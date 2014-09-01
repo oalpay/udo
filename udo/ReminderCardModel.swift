@@ -12,3 +12,11 @@ import Foundation
 enum ReminderTaskStatus: Int {
     case New = 1, Done, Deleted
 }
+
+let kReminderItemStatus = "status"
+let kReminderItemDescription = "description"
+let kReminderItemAlarmDate = "alarmDate"
+let kReminderCardOwner = "owner"
+let kReminderCardCreator = "creator"
+let kReminderCardItems = "items"
+

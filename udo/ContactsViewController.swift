@@ -9,10 +9,19 @@
 import Foundation
 import UIKit
 import AddressBookUI
+import MessageUI
+
+var appstoreUrl:String = ""
 
 
 class ContactTableViewCell:UITableViewCell{
     @IBOutlet weak var name: UILabel!
+    
+    
+    
+    func initWithContact(contact:Contact) {
+        self.name.text = contact.name
+    }
     
 }
 
@@ -23,27 +32,68 @@ class ContactPhoneNumberTableViewCell:UITableViewCell{
     
 }
 
-class ContactNumber{
-    var original:String!
-    var userId:String?
-    var isRegistered = false
-}
 
-class Contact{
-    var name:String!
-    var numbers:[ContactNumber] = []
-    init(){
-        
-    }
-}
-
-class ContactDetailsViewController:UITableViewController{
+class ContactDetailsViewController:UITableViewController,MFMessageComposeViewControllerDelegate{
     @IBOutlet weak var name: UILabel!
+    @IBOutlet weak var image: UIImageView!
+    
     
     var contact:Contact!
     
     override func viewDidLoad() {
         name.text = contact.name
+        image.layer.cornerRadius = image.frame.size.height/2
+        image.layer.masksToBounds = true
+        image.layer.borderWidth = 0
+        if let img = contact.image{
+            image.image = img
+        }
+        
+    }
+    
+    
+    @IBAction func inviteButtonPressed(sender: AnyObject) {
+        let point = sender.convertPoint(CGPointZero, toView: self.tableView)
+        let indexPath = self.tableView.indexPathForRowAtPoint(point)
+        self.tableView.selectRowAtIndexPath(indexPath, animated: false, scrollPosition: UITableViewScrollPosition.Bottom)
+        sendInvitation()
+    }
+    
+    func sendInvitation(){
+        if MFMessageComposeViewController.canSendText() {
+            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+            let recipents = [selectedNumber.original]
+            let messageController = MFMessageComposeViewController()
+            messageController.messageComposeDelegate = self
+            messageController.recipients = recipents
+            messageController.body = "I sent you an reminder. \(appstoreUrl)"
+            self.presentViewController(messageController, animated: true, completion: nil)
+        }else{
+            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+            invitationSent(selectedNumber)
+            self.performSegueWithIdentifier("ContactSelected", sender: nil)
+        }
+    }
+    
+    func invitationSent(number:ContactNumber){
+        var invitation = PFObject(className: "Invitation")
+        invitation["to"] = number.userId
+        invitation["from"] = PFUser.currentUser().username
+        invitation.saveInBackground()
+    }
+    
+    func messageComposeViewController(controller: MFMessageComposeViewController!, didFinishWithResult result: MessageComposeResult) {
+        if result.value == MessageComposeResultFailed.value{
+            UIAlertView(title: "Error", message: "Failed to send message", delegate: nil, cancelButtonTitle: "Continue").show()
+            controller.dismissViewControllerAnimated(true, completion: nil)
+        }else if result.value == MessageComposeResultSent.value {
+            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+            invitationSent(selectedNumber)
+            controller.dismissViewControllerAnimated(true, completion: nil)
+            self.performSegueWithIdentifier("ContactSelected", sender: nil)
+        }else if result.value == MessageComposeResultCancelled.value {
+            controller.dismissViewControllerAnimated(true, completion: nil)
+        }
     }
     
     override func tableView(tableView: UITableView!, cellForRowAtIndexPath indexPath: NSIndexPath!) -> UITableViewCell! {
@@ -83,44 +133,36 @@ class ContactDetailsViewController:UITableViewController{
 }
 
 class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
-    var phoneUtil:NBPhoneNumberUtil! = NBPhoneNumberUtil.sharedInstance()
-    var addressBook: ABAddressBookRef?
-    var contacts:[Contact] = []
+    var contactsHelper:ContactsHelper!
+    var sectionHeaders:[String] = []
+    var sectionContacts = Dictionary<String,NSMutableArray>()
     var searchResults:[Contact] = []
     
     override func viewDidLoad() {
-        if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.NotDetermined) {
-            var errorRef: Unmanaged<CFError>? = nil
-            addressBook = extractABAddressBookRef(ABAddressBookCreateWithOptions(nil, &errorRef))
-            ABAddressBookRequestAccessWithCompletion(addressBook, { success, error in
-                if success {
-                    self.contactsAuthorized()
-                }
-                else {
-                    println("ContactsViewController: \(error)")
-                    self.navigationController.dismissViewControllerAnimated(true, completion: nil)
-                }
-            })
-        }
-        else if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Denied || ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Restricted) {
-            self.navigationController.dismissViewControllerAnimated(true, completion: nil)
-        }
-        else if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Authorized) {
-            self.contactsAuthorized()
-        }
-        
+        self.divideContactsToSection()
+        self.getAppUsers()
     }
     
-    func extractABAddressBookRef(abRef: Unmanaged<ABAddressBookRef>!) -> ABAddressBookRef? {
-        if let ab = abRef {
-            return Unmanaged<NSObject>.fromOpaque(ab.toOpaque()).takeUnretainedValue()
+    func divideContactsToSection(){
+        for contact in contactsHelper.contacts{
+            var section:NSMutableArray!
+            let sectionChar = contact.name.substringToIndex(contact.name.startIndex.successor()).uppercaseString
+            if let s = sectionContacts[sectionChar] as NSMutableArray?{
+                section = s
+            }else{
+                section = NSMutableArray()
+                sectionContacts[sectionChar] = section
+            }
+            section.addObject(contact)
         }
-        return nil
+        self.sectionHeaders = sectionContacts.keys.array.sorted{ (n1:String, n2:String) -> Bool in
+            return n1.compare(n2, options: NSStringCompareOptions.CaseInsensitiveSearch, range: nil, locale: nil) == NSComparisonResult.OrderedAscending
+        }
     }
     
     func updateContactsWithAppUserIds(userIds:[String]) {
         //there should be a more cpu efficient way of doing this!
-        for contact in contacts{
+        for contact in contactsHelper.contacts{
             for number in contact.numbers{
                 for userId in userIds{
                     if number.userId == userId {
@@ -129,15 +171,12 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
                 }
             }
         }
+        self.tableView.reloadData()
     }
     
     func getAppUsers(){
-        let user = PFUser.currentUser()
-        let userCountryCode = user["country"] as NSNumber
-        let userRegionCode = phoneUtil.getRegionCodeForCountryCode(userCountryCode)
         var numbers:[String] = []
-        var error:NSError?
-        for contact in contacts{
+        for contact in contactsHelper.contacts{
             for number in contact.numbers{
                 if let userId = number.userId{
                     numbers.append(userId)
@@ -154,51 +193,24 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         }
     }
     
-    func convertPhoneNumberToUserId(phoneNumber:String) -> String? {
-        let user = PFUser.currentUser()
-        let userCountryCode = user["country"] as NSNumber
-        let userRegionCode = phoneUtil.getRegionCodeForCountryCode(userCountryCode)
-        var error:NSError?
-        let nbPhoneNumber:NBPhoneNumber = phoneUtil.parse(phoneNumber, defaultRegion: userRegionCode, error: &error)
-        if error == nil {
-            return phoneUtil.format(nbPhoneNumber, numberFormat: NBEPhoneNumberFormatE164, error: &error)
-        }
-        return nil
+    override func numberOfSectionsInTableView(tableView: UITableView!) -> Int {
+        return self.sectionHeaders.count
     }
     
+    override func sectionIndexTitlesForTableView(tableView: UITableView!) -> [AnyObject]! {
+        return self.sectionHeaders
+    }
     
-    func contactsAuthorized() {
-        var errorRef: Unmanaged<CFError>?
-        addressBook = extractABAddressBookRef(ABAddressBookCreateWithOptions(nil, &errorRef))
-        var contactList: NSArray = ABAddressBookCopyArrayOfAllPeople(addressBook).takeRetainedValue()
-        for record:ABRecordRef in contactList {
-            var contact = Contact()
-            contact.name = ABRecordCopyCompositeName(record).takeRetainedValue() as NSString
-            let uPhoneNumbers = ABRecordCopyValue(record, kABPersonPhoneProperty)
-            let phones: ABMultiValueRef =
-            Unmanaged<NSObject>.fromOpaque(uPhoneNumbers.toOpaque()).takeUnretainedValue() as ABMultiValueRef
-            for (var i = 0; i < ABMultiValueGetCount(phones); ++i)
-            {
-                var uPhoneNumber = ABMultiValueCopyValueAtIndex(phones, i)
-                let phoneNumber: String = Unmanaged<NSObject>.fromOpaque(
-                    uPhoneNumber.toOpaque()).takeUnretainedValue() as String
-                var contactNumber = ContactNumber()
-                contactNumber.original = phoneNumber
-                contactNumber.userId = convertPhoneNumberToUserId(phoneNumber)
-                contact.numbers.append(contactNumber)
-            }
-            contacts.append(contact)
-        }
-        contacts.sort { $0.name < $1.name }
-        self.getAppUsers()
-        self.tableView.reloadData()
+    override func tableView(tableView: UITableView!, titleForHeaderInSection section: Int) -> String! {
+        return self.sectionHeaders[section]
     }
     
     override func tableView(tableView: UITableView!, numberOfRowsInSection section: Int) -> Int {
         if tableView != self.tableView {
             return searchResults.count
         }else{
-            return contacts.count
+            let s = sectionHeaders[section]
+            return sectionContacts[s]!.count
         }
     }
     
@@ -215,10 +227,11 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             return contactCell
         }else{
             var contactCell = tableView.dequeueReusableCellWithIdentifier("ContactCell", forIndexPath: indexPath) as ContactTableViewCell
-            let contact = contacts[indexPath.row]
-            contactCell.name.text = contact.name
+            let section = sectionContacts[sectionHeaders[indexPath.section]]
+            let contact = section?.objectAtIndex(indexPath.row) as Contact
+            contactCell.initWithContact(contact)
             return contactCell
-
+            
         }
     }
     
@@ -228,7 +241,8 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             //search
             selectedContact = searchResults[indexPath.row]
         }else{
-            selectedContact = contacts[indexPath.row]
+            let section = sectionContacts[sectionHeaders[indexPath.section]]
+            selectedContact = section?.objectAtIndex(indexPath.row) as Contact
         }
         performSegueWithIdentifier("ShowContactDetail", sender: selectedContact)
     }
@@ -243,11 +257,12 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
     
     func searchDisplayController(controller: UISearchDisplayController!, shouldReloadTableForSearchString searchString: String!) -> Bool {
         var newSearchResults:[Contact] = []
-        for contact in contacts {
+        for contact in contactsHelper.contacts {
             let name:NSString = contact.name
             for token in name.componentsSeparatedByString(" ") as [String]{
                 if token.lowercaseString.hasPrefix(searchString.lowercaseString){
                     newSearchResults.append(contact)
+                    break
                 }
             }
         }

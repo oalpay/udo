@@ -30,8 +30,8 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
         alarmLabel.text = dateFormatter.stringFromDate(currentDate)
         datePicker.minimumDate = currentDate
         
-        taskTextView.text = item["description"] as String
-        let alarmDate = item["alarmDate"] as NSDate
+        taskTextView.text = item[kReminderItemDescription] as String
+        let alarmDate = item[kReminderItemAlarmDate] as NSDate
         if alarmDate != NSDate(timeIntervalSince1970: 0){
             remindSwitch.on = true
             alarmLabel.text = dateFormatter.stringFromDate(alarmDate)
@@ -67,12 +67,12 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
     
     
     override func tableView(tableView: UITableView!, heightForRowAtIndexPath indexPath: NSIndexPath!) -> CGFloat {
-        if indexPath.section == 0 && indexPath.row == 0 {
-            let font = taskTextView.font
-            let attributes:Dictionary<String,AnyObject> = [NSFontAttributeName : font]
-            let width = self.tableView.frame.width
-            let rect = taskTextView.text.boundingRectWithSize(CGSizeMake(width,CGFloat.max) , options: NSStringDrawingOptions.UsesLineFragmentOrigin, attributes: attributes, context: nil)
-            return max(44,rect.height + 60)
+        if indexPath.section == 0 {
+            self.taskTextView.layoutIfNeeded()
+            var sizeThatFits = self.taskTextView.frame.size
+            sizeThatFits.width = self.tableView.frame.size.width - 16 //margins
+            sizeThatFits = self.taskTextView.sizeThatFits(sizeThatFits)
+            return max(44,sizeThatFits.height + 16/*margins*/)
         }
         return super.tableView(tableView, heightForRowAtIndexPath: indexPath)
     }

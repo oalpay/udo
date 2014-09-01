@@ -21,7 +21,7 @@ class RemindersCollectionViewController: TGLStackedViewController, UICollectionV
         
         self.exposedTopOverlap = 0
         self.exposedLayoutMargin = UIEdgeInsetsMake(25, 0.0, 0.0, 0.0);
-        self.stackedLayout.layoutMargin = UIEdgeInsetsMake(65, 0.0, 0.0, 0.0);
+        self.stackedLayout.layoutMargin = UIEdgeInsetsMake(70, 0.0, 0.0, 0.0);
         
         // Set to NO to prevent a small number
         // of cards from filling the entire

@@ -159,7 +159,7 @@ typedef NS_ENUM(NSInteger, TGLStackedViewControllerScrollDirection) {
             self.stackedLayout.overwriteContentOffset = YES;
             self.stackedLayout.contentOffset = self.stackedContentOffset;
             
-            [self.collectionView setCollectionViewLayout:self.stackedLayout animated:YES];
+            [self.collectionView setCollectionViewLayout:self.stackedLayout animated:NO];
             [self.collectionView setContentOffset:self.stackedContentOffset animated:NO];
         }
         

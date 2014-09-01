@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6206.8" systemVersion="13E28" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
+        <deployment defaultVersion="1808" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7026.1"/>
     </dependencies>
     <objects>
@@ -14,17 +15,25 @@
                     <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                 </imageView>
                 <searchBar contentMode="redraw" barStyle="black" searchBarStyle="minimal" translatesAutoresizingMaskIntoConstraints="NO" id="KhT-wr-hg7">
-                    <rect key="frame" x="5" y="18" width="265" height="44"/>
+                    <rect key="frame" x="5" y="25" width="265" height="44"/>
                     <textInputTraits key="textInputTraits"/>
                     <connections>
                         <outlet property="delegate" destination="iN0-l3-epB" id="hOy-0s-FRZ"/>
                     </connections>
                 </searchBar>
+                <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="VBJ-Ib-SgR" userLabel="Search Results TableViewControler">
+                    <rect key="frame" x="0.0" y="79" width="320" height="489"/>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                    <connections>
+                        <outlet property="dataSource" destination="iN0-l3-epB" id="9QF-fC-Gku"/>
+                        <outlet property="delegate" destination="iN0-l3-epB" id="ndO-3h-wHZ"/>
+                    </connections>
+                </tableView>
                 <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eyH-qc-gEQ">
-                    <rect key="frame" x="270" y="17" width="40" height="40"/>
+                    <rect key="frame" x="266" y="18" width="50" height="50"/>
                     <constraints>
-                        <constraint firstAttribute="width" constant="40" id="NnR-CH-xGN"/>
-                        <constraint firstAttribute="height" constant="40" id="xxU-4m-j7N"/>
+                        <constraint firstAttribute="width" constant="50" id="NnR-CH-xGN"/>
+                        <constraint firstAttribute="height" constant="50" id="xxU-4m-j7N"/>
                     </constraints>
                     <fontDescription key="fontDescription" type="system" pointSize="38"/>
                     <state key="normal" title="+">
@@ -34,14 +43,6 @@
                         <action selector="addButtonPressed:" destination="iN0-l3-epB" eventType="touchUpInside" id="4Ws-d2-LCD"/>
                     </connections>
                 </button>
-                <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="VBJ-Ib-SgR" userLabel="Search Results TableViewControler">
-                    <rect key="frame" x="0.0" y="65" width="320" height="503"/>
-                    <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                    <connections>
-                        <outlet property="dataSource" destination="iN0-l3-epB" id="9QF-fC-Gku"/>
-                        <outlet property="delegate" destination="iN0-l3-epB" id="ndO-3h-wHZ"/>
-                    </connections>
-                </tableView>
             </subviews>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
             <constraints>
@@ -49,17 +50,17 @@
                 <constraint firstAttribute="trailing" secondItem="VBJ-Ib-SgR" secondAttribute="trailing" id="7pF-mQ-baM"/>
                 <constraint firstAttribute="trailing" secondItem="KhT-wr-hg7" secondAttribute="trailing" constant="50" id="O60-i5-Qir"/>
                 <constraint firstItem="6By-Df-C29" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="OYd-5V-Kog"/>
-                <constraint firstItem="eyH-qc-gEQ" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="17" id="QlH-Vy-GlY"/>
+                <constraint firstItem="eyH-qc-gEQ" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="18" id="QlH-Vy-GlY"/>
                 <constraint firstItem="VBJ-Ib-SgR" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" id="Tf7-gl-0sr"/>
                 <constraint firstItem="6By-Df-C29" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" id="Zry-o2-F6W"/>
                 <constraint firstAttribute="bottom" secondItem="6By-Df-C29" secondAttribute="bottom" id="Zz2-oa-bG6"/>
-                <constraint firstItem="KhT-wr-hg7" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="18" id="ctE-XB-gig"/>
+                <constraint firstItem="KhT-wr-hg7" firstAttribute="top" secondItem="iN0-l3-epB" secondAttribute="top" constant="25" id="ctE-XB-gig"/>
                 <constraint firstItem="KhT-wr-hg7" firstAttribute="leading" secondItem="iN0-l3-epB" secondAttribute="leading" constant="5" id="fba-B1-WnD"/>
-                <constraint firstItem="eyH-qc-gEQ" firstAttribute="leading" secondItem="KhT-wr-hg7" secondAttribute="trailing" id="gep-Qq-jVy"/>
-                <constraint firstItem="VBJ-Ib-SgR" firstAttribute="top" secondItem="KhT-wr-hg7" secondAttribute="bottom" constant="3" id="jCg-2p-vI8"/>
+                <constraint firstItem="eyH-qc-gEQ" firstAttribute="leading" secondItem="KhT-wr-hg7" secondAttribute="trailing" constant="-4" id="gep-Qq-jVy"/>
+                <constraint firstItem="VBJ-Ib-SgR" firstAttribute="top" secondItem="KhT-wr-hg7" secondAttribute="bottom" constant="10" id="jCg-2p-vI8"/>
                 <constraint firstAttribute="bottom" secondItem="VBJ-Ib-SgR" secondAttribute="bottom" id="sOY-E6-opW"/>
             </constraints>
-            <nil key="simulatedStatusBarMetrics"/>
+            <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="lightContent"/>
             <simulatedOrientationMetrics key="simulatedOrientationMetrics"/>
             <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina4">
                 <size key="portraitSize" width="320" height="568"/>

@@ -297,12 +297,12 @@
 		ACFB6C1C198AB7BB0091E4AB = {
 			isa = PBXGroup;
 			children = (
-				AC1B48F319AFCC9500C7B6B4 /* MessageUI.framework */,
 				AC0C72AA198DA47200B803B5 /* UDO-Bridging-Header.h */,
 				ACFB6C27198AB7BB0091E4AB /* udo */,
 				ACFB6C3C198AB7BC0091E4AB /* udoTests */,
 				ACFB6C26198AB7BB0091E4AB /* Products */,
 				AC0C72C8198E9CAA00B803B5 /* libz.dylib */,
+				AC1B48F319AFCC9500C7B6B4 /* MessageUI.framework */,
 				AC0C72D2198E9CF900B803B5 /* SystemConfiguration.framework */,
 				AC0C72D0198E9CEC00B803B5 /* StoreKit.framework */,
 				AC0C72CE198E9CE300B803B5 /* Security.framework */,

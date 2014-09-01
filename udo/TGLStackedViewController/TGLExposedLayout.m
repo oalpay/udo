@@ -126,13 +126,13 @@
             // are aligned above top with
             // cardTopOverlap
             //
-            attributes.frame = CGRectMake(self.layoutMargin.left, self.layoutMargin.top - self.topOverlap, itemSize.width, itemSize.height);
+            attributes.frame = CGRectMake(self.layoutMargin.left, self.layoutMargin.top, itemSize.width, itemSize.height - self.bottomOverlap);
             
         } else if (item == self.exposedItemIndex) {
             
             // Exposed item
             //
-            attributes.frame = CGRectMake(self.layoutMargin.left, self.layoutMargin.top, itemSize.width, itemSize.height);
+            attributes.frame = CGRectMake(self.layoutMargin.left, self.layoutMargin.top, itemSize.width, itemSize.height - self.bottomOverlap);
 
         } else if (item > self.exposedItemIndex + 1) {
             

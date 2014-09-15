@@ -10,12 +10,7 @@
 		AC004E7B19AA032E00970D00 /* sativa.png in Resources */ = {isa = PBXBuildFile; fileRef = AC004E7A19AA032E00970D00 /* sativa.png */; };
 		AC004E7D19AA53EE00970D00 /* geometry2.png in Resources */ = {isa = PBXBuildFile; fileRef = AC004E7C19AA53EE00970D00 /* geometry2.png */; };
 		AC004E7F19AD1BED00970D00 /* ReminderItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */; };
-		AC004E8119AE5E7500970D00 /* RemindersHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC004E8019AE5E7500970D00 /* RemindersHeader.swift */; };
 		AC004E8319AE5F2400970D00 /* ReminderItemCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */; };
-		AC0C72A1198D411E00B803B5 /* TGLExposedLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = AC0C729C198D411E00B803B5 /* TGLExposedLayout.m */; };
-		AC0C72A2198D411E00B803B5 /* TGLStackedLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = AC0C729E198D411E00B803B5 /* TGLStackedLayout.m */; };
-		AC0C72A3198D411E00B803B5 /* TGLStackedViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = AC0C72A0198D411E00B803B5 /* TGLStackedViewController.m */; };
-		AC0C72A5198D4FA500B803B5 /* ReminderCardViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0C72A4198D4FA500B803B5 /* ReminderCardViewCell.swift */; };
 		AC0C72AC198E5FD000B803B5 /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72AB198E5FCF00B803B5 /* Parse.framework */; };
 		AC0C72AE198E63E100B803B5 /* RegisterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */; };
 		AC0C72C1198E9C7A00B803B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72C0198E9C7A00B803B5 /* AudioToolbox.framework */; };
@@ -28,7 +23,6 @@
 		AC0C72CF198E9CE300B803B5 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72CE198E9CE300B803B5 /* Security.framework */; };
 		AC0C72D1198E9CEC00B803B5 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72D0198E9CEC00B803B5 /* StoreKit.framework */; };
 		AC0C72D3198E9CF900B803B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72D2198E9CF900B803B5 /* SystemConfiguration.framework */; };
-		AC1B48EE19AFA40600C7B6B4 /* ContactsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1B48ED19AFA40600C7B6B4 /* ContactsHelper.swift */; };
 		AC1B48F119AFB24100C7B6B4 /* default-avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = AC1B48EF19AFB24100C7B6B4 /* default-avatar.png */; };
 		AC1B48F219AFB24100C7B6B4 /* default-avatar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC1B48F019AFB24100C7B6B4 /* default-avatar@2x.png */; };
 		AC1B48F419AFCC9500C7B6B4 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC1B48F319AFCC9500C7B6B4 /* MessageUI.framework */; };
@@ -36,14 +30,8 @@
 		AC404AD019A140B400FBA16B /* lightpaperfibers.png in Resources */ = {isa = PBXBuildFile; fileRef = AC404ACE19A140B400FBA16B /* lightpaperfibers.png */; };
 		AC4AB9FD19B3A4EC00A75905 /* checkboxmark.png in Resources */ = {isa = PBXBuildFile; fileRef = AC4AB9F719B3A4EC00A75905 /* checkboxmark.png */; };
 		AC4AB9FE19B3A4EC00A75905 /* mail29.png in Resources */ = {isa = PBXBuildFile; fileRef = AC4AB9F819B3A4EC00A75905 /* mail29.png */; };
-		AC4AB9FF19B3A4EC00A75905 /* delete.png in Resources */ = {isa = PBXBuildFile; fileRef = AC4AB9F919B3A4EC00A75905 /* delete.png */; };
-		AC4ABA0019B3A4EC00A75905 /* checkboxmark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC4AB9FA19B3A4EC00A75905 /* checkboxmark@2x.png */; };
-		AC4ABA0119B3A4EC00A75905 /* delete@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC4AB9FB19B3A4EC00A75905 /* delete@2x.png */; };
-		AC4ABA0219B3A4EC00A75905 /* mail29@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC4AB9FC19B3A4EC00A75905 /* mail29@2x.png */; };
-		AC86751419A7D614008CFCA8 /* test.xib in Resources */ = {isa = PBXBuildFile; fileRef = AC86751319A7D614008CFCA8 /* test.xib */; };
 		AC86751619A7DC19008CFCA8 /* clouds.jpg in Resources */ = {isa = PBXBuildFile; fileRef = AC86751519A7DC19008CFCA8 /* clouds.jpg */; };
 		AC8CE84F199C07C800D39B41 /* ReminderCardModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC8CE84E199C07C800D39B41 /* ReminderCardModel.swift */; };
-		ACA2FF8F198FF6BC0098A5D5 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF8E198FF6BC0098A5D5 /* Util.swift */; };
 		ACA2FFA0198FFBD60098A5D5 /* NBAsYouTypeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF92198FFBD60098A5D5 /* NBAsYouTypeFormatter.m */; };
 		ACA2FFA1198FFBD60098A5D5 /* NBNumberFormat.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF94198FFBD60098A5D5 /* NBNumberFormat.m */; };
 		ACA2FFA2198FFBD60098A5D5 /* NBPhoneMetaData.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF96198FFBD60098A5D5 /* NBPhoneMetaData.m */; };
@@ -59,16 +47,26 @@
 		ACA925AE1996C8BD00FA86A1 /* received.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A81996C8BD00FA86A1 /* received.png */; };
 		ACA925AF1996C8BD00FA86A1 /* sending.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A91996C8BD00FA86A1 /* sending.png */; };
 		ACA925B01996C8BD00FA86A1 /* received@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925AA1996C8BD00FA86A1 /* received@2x.png */; };
-		ACAE74CD19A546DB00072BF5 /* RemindersHeader.xib in Resources */ = {isa = PBXBuildFile; fileRef = ACAE74CC19A546DB00072BF5 /* RemindersHeader.xib */; };
 		ACAE74CF19A7C21A00072BF5 /* colors.jpg in Resources */ = {isa = PBXBuildFile; fileRef = ACAE74CE19A7C21A00072BF5 /* colors.jpg */; };
 		ACAE74D219A7C69600072BF5 /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */; };
-		ACAE74D519A7C71500072BF5 /* UDOStackedLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAE74D419A7C71500072BF5 /* UDOStackedLayout.swift */; };
+		ACD60AFE19C78886002F550A /* UDOReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF119C78886002F550A /* UDOReminderManager.swift */; };
+		ACD60AFF19C78886002F550A /* RemindersTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF219C78886002F550A /* RemindersTableViewController.swift */; };
+		ACD60B0019C78886002F550A /* AccountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF319C78886002F550A /* AccountViewController.swift */; };
+		ACD60B0119C78886002F550A /* ReminderCardTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF419C78886002F550A /* ReminderCardTableViewController.swift */; };
+		ACD60B0219C78886002F550A /* udo.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF519C78886002F550A /* udo.png */; };
+		ACD60B0319C78886002F550A /* udo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF619C78886002F550A /* udo@2x.png */; };
+		ACD60B0419C78886002F550A /* settings.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF719C78886002F550A /* settings.png */; };
+		ACD60B0519C78886002F550A /* settings@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF819C78886002F550A /* settings@2x.png */; };
+		ACD60B0619C78886002F550A /* checkmark_empty.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF919C78886002F550A /* checkmark_empty.png */; };
+		ACD60B0719C78886002F550A /* checkmark_empty@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AFA19C78886002F550A /* checkmark_empty@2x.png */; };
+		ACD60B0819C78886002F550A /* checkmark.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AFB19C78886002F550A /* checkmark.png */; };
+		ACD60B0919C78886002F550A /* checkmark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AFC19C78886002F550A /* checkmark@2x.png */; };
+		ACD60B0A19C78886002F550A /* ContactsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AFD19C78886002F550A /* ContactsHelper.swift */; };
 		ACE869221992CB5C00F26D67 /* TaskEditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE869211992CB5C00F26D67 /* TaskEditViewController.swift */; };
 		ACF35C3C19A3E92E00831391 /* plus@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF35C3A19A3E92E00831391 /* plus@2x.png */; };
 		ACF35C3D19A3E92E00831391 /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF35C3B19A3E92E00831391 /* plus.png */; };
 		ACF35C4019A3EC9C00831391 /* FXBlurView.m in Sources */ = {isa = PBXBuildFile; fileRef = ACF35C3F19A3EC9C00831391 /* FXBlurView.m */; };
 		ACFB6C2B198AB7BB0091E4AB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */; };
-		ACFB6C2D198AB7BB0091E4AB /* RemindersCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFB6C2C198AB7BB0091E4AB /* RemindersCollectionViewController.swift */; };
 		ACFB6C32198AB7BB0091E4AB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = ACFB6C30198AB7BB0091E4AB /* Main.storyboard */; };
 		ACFB6C34198AB7BB0091E4AB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ACFB6C33198AB7BB0091E4AB /* Images.xcassets */; };
 		ACFB6C40198AB7BC0091E4AB /* udoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFB6C3F198AB7BC0091E4AB /* udoTests.swift */; };
@@ -89,15 +87,7 @@
 		AC004E7A19AA032E00970D00 /* sativa.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sativa.png; sourceTree = "<group>"; };
 		AC004E7C19AA53EE00970D00 /* geometry2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = geometry2.png; sourceTree = "<group>"; };
 		AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ReminderItemCell.xib; sourceTree = "<group>"; };
-		AC004E8019AE5E7500970D00 /* RemindersHeader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemindersHeader.swift; sourceTree = "<group>"; };
 		AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderItemCell.swift; sourceTree = "<group>"; };
-		AC0C729B198D411E00B803B5 /* TGLExposedLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGLExposedLayout.h; sourceTree = "<group>"; };
-		AC0C729C198D411E00B803B5 /* TGLExposedLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGLExposedLayout.m; sourceTree = "<group>"; };
-		AC0C729D198D411E00B803B5 /* TGLStackedLayout.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGLStackedLayout.h; sourceTree = "<group>"; };
-		AC0C729E198D411E00B803B5 /* TGLStackedLayout.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGLStackedLayout.m; sourceTree = "<group>"; };
-		AC0C729F198D411E00B803B5 /* TGLStackedViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGLStackedViewController.h; sourceTree = "<group>"; };
-		AC0C72A0198D411E00B803B5 /* TGLStackedViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGLStackedViewController.m; sourceTree = "<group>"; };
-		AC0C72A4198D4FA500B803B5 /* ReminderCardViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderCardViewCell.swift; sourceTree = "<group>"; };
 		AC0C72AA198DA47200B803B5 /* UDO-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UDO-Bridging-Header.h"; sourceTree = "<group>"; };
 		AC0C72AB198E5FCF00B803B5 /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Parse.framework; sourceTree = "<group>"; };
 		AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegisterViewController.swift; sourceTree = "<group>"; };
@@ -111,7 +101,6 @@
 		AC0C72CE198E9CE300B803B5 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		AC0C72D0198E9CEC00B803B5 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		AC0C72D2198E9CF900B803B5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		AC1B48ED19AFA40600C7B6B4 /* ContactsHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = ContactsHelper.swift; path = ../ContactsHelper.swift; sourceTree = "<group>"; };
 		AC1B48EF19AFB24100C7B6B4 /* default-avatar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "default-avatar.png"; sourceTree = "<group>"; };
 		AC1B48F019AFB24100C7B6B4 /* default-avatar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "default-avatar@2x.png"; sourceTree = "<group>"; };
 		AC1B48F319AFCC9500C7B6B4 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
@@ -119,14 +108,8 @@
 		AC404ACE19A140B400FBA16B /* lightpaperfibers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = lightpaperfibers.png; sourceTree = "<group>"; };
 		AC4AB9F719B3A4EC00A75905 /* checkboxmark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = checkboxmark.png; path = ../../../Downloads/png/checkboxmark.png; sourceTree = "<group>"; };
 		AC4AB9F819B3A4EC00A75905 /* mail29.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = mail29.png; path = ../../../Downloads/png/mail29.png; sourceTree = "<group>"; };
-		AC4AB9F919B3A4EC00A75905 /* delete.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = delete.png; path = ../../../Downloads/png/delete.png; sourceTree = "<group>"; };
-		AC4AB9FA19B3A4EC00A75905 /* checkboxmark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "checkboxmark@2x.png"; path = "../../../Downloads/png/checkboxmark@2x.png"; sourceTree = "<group>"; };
-		AC4AB9FB19B3A4EC00A75905 /* delete@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "delete@2x.png"; path = "../../../Downloads/png/delete@2x.png"; sourceTree = "<group>"; };
-		AC4AB9FC19B3A4EC00A75905 /* mail29@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "mail29@2x.png"; path = "../../../Downloads/png/mail29@2x.png"; sourceTree = "<group>"; };
-		AC86751319A7D614008CFCA8 /* test.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = test.xib; sourceTree = "<group>"; };
 		AC86751519A7DC19008CFCA8 /* clouds.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = clouds.jpg; sourceTree = "<group>"; };
 		AC8CE84E199C07C800D39B41 /* ReminderCardModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderCardModel.swift; sourceTree = "<group>"; };
-		ACA2FF8E198FF6BC0098A5D5 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		ACA2FF91198FFBD60098A5D5 /* NBAsYouTypeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NBAsYouTypeFormatter.h; sourceTree = "<group>"; };
 		ACA2FF92198FFBD60098A5D5 /* NBAsYouTypeFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NBAsYouTypeFormatter.m; sourceTree = "<group>"; };
 		ACA2FF93198FFBD60098A5D5 /* NBNumberFormat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NBNumberFormat.h; sourceTree = "<group>"; };
@@ -150,11 +133,22 @@
 		ACA925A81996C8BD00FA86A1 /* received.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = received.png; sourceTree = "<group>"; };
 		ACA925A91996C8BD00FA86A1 /* sending.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sending.png; sourceTree = "<group>"; };
 		ACA925AA1996C8BD00FA86A1 /* received@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "received@2x.png"; sourceTree = "<group>"; };
-		ACAE74CC19A546DB00072BF5 /* RemindersHeader.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = RemindersHeader.xib; sourceTree = "<group>"; };
 		ACAE74CE19A7C21A00072BF5 /* colors.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = colors.jpg; sourceTree = "<group>"; };
 		ACAE74D019A7C69600072BF5 /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+ImageEffects.m"; sourceTree = "<group>"; };
-		ACAE74D419A7C71500072BF5 /* UDOStackedLayout.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDOStackedLayout.swift; sourceTree = "<group>"; };
+		ACD60AF119C78886002F550A /* UDOReminderManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDOReminderManager.swift; sourceTree = "<group>"; };
+		ACD60AF219C78886002F550A /* RemindersTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemindersTableViewController.swift; sourceTree = "<group>"; };
+		ACD60AF319C78886002F550A /* AccountViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AccountViewController.swift; sourceTree = "<group>"; };
+		ACD60AF419C78886002F550A /* ReminderCardTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderCardTableViewController.swift; sourceTree = "<group>"; };
+		ACD60AF519C78886002F550A /* udo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = udo.png; sourceTree = "<group>"; };
+		ACD60AF619C78886002F550A /* udo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "udo@2x.png"; sourceTree = "<group>"; };
+		ACD60AF719C78886002F550A /* settings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings.png; sourceTree = "<group>"; };
+		ACD60AF819C78886002F550A /* settings@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "settings@2x.png"; sourceTree = "<group>"; };
+		ACD60AF919C78886002F550A /* checkmark_empty.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmark_empty.png; sourceTree = "<group>"; };
+		ACD60AFA19C78886002F550A /* checkmark_empty@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "checkmark_empty@2x.png"; sourceTree = "<group>"; };
+		ACD60AFB19C78886002F550A /* checkmark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmark.png; sourceTree = "<group>"; };
+		ACD60AFC19C78886002F550A /* checkmark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "checkmark@2x.png"; sourceTree = "<group>"; };
+		ACD60AFD19C78886002F550A /* ContactsHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsHelper.swift; sourceTree = "<group>"; };
 		ACE869211992CB5C00F26D67 /* TaskEditViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TaskEditViewController.swift; sourceTree = "<group>"; };
 		ACF35C3A19A3E92E00831391 /* plus@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "plus@2x.png"; sourceTree = "<group>"; };
 		ACF35C3B19A3E92E00831391 /* plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = plus.png; sourceTree = "<group>"; };
@@ -163,7 +157,6 @@
 		ACFB6C25198AB7BB0091E4AB /* udo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = udo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFB6C29198AB7BB0091E4AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		ACFB6C2C198AB7BB0091E4AB /* RemindersCollectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersCollectionViewController.swift; sourceTree = "<group>"; };
 		ACFB6C31198AB7BB0091E4AB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		ACFB6C33198AB7BB0091E4AB /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		ACFB6C39198AB7BC0091E4AB /* udoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = udoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -202,19 +195,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AC0C729A198D411E00B803B5 /* TGLStackedViewController */ = {
-			isa = PBXGroup;
-			children = (
-				AC0C729B198D411E00B803B5 /* TGLExposedLayout.h */,
-				AC0C729C198D411E00B803B5 /* TGLExposedLayout.m */,
-				AC0C729D198D411E00B803B5 /* TGLStackedLayout.h */,
-				AC0C729E198D411E00B803B5 /* TGLStackedLayout.m */,
-				AC0C729F198D411E00B803B5 /* TGLStackedViewController.h */,
-				AC0C72A0198D411E00B803B5 /* TGLStackedViewController.m */,
-			);
-			path = TGLStackedViewController;
-			sourceTree = "<group>";
-		};
 		ACA2FF90198FFBC10098A5D5 /* libPhoneNumber */ = {
 			isa = PBXGroup;
 			children = (
@@ -250,12 +230,16 @@
 		ACA9259C1996C24C00FA86A1 /* images */ = {
 			isa = PBXGroup;
 			children = (
+				ACD60AF519C78886002F550A /* udo.png */,
+				ACD60AF619C78886002F550A /* udo@2x.png */,
+				ACD60AF719C78886002F550A /* settings.png */,
+				ACD60AF819C78886002F550A /* settings@2x.png */,
+				ACD60AF919C78886002F550A /* checkmark_empty.png */,
+				ACD60AFA19C78886002F550A /* checkmark_empty@2x.png */,
+				ACD60AFB19C78886002F550A /* checkmark.png */,
+				ACD60AFC19C78886002F550A /* checkmark@2x.png */,
 				AC4AB9F719B3A4EC00A75905 /* checkboxmark.png */,
 				AC4AB9F819B3A4EC00A75905 /* mail29.png */,
-				AC4AB9F919B3A4EC00A75905 /* delete.png */,
-				AC4AB9FA19B3A4EC00A75905 /* checkboxmark@2x.png */,
-				AC4AB9FB19B3A4EC00A75905 /* delete@2x.png */,
-				AC4AB9FC19B3A4EC00A75905 /* mail29@2x.png */,
 				AC86751519A7DC19008CFCA8 /* clouds.jpg */,
 				ACAE74CE19A7C21A00072BF5 /* colors.jpg */,
 				AC1B48EF19AFB24100C7B6B4 /* default-avatar.png */,
@@ -328,29 +312,25 @@
 		ACFB6C27198AB7BB0091E4AB /* udo */ = {
 			isa = PBXGroup;
 			children = (
+				ACD60AF119C78886002F550A /* UDOReminderManager.swift */,
+				ACD60AF319C78886002F550A /* AccountViewController.swift */,
+				ACD60AF219C78886002F550A /* RemindersTableViewController.swift */,
+				ACD60AF419C78886002F550A /* ReminderCardTableViewController.swift */,
+				ACD60AFD19C78886002F550A /* ContactsHelper.swift */,
+				ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */,
+				ACFB6C49198ACE2E0091E4AB /* ContactsViewController.swift */,
+				ACE869211992CB5C00F26D67 /* TaskEditViewController.swift */,
+				AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */,
+				AC8CE84E199C07C800D39B41 /* ReminderCardModel.swift */,
+				ACFB6C30198AB7BB0091E4AB /* Main.storyboard */,
+				AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */,
+				AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */,
 				ACAE74D319A7C69C00072BF5 /* UIImage+ImageEffects */,
 				ACF35C4119A3ECA200831391 /* FXBlurView */,
 				ACA9259C1996C24C00FA86A1 /* images */,
 				ACA2FF90198FFBC10098A5D5 /* libPhoneNumber */,
-				AC0C729A198D411E00B803B5 /* TGLStackedViewController */,
-				ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */,
-				ACAE74D419A7C71500072BF5 /* UDOStackedLayout.swift */,
-				ACFB6C2C198AB7BB0091E4AB /* RemindersCollectionViewController.swift */,
-				AC1B48ED19AFA40600C7B6B4 /* ContactsHelper.swift */,
-				ACFB6C49198ACE2E0091E4AB /* ContactsViewController.swift */,
-				AC0C72A4198D4FA500B803B5 /* ReminderCardViewCell.swift */,
-				ACE869211992CB5C00F26D67 /* TaskEditViewController.swift */,
-				AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */,
-				ACFB6C30198AB7BB0091E4AB /* Main.storyboard */,
-				AC004E8019AE5E7500970D00 /* RemindersHeader.swift */,
-				ACAE74CC19A546DB00072BF5 /* RemindersHeader.xib */,
-				AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */,
-				AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */,
 				ACFB6C33198AB7BB0091E4AB /* Images.xcassets */,
 				ACFB6C28198AB7BB0091E4AB /* Supporting Files */,
-				ACA2FF8E198FF6BC0098A5D5 /* Util.swift */,
-				AC8CE84E199C07C800D39B41 /* ReminderCardModel.swift */,
-				AC86751319A7D614008CFCA8 /* test.xib */,
 			);
 			path = udo;
 			sourceTree = "<group>";
@@ -463,17 +443,15 @@
 			files = (
 				AC1B48F119AFB24100C7B6B4 /* default-avatar.png in Resources */,
 				AC404AD019A140B400FBA16B /* lightpaperfibers.png in Resources */,
-				ACAE74CD19A546DB00072BF5 /* RemindersHeader.xib in Resources */,
 				ACFB6C32198AB7BB0091E4AB /* Main.storyboard in Resources */,
 				AC86751619A7DC19008CFCA8 /* clouds.jpg in Resources */,
-				AC4ABA0019B3A4EC00A75905 /* checkboxmark@2x.png in Resources */,
 				AC4AB9FD19B3A4EC00A75905 /* checkboxmark.png in Resources */,
-				AC4AB9FF19B3A4EC00A75905 /* delete.png in Resources */,
 				ACA925B01996C8BD00FA86A1 /* received@2x.png in Resources */,
 				ACA925AB1996C8BD00FA86A1 /* sent.png in Resources */,
 				ACA925AD1996C8BD00FA86A1 /* sent@2x.png in Resources */,
-				AC4ABA0219B3A4EC00A75905 /* mail29@2x.png in Resources */,
+				ACD60B0919C78886002F550A /* checkmark@2x.png in Resources */,
 				ACF35C3D19A3E92E00831391 /* plus.png in Resources */,
+				ACD60B0719C78886002F550A /* checkmark_empty@2x.png in Resources */,
 				ACA2FFAB198FFC590098A5D5 /* NBPhoneNumberMetadata.plist in Resources */,
 				AC004E7F19AD1BED00970D00 /* ReminderItemCell.xib in Resources */,
 				ACFB6C34198AB7BB0091E4AB /* Images.xcassets in Resources */,
@@ -483,11 +461,15 @@
 				AC4AB9FE19B3A4EC00A75905 /* mail29.png in Resources */,
 				ACA925AF1996C8BD00FA86A1 /* sending.png in Resources */,
 				ACAE74CF19A7C21A00072BF5 /* colors.jpg in Resources */,
+				ACD60B0419C78886002F550A /* settings.png in Resources */,
 				ACA2FFAC198FFC590098A5D5 /* NBPhoneNumberMetadataForTesting.plist in Resources */,
 				ACA925AE1996C8BD00FA86A1 /* received.png in Resources */,
-				AC86751419A7D614008CFCA8 /* test.xib in Resources */,
+				ACD60B0219C78886002F550A /* udo.png in Resources */,
+				ACD60B0619C78886002F550A /* checkmark_empty.png in Resources */,
+				ACD60B0319C78886002F550A /* udo@2x.png in Resources */,
 				AC004E7B19AA032E00970D00 /* sativa.png in Resources */,
-				AC4ABA0119B3A4EC00A75905 /* delete@2x.png in Resources */,
+				ACD60B0819C78886002F550A /* checkmark.png in Resources */,
+				ACD60B0519C78886002F550A /* settings@2x.png in Resources */,
 				ACA925AC1996C8BD00FA86A1 /* sending@2x.png in Resources */,
 				AC404ACF19A140B400FBA16B /* lightpaperfibers_@2X.png in Resources */,
 			);
@@ -510,27 +492,23 @@
 				ACA2FFA3198FFBD60098A5D5 /* NBPhoneNumber.m in Sources */,
 				ACA2FFA1198FFBD60098A5D5 /* NBNumberFormat.m in Sources */,
 				ACF35C4019A3EC9C00831391 /* FXBlurView.m in Sources */,
-				AC0C72A5198D4FA500B803B5 /* ReminderCardViewCell.swift in Sources */,
 				AC004E8319AE5F2400970D00 /* ReminderItemCell.swift in Sources */,
-				AC0C72A3198D411E00B803B5 /* TGLStackedViewController.m in Sources */,
-				AC1B48EE19AFA40600C7B6B4 /* ContactsHelper.swift in Sources */,
 				ACA2FFA2198FFBD60098A5D5 /* NBPhoneMetaData.m in Sources */,
-				AC0C72A1198D411E00B803B5 /* TGLExposedLayout.m in Sources */,
-				ACA2FF8F198FF6BC0098A5D5 /* Util.swift in Sources */,
+				ACD60B0019C78886002F550A /* AccountViewController.swift in Sources */,
+				ACD60B0A19C78886002F550A /* ContactsHelper.swift in Sources */,
 				ACE869221992CB5C00F26D67 /* TaskEditViewController.swift in Sources */,
 				AC0C72AE198E63E100B803B5 /* RegisterViewController.swift in Sources */,
 				ACFB6C4A198ACE2E0091E4AB /* ContactsViewController.swift in Sources */,
 				ACA2FFA5198FFBD60098A5D5 /* NBPhoneNumberUtil.m in Sources */,
-				AC004E8119AE5E7500970D00 /* RemindersHeader.swift in Sources */,
 				ACA2FFA6198FFBD60098A5D5 /* NSArray+NBAdditions.m in Sources */,
-				ACAE74D519A7C71500072BF5 /* UDOStackedLayout.swift in Sources */,
+				ACD60AFE19C78886002F550A /* UDOReminderManager.swift in Sources */,
 				ACA2FFA0198FFBD60098A5D5 /* NBAsYouTypeFormatter.m in Sources */,
+				ACD60AFF19C78886002F550A /* RemindersTableViewController.swift in Sources */,
 				AC8CE84F199C07C800D39B41 /* ReminderCardModel.swift in Sources */,
+				ACD60B0119C78886002F550A /* ReminderCardTableViewController.swift in Sources */,
 				ACA2FFA4198FFBD60098A5D5 /* NBPhoneNumberDesc.m in Sources */,
 				ACAE74D219A7C69600072BF5 /* UIImage+ImageEffects.m in Sources */,
-				AC0C72A2198D411E00B803B5 /* TGLStackedLayout.m in Sources */,
 				ACFB6C2B198AB7BB0091E4AB /* AppDelegate.swift in Sources */,
-				ACFB6C2D198AB7BB0091E4AB /* RemindersCollectionViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

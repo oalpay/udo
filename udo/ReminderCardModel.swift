@@ -16,7 +16,8 @@ enum ReminderTaskStatus: Int {
 let kReminderItemStatus = "status"
 let kReminderItemDescription = "description"
 let kReminderItemAlarmDate = "alarmDate"
-let kReminderCardOwner = "owner"
-let kReminderCardCreator = "creator"
+let kReminderCardOwner = "to"
+let kReminderCardCreator = "from"
 let kReminderCardItems = "items"
+let kReminderCardClassName = "ReminderCards"
 

@@ -55,13 +55,13 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
     @IBAction func inviteButtonPressed(sender: AnyObject) {
         let point = sender.convertPoint(CGPointZero, toView: self.tableView)
         let indexPath = self.tableView.indexPathForRowAtPoint(point)
-        self.tableView.selectRowAtIndexPath(indexPath, animated: false, scrollPosition: UITableViewScrollPosition.Bottom)
+        self.tableView.selectRowAtIndexPath(indexPath!, animated: false, scrollPosition: UITableViewScrollPosition.Bottom)
         sendInvitation()
     }
     
     func sendInvitation(){
         if MFMessageComposeViewController.canSendText() {
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
             let recipents = [selectedNumber.original]
             let messageController = MFMessageComposeViewController()
             messageController.messageComposeDelegate = self
@@ -69,7 +69,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
             messageController.body = "I sent you an reminder. \(appstoreUrl)"
             self.presentViewController(messageController, animated: true, completion: nil)
         }else{
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
             invitationSent(selectedNumber)
             self.performSegueWithIdentifier("ContactSelected", sender: nil)
         }
@@ -87,7 +87,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
             UIAlertView(title: "Error", message: "Failed to send message", delegate: nil, cancelButtonTitle: "Continue").show()
             controller.dismissViewControllerAnimated(true, completion: nil)
         }else if result.value == MessageComposeResultSent.value {
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
             invitationSent(selectedNumber)
             controller.dismissViewControllerAnimated(true, completion: nil)
             self.performSegueWithIdentifier("ContactSelected", sender: nil)
@@ -96,7 +96,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
         }
     }
     
-    override func tableView(tableView: UITableView!, cellForRowAtIndexPath indexPath: NSIndexPath!) -> UITableViewCell! {
+    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let contactDetailsCell = tableView.dequeueReusableCellWithIdentifier("ContactDetails", forIndexPath: indexPath) as ContactPhoneNumberTableViewCell
         let number = contact.numbers[indexPath.row]
         contactDetailsCell.number.text = number.original
@@ -111,25 +111,16 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
         return contactDetailsCell
     }
     
-    override func tableView(tableView: UITableView!, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return contact.numbers.count
     }
     
-    override func tableView(tableView: UITableView!, didSelectRowAtIndexPath indexPath: NSIndexPath!) {
-        let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
         if selectedNumber.isRegistered{
             self.performSegueWithIdentifier("ContactSelected", sender: self)
         }
     }
-    
-    override func prepareForSegue(segue: UIStoryboardSegue!, sender: AnyObject!) {
-        if segue.identifier == "ContactSelected"{
-            let remindersCVC = segue.destinationViewController as RemindersCollectionViewController
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow().row]
-            remindersCVC.addReminderCardForUserId(selectedNumber.userId!, contact: contact)
-        }
-    }
-    
 }
 
 class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
@@ -193,19 +184,19 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         }
     }
     
-    override func numberOfSectionsInTableView(tableView: UITableView!) -> Int {
+    override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return self.sectionHeaders.count
     }
     
-    override func sectionIndexTitlesForTableView(tableView: UITableView!) -> [AnyObject]! {
+    override func sectionIndexTitlesForTableView(tableView: UITableView) -> [AnyObject]! {
         return self.sectionHeaders
     }
     
-    override func tableView(tableView: UITableView!, titleForHeaderInSection section: Int) -> String! {
+    override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String {
         return self.sectionHeaders[section]
     }
     
-    override func tableView(tableView: UITableView!, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if tableView != self.tableView {
             return searchResults.count
         }else{
@@ -214,16 +205,16 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         }
     }
     
-    override func tableView(tableView: UITableView!, cellForRowAtIndexPath indexPath: NSIndexPath!) -> UITableViewCell! {
+    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         if tableView != self.tableView{
             //searching
-            var contactCell = tableView.dequeueReusableCellWithIdentifier("Cell") as? UITableViewCell
+            var contactCell = tableView.dequeueReusableCellWithIdentifier("Cell") as UITableViewCell!
             if (contactCell == nil) {
                 contactCell = UITableViewCell(style: UITableViewCellStyle.Default, reuseIdentifier: "Cell")
             }
             let contact = searchResults[indexPath.row]
-            contactCell?.textLabel.text = contact.name
-            contactCell?.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+            contactCell.textLabel?.text = contact.name
+            contactCell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
             return contactCell
         }else{
             var contactCell = tableView.dequeueReusableCellWithIdentifier("ContactCell", forIndexPath: indexPath) as ContactTableViewCell
@@ -235,7 +226,7 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         }
     }
     
-    override func tableView(tableView: UITableView!, didSelectRowAtIndexPath indexPath: NSIndexPath!) {
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         var selectedContact:Contact
         if tableView != self.tableView{
             //search
@@ -247,7 +238,7 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         performSegueWithIdentifier("ShowContactDetail", sender: selectedContact)
     }
     
-    override func prepareForSegue(segue: UIStoryboardSegue!, sender: AnyObject!) {
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == "ShowContactDetail"{
             let contact = sender as Contact
             let contactDetailsVC = segue.destinationViewController as ContactDetailsViewController
@@ -255,7 +246,7 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         }
     }
     
-    func searchDisplayController(controller: UISearchDisplayController!, shouldReloadTableForSearchString searchString: String!) -> Bool {
+    func searchDisplayController(controller: UISearchDisplayController, shouldReloadTableForSearchString searchString: String) -> Bool {
         var newSearchResults:[Contact] = []
         for contact in contactsHelper.contacts {
             let name:NSString = contact.name

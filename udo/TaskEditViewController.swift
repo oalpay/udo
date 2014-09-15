@@ -9,15 +9,15 @@
 import Foundation
 
 class TaskEditViewController: UITableViewController,UITextViewDelegate{
-    
-    @IBOutlet weak var actionButton: UIBarButtonItem!
     @IBOutlet weak var taskTextView: UITextView!
     @IBOutlet weak var alarmLabel: UILabel!
     @IBOutlet weak var remindSwitch: UISwitch!
     @IBOutlet weak var datePicker: UIDatePicker!
     let dateFormatter = NSDateFormatter()
     
-    var item: NSDictionary!
+    var card: PFObject!
+    var itemIndex: Int!
+    var item: NSMutableDictionary!
     
     override func viewDidLoad() {
         let tap = UITapGestureRecognizer(target: self, action:"touchOutside:")
@@ -39,10 +39,24 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
         }
     }
     
+    func editItem(card:PFObject,itemIndex:Int){
+        self.card = card
+        self.itemIndex = itemIndex
+        let items = card[kReminderCardItems] as [NSMutableDictionary]
+        self.item = items[itemIndex]
+    }
+    
     func touchOutside(sender:UITapGestureRecognizer) {
         self.taskTextView.endEditing(false)
     }
     
+    @IBAction func saveButtonPressed(sender: AnyObject) {
+        item[kReminderItemDescription] = taskTextView.text
+        if remindSwitch.on {
+            item[kReminderItemAlarmDate] = datePicker.date
+        }
+        self.performSegueWithIdentifier("SaveItemEdit", sender: nil)
+    }
     
     @IBAction func remindSwitchChanged(sender: AnyObject) {
         self.tableView.beginUpdates()
@@ -60,24 +74,23 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
     }
     
     @IBAction func dateChanged(sender: UIDatePicker) {
-        print(dateFormatter.stringFromDate(sender.date))
         self.alarmLabel.text = dateFormatter.stringFromDate(sender.date)
     }
     
     
     
-    override func tableView(tableView: UITableView!, heightForRowAtIndexPath indexPath: NSIndexPath!) -> CGFloat {
+    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         if indexPath.section == 0 {
-            self.taskTextView.layoutIfNeeded()
+            self.taskTextView.superview?.layoutIfNeeded()
             var sizeThatFits = self.taskTextView.frame.size
             sizeThatFits.width = self.tableView.frame.size.width - 16 //margins
             sizeThatFits = self.taskTextView.sizeThatFits(sizeThatFits)
-            return max(44,sizeThatFits.height + 16/*margins*/)
+            return max(44,sizeThatFits.height + 20/*margins*/)
         }
         return super.tableView(tableView, heightForRowAtIndexPath: indexPath)
     }
     
-    override func tableView(tableView: UITableView!, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 1 && !remindSwitch.on {
             // reminder is off
             return 1

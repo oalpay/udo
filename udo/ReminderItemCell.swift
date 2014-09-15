@@ -8,6 +8,9 @@
 
 import Foundation
 
+let itemDoneImage = UIImage(named: "checkmark")
+let itemPendingImage = UIImage(named: "checkmark_empty")
+
 class ReminderItemTableViewCell: UITableViewCell {
     @IBOutlet weak var itemTextView : UITextView!
     @IBOutlet weak var checkButton: UIButton!
@@ -19,9 +22,14 @@ class ReminderItemTableViewCell: UITableViewCell {
     
     var maskLayer:CAShapeLayer!
     
+    override func prepareForReuse() {
+        alarmDateLabel.hidden = false
+        checkButton.setBackgroundImage(itemPendingImage, forState: UIControlState.Normal)
+    }
+    
     func initForSearchResults(reminderTask:NSDictionary!){
         initTaskCell(reminderTask)
-        self.reminderNameLabel.text = reminderTask["reminderName"] as String
+        self.reminderNameLabel.text = reminderTask["reminderName"] as? String
         self.itemTextView.userInteractionEnabled = false
     }
     
@@ -29,44 +37,33 @@ class ReminderItemTableViewCell: UITableViewCell {
         initTaskCell(reminderTask)
         self.reminderNameLabel.hidden = true
         self.itemTextTopSpace.constant = 0
-        self.itemTextView.userInteractionEnabled = true
     }
     
-    
-    func initMaskLayer(size:CGSize){
-        maskLayer = CAShapeLayer()
-        let maskRect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-        maskLayer.path = CGPathCreateWithRect(maskRect, nil)
-        self.layer.mask = maskLayer
-    }
-    
-    func initTaskCell(reminderTask:NSDictionary!){
+
+    func initTaskCell(item:NSDictionary!){
          self.itemTextView.scrollEnabled = false
-        itemTextView.text = reminderTask[kReminderItemDescription] as String
-        let status = reminderTask[kReminderItemStatus] as Int
-        checkButton.hidden = (status != ReminderTaskStatus.Done.toRaw())
-        
+        itemTextView.text = item[kReminderItemDescription] as String
+        let status = item[kReminderItemStatus] as Int
+        if status == ReminderTaskStatus.Done.toRaw(){
+            checkButton.setBackgroundImage(itemDoneImage, forState: UIControlState.Normal)
+        }
         dateFormatter.dateStyle = NSDateFormatterStyle.MediumStyle
         dateFormatter.timeStyle = NSDateFormatterStyle.MediumStyle
         
-        let alarmDate = reminderTask["alarmDate"] as  NSDate
+        let alarmDate = item[kReminderItemAlarmDate] as  NSDate
         if NSDate(timeIntervalSince1970: 0) != alarmDate{
             alarmDateLabel.text = dateFormatter.stringFromDate(alarmDate)
         }else{
             alarmDateLabel.hidden = true
         }
     }
-    
-    
-    func maskOffset(maskOffset:CGFloat){
-        self.maskLayer.frame.origin.y = maskOffset
-    }
-    
+
     func cellHeightThatFitsForItemText(itemText:String) -> CGFloat{
         self.itemTextView.text = itemText
         var sizeThatFits = self.itemTextView.frame.size
+        sizeThatFits.width -= 8 //some mysterious margin
         sizeThatFits = self.itemTextView.sizeThatFits(sizeThatFits)
-        return self.itemTextTopSpace.constant + self.itemTextBottomSpace.constant + sizeThatFits.height
+        return self.itemTextTopSpace.constant + self.itemTextBottomSpace.constant + sizeThatFits.height + 1
     }
     
 }

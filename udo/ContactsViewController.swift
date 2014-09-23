@@ -11,9 +11,6 @@ import UIKit
 import AddressBookUI
 import MessageUI
 
-var appstoreUrl:String = ""
-
-
 class ContactTableViewCell:UITableViewCell{
     @IBOutlet weak var name: UILabel!
     
@@ -59,6 +56,10 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
         sendInvitation()
     }
     
+    func getInvitationLetter() -> String {
+        return PFConfig.getConfig()["invitationSMS"] as String
+    }
+    
     func sendInvitation(){
         if MFMessageComposeViewController.canSendText() {
             let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
@@ -66,7 +67,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
             let messageController = MFMessageComposeViewController()
             messageController.messageComposeDelegate = self
             messageController.recipients = recipents
-            messageController.body = "I sent you an reminder. \(appstoreUrl)"
+            messageController.body = self.getInvitationLetter()
             self.presentViewController(messageController, animated: true, completion: nil)
         }else{
             let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
@@ -125,30 +126,34 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
 
 class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
     var contactsHelper:ContactsHelper!
-    var sectionHeaders:[String] = []
-    var sectionContacts = Dictionary<String,NSMutableArray>()
-    var searchResults:[Contact] = []
+    var sectionHeaders:[String]!
+    var sectionContacts:Dictionary<String,NSMutableArray>!
+    
+    var searchHeaders:[String]! = []
+    var searchSections:Dictionary<String,NSMutableArray>! = Dictionary<String,NSMutableArray>()
     
     override func viewDidLoad() {
-        self.divideContactsToSection()
+        (self.sectionHeaders,self.sectionContacts)  = self.divideContactsToSection(contactsHelper.contacts)
         self.getAppUsers()
     }
     
-    func divideContactsToSection(){
-        for contact in contactsHelper.contacts{
+    func divideContactsToSection( contacts:[Contact] ) -> ([String]!,Dictionary<String,NSMutableArray>!) {
+        var sections = Dictionary<String,NSMutableArray>()
+        for contact in contacts{
             var section:NSMutableArray!
             let sectionChar = contact.name.substringToIndex(contact.name.startIndex.successor()).uppercaseString
-            if let s = sectionContacts[sectionChar] as NSMutableArray?{
+            if let s = sections[sectionChar] as NSMutableArray?{
                 section = s
             }else{
                 section = NSMutableArray()
-                sectionContacts[sectionChar] = section
+                sections[sectionChar] = section
             }
             section.addObject(contact)
         }
-        self.sectionHeaders = sectionContacts.keys.array.sorted{ (n1:String, n2:String) -> Bool in
+        var headers = sections.keys.array.sorted{ (n1:String, n2:String) -> Bool in
             return n1.compare(n2, options: NSStringCompareOptions.CaseInsensitiveSearch, range: nil, locale: nil) == NSComparisonResult.OrderedAscending
         }
+        return (headers, sections)
     }
     
     func updateContactsWithAppUserIds(userIds:[String]) {
@@ -185,23 +190,36 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
     }
     
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
-        return self.sectionHeaders.count
+        if tableView != self.tableView {
+            return self.searchHeaders.count
+        }else{
+            return self.sectionHeaders.count
+        }
     }
     
     override func sectionIndexTitlesForTableView(tableView: UITableView) -> [AnyObject]! {
-        return self.sectionHeaders
+        if tableView != self.tableView {
+            return self.searchHeaders
+        }else{
+            return self.sectionHeaders
+        }
     }
     
     override func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String {
-        return self.sectionHeaders[section]
+        if tableView != self.tableView {
+            return self.searchHeaders[section]
+        }else{
+            return self.sectionHeaders[section]
+        }
     }
     
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if tableView != self.tableView {
-            return searchResults.count
+            let s = self.searchHeaders[section]
+            return self.searchSections[s]!.count
         }else{
-            let s = sectionHeaders[section]
-            return sectionContacts[s]!.count
+            let s = self.sectionHeaders[section]
+            return self.sectionContacts[s]!.count
         }
     }
     
@@ -212,7 +230,8 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             if (contactCell == nil) {
                 contactCell = UITableViewCell(style: UITableViewCellStyle.Default, reuseIdentifier: "Cell")
             }
-            let contact = searchResults[indexPath.row]
+            let section = self.searchSections[self.searchHeaders[indexPath.section]]
+            let contact = section?.objectAtIndex(indexPath.row) as Contact
             contactCell.textLabel?.text = contact.name
             contactCell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
             return contactCell
@@ -230,7 +249,8 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         var selectedContact:Contact
         if tableView != self.tableView{
             //search
-            selectedContact = searchResults[indexPath.row]
+            let section = self.searchSections[self.searchHeaders[indexPath.section]]
+            selectedContact = section?.objectAtIndex(indexPath.row) as Contact
         }else{
             let section = sectionContacts[sectionHeaders[indexPath.section]]
             selectedContact = section?.objectAtIndex(indexPath.row) as Contact
@@ -257,10 +277,19 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
                 }
             }
         }
-        let oldResultSet:NSSet = NSSet(array: searchResults)
+        var oldResultSet = NSSet()
+        for section in self.searchSections.values {
+            for contact in section {
+                oldResultSet.setByAddingObject(contact)
+            }
+        }
         let newResultSet:NSSet = NSSet(array: newSearchResults)
-        searchResults = newSearchResults
-        return !oldResultSet.isEqualToSet(newResultSet)
+        if oldResultSet.isEqualToSet(newResultSet){
+            return false
+        }else{
+            (self.searchHeaders, self.searchSections) = self.divideContactsToSection(newSearchResults)
+            return true
+        }
     }
     
 }

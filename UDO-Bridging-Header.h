@@ -11,9 +11,11 @@
 
 #import "NBPhoneNumber.h"
 #import "NBPhoneNumberUtil.h"
+#import <Parse/PFObject+Subclass.h>
 #import <Parse/Parse.h>
 #import "FXBlurView.h"
 #import "UIImage+ImageEffects.h"
+
 
 
 #endif

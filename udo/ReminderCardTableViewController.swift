@@ -9,25 +9,11 @@
 import Foundation
 
 class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
-    var contactImgButton:UIButton!
-    var contactHelper:ContactsHelper!
-    var contact:Contact!
-    var reminderCard:PFObject!{
-        didSet{
-            for item in self.reminderCard[kReminderCardItems] as [NSDictionary]{
-                cardItems.append(NSMutableDictionary(dictionary: item))
-            }
-            //last cell is for new entries
-            cardItems.append(getNewItem())
-            self.contact = contactHelper.getContactForUserId(reminderCard[kReminderCardOwner] as String)
-            self.title = contact.name
-            if let img = self.contact.image{
-                 contactImgButton.setBackgroundImage(img, forState: UIControlState.Normal)
-            }
-        }
-    }
-    var cardItems:[NSMutableDictionary] = []
-    var templateCell:ReminderItemTableViewCell!
+    private var contactImgButton:UIButton!
+    private var contactHelper:ContactsHelper!
+    private var contact:Contact!
+    private var reminderCard:ReminderCard!
+    private var templateCell:ReminderItemTableViewCell!
     
     override func awakeFromNib() {
         self.tableView.backgroundColor = UIColor(patternImage: UIImage(named: "geometry2"))
@@ -39,25 +25,42 @@ class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
         templateCell.itemTextTopSpace.constant = 0
         
         self.contactImgButton = UIButton(frame: CGRect(x: 0, y: 0, width: 40, height: 40))
-        contactImgButton.layer.cornerRadius = contactImgButton.frame.size.height/2
-        contactImgButton.layer.masksToBounds = true
-        contactImgButton.layer.borderWidth = 0
+        self.contactImgButton.layer.cornerRadius = contactImgButton.frame.size.height/2
+        self.contactImgButton.layer.masksToBounds = true
+        self.contactImgButton.layer.borderWidth = 0
         self.contactImgButton.setBackgroundImage(defaultContactImage, forState: UIControlState.Normal)
+        self.contactImgButton.addTarget(self, action: "contactImgPressed", forControlEvents: UIControlEvents.TouchUpInside)
         let contactImgBarButton = UIBarButtonItem(customView: contactImgButton)
         self.navigationItem.rightBarButtonItem = contactImgBarButton
         
     }
+    
     
     override func viewDidLoad() {
         let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: "tappedInsideTable:")
         tableView.addGestureRecognizer(tapGestureRecognizer)
     }
     
-    func getNewItem() -> NSMutableDictionary {
-        var newItem = NSMutableDictionary()
+    func showCard(reminderCard:ReminderCard!){
+        self.reminderCard = reminderCard
+        self.contact = contactHelper.getContactForUserId(GetOtherUsernameFor(reminder: self.reminderCard))
+        self.title = contact.name
+        if let img = self.contact.image{
+            contactImgButton.setBackgroundImage(img, forState: UIControlState.Normal)
+        }
+
+    }
+    
+    func contactImgPressed(){
+        self.performSegueWithIdentifier("ShowCardSettings", sender: nil)
+    }
+    
+    func getNewItem() -> ReminderItem {
+        var newItem = ReminderItem()
         newItem[kReminderItemDescription] = ""
         newItem[kReminderItemStatus] = ReminderTaskStatus.New.toRaw()
         newItem[kReminderItemAlarmDate] = NSDate(timeIntervalSince1970: 0)
+        newItem[kReminderItemCalendarIds] = NSMutableDictionary()
         return newItem
     }
     
@@ -115,6 +118,11 @@ class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
         tableView.endUpdates()
     }
     
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        tableView.separatorStyle = UITableViewCellSeparatorStyle.None
+        tableView.separatorStyle = UITableViewCellSeparatorStyle.SingleLine
+    }
+    
     
     override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         if self.tableView.indexPathForSelectedRow() != nil && self.tableView.indexPathForSelectedRow() == indexPath{
@@ -132,7 +140,7 @@ class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
     }
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        let itemCell:ReminderItemTableViewCell = self.tableView.dequeueReusableCellWithIdentifier("ReminderItemCell") as ReminderItemTableViewCell
+        let itemCell:ReminderItemTableViewCell = self.tableView.dequeueReusableCellWithIdentifier("ReminderItemCell", forIndexPath: indexPath) as ReminderItemTableViewCell
         itemCell.initForReminderCard(cardItems[indexPath.row])
         itemCell.selectionStyle = UITableViewCellSelectionStyle.None
         itemCell.itemTextView.delegate = self
@@ -171,6 +179,14 @@ class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
         removeLastItemAndSave()
     }
     
+    func saveItemAtIndex(index:Int){
+        let oldItems = self.reminderCard[kReminderCardItems] as [NSDictionary]
+        if index < oldItems.count {
+             let oldItem = oldItems[index]
+        }
+       
+    }
+    
     func saveCard(){
         let lastItem = cardItems.last
         let description = lastItem?[kReminderItemDescription] as NSString?
@@ -194,6 +210,10 @@ class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
         }
     }
     
+    func updatedItemAtIndex(index:Int){
+
+    }
+    
     @IBAction func unwindToMain(unwindSegue:UIStoryboardSegue){
         if unwindSegue.identifier == "SaveItemEdit" {
             var itemEditVC = unwindSegue.sourceViewController as TaskEditViewController
@@ -201,21 +221,5 @@ class ReminderCardTableViewController: UITableViewController,UITextViewDelegate{
             saveCard()
         }
     }
-    
-    
-    /*
-    func saveCardItemFrom(#taskEditViewController:TaskEditViewController){
-    let itemIndexPath = self.tableView.indexPathForSelectedRow()
-    var editedItem = cardItems[itemIndexPath]
-    editedItem["description"] = taskEditViewController.taskTextView.text
-    if taskEditViewController.remindSwitch.on {
-    editedItem["alarmDate"] = taskEditViewController.datePicker.date
-    }else{
-    editedItem["alarmDate"] = NSDate(timeIntervalSince1970: 0)
-    }
-    tableView.reloadRowsAtIndexPaths([activeRowIndex], withRowAnimation: UITableViewRowAnimation.None)
-    saveActiveItem()
-    }
-    */
     
 }

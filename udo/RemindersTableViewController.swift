@@ -47,10 +47,10 @@ let reminderItemCellNib = UINib(nibName: "ReminderItemCell", bundle: nil)
 class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate{
     @IBOutlet weak var searchBar: UISearchBar!
     var contactsHelper = ContactsHelper()
-    var reminderCards:[PFObject] = []
+    var reminderCards:[ReminderCard] = []
     var searchResults:[NSDictionary] = []
     
-    var eventStore:EKEventStore!
+    var reminderManager = UDOReminderManager.sharedInstance
     
     
     override func viewDidLoad() {
@@ -62,31 +62,6 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
         if (PFUser.currentUser() != nil ) {
             self.userLoggedIn()
         }
-        
-        self.eventStore = EKEventStore()
-        self.eventStore.requestAccessToEntityType(EKEntityTypeReminder, completion: { (granted:Bool, error:NSError!) -> Void in
-            
-            let reminder = EKReminder(eventStore: self.eventStore)
-            reminder.title = "title"
-            
-            var calendar = EKCalendar(forEntityType: EKEntityTypeReminder, eventStore: self.eventStore)
-            calendar.title = "u.do"
-            var theSource:EKSource!
-            for source in self.eventStore.sources() as [EKSource]{
-                if (source.sourceType.value == EKSourceTypeCalDAV.value && source.title == "iCloud"){
-                    theSource = source;
-                    break;
-                }
-            }
-            calendar.source = theSource
-            var error:NSError?
-            self.eventStore.saveCalendar(calendar, commit: true, error: &error)
-            reminder.calendar = calendar
-            self.eventStore.saveReminder(reminder, commit: true, error: &error)
-            self.eventStore.commit(&error)
-            println(error)
-        })
-    
     }
     
     @IBAction func unwindToMain(unwindSegue:UIStoryboardSegue){
@@ -97,7 +72,7 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
         frontCard.saveCardItemFrom(taskEditViewController: taskViewController)
         
         }else */
-        if unwindSegue.identifier == "loggedin"{
+        if unwindSegue.identifier == "Loggedin"{
             self.userLoggedIn()
         }else if unwindSegue.identifier == "ContactSelected"{
             let contactDetailsVC = unwindSegue.sourceViewController as ContactDetailsViewController
@@ -110,11 +85,16 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
         let userId = contact.numbers[numberIndex].userId!
         for var index = 0; index < reminderCards.count; ++index {
             let card = reminderCards[index]
-            if card[kReminderCardOwner] as String == userId {
-                let indexPath = NSIndexPath(forItem: index, inSection: 0)
-                self.performSegueWithIdentifier("ShowReminderCard", sender: card)
-                found = true
-                break
+            if card.owners.count == 2 {
+                //not a group
+                for owner in card.owners{
+                    if owner == userId {
+                        let indexPath = NSIndexPath(forItem: index, inSection: 0)
+                        self.performSegueWithIdentifier("ShowReminderCard", sender: card)
+                        found = true
+                        break
+                    }
+                }
             }
         }
         if !found {
@@ -123,9 +103,8 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
     }
     
     func createReminderCardForUserId(userId:String){
-        var card = PFObject(className:"ReminderCard")
-        card[kReminderCardOwner] = userId
-        card[kReminderCardCreator] = PFUser.currentUser()
+        var card = ReminderCard()
+        card.owners = [PFUser.currentUser().username, userId]
         card[kReminderCardItems] = []
         reminderCards.insert(card, atIndex: 0)
         self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 0)], withRowAnimation: UITableViewRowAnimation.Automatic)
@@ -136,7 +115,7 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == "ShowReminderCard"{
             let reminderCardTVC = segue.destinationViewController as ReminderCardTableViewController
-            let card = sender as PFObject
+            let card = sender as ReminderCard
             reminderCardTVC.contactHelper = self.contactsHelper
             reminderCardTVC.reminderCard = card
         }else if segue.identifier == "ShowContacts"{
@@ -159,13 +138,20 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
     
     func userLoggedIn(){
         self.contactsHelper.authorize({ () -> Void in
-            let query = PFQuery(className:"ReminderCard")
-            query.whereKey(kReminderCardCreator,equalTo:PFUser.currentUser())
-            query.findObjectsInBackgroundWithBlock({
+            let cardQuery = PFQuery(className:kReminderCardClassName)
+            cardQuery.whereKey(kReminderCardCollaborators,equalTo:PFUser.currentUser().username)
+            cardQuery.findObjectsInBackgroundWithBlock({
                 (cards:[AnyObject]!, error: NSError!) -> Void in
                 if error == nil{
-                    self.reminderCards = cards as [PFObject]
+                    self.reminderCards = cards as [ReminderCard]
                     self.sortAndReloadReminders()
+                    self.reminderManager.requestAccess { (granted:Bool, error:NSError!) -> Void in
+                        if !granted {
+                            UIAlertView(title: "Error", message: "u.do need access to reminders in order to work!", delegate: nil, cancelButtonTitle: "Okay").show()
+                            return
+                        }
+                        self.reminderManager.mergeReminders(self.reminderCards)
+                    }
                 }else{
                     //handle error
                     println("getReminders: \(error)")
@@ -176,14 +162,6 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
                 UIAlertView(title: "Error", message: "Contacts access failed!", delegate: nil, cancelButtonTitle: nil).show()
                 return
         })
-        let appstoreLinkQuery = PFQuery(className:"AppstoreLink")
-        appstoreLinkQuery.findObjectsInBackgroundWithBlock { (urls:[AnyObject]!, error:NSError!) -> Void in
-            if error == nil{
-                if let url = urls.first as? NSDictionary {
-                    appstoreUrl = url["url"] as String
-                }
-            }
-        }
     }
     
     func sortAndReloadReminders(){
@@ -198,7 +176,7 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
             return self.tableView.rowHeight
         }else{
             //search
-            let itemText = searchResults[indexPath.row]["description"] as String
+            let itemText = searchResults[indexPath.row][kReminderItemDescription] as String
             return max(templateItemCell.cellHeightThatFitsForItemText(itemText),44)
         }
     }
@@ -215,13 +193,14 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         if self.tableView == tableView {
             var reminderCell = tableView.dequeueReusableCellWithIdentifier("ReminderCell", forIndexPath: indexPath) as ReminderTableViewCell
-            let reminder = reminderCards[indexPath.row]
+            let reminder = self.reminderCards[indexPath.row]
             let contact = contactForIndexPath(indexPath)
+            println(reminder.owners)
             reminderCell.fillCellWith(contact, reminder: reminder)
             return reminderCell
         }else{
             //search
-            let itemCell:ReminderItemTableViewCell = tableView.dequeueReusableCellWithIdentifier("ReminderItemCell") as ReminderItemTableViewCell
+            let itemCell:ReminderItemTableViewCell = tableView.dequeueReusableCellWithIdentifier("ReminderItemCell",forIndexPath: indexPath) as ReminderItemTableViewCell
             itemCell.initForSearchResults(searchResults[indexPath.row])
             return itemCell
         }
@@ -239,7 +218,7 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
     
     func contactForIndexPath(indexPath:NSIndexPath) -> Contact {
         let reminder = reminderCards[indexPath.row]
-        return contactsHelper.getContactForUserId(reminder[kReminderCardOwner] as String)
+        return contactsHelper.getContactForUserId(GetOtherUsernameFor(reminder: reminder))
     }
     
     func searchDisplayController(controller: UISearchDisplayController!, didLoadSearchResultsTableView tableView: UITableView!) {
@@ -256,7 +235,7 @@ class RemindersTableViewController:UITableViewController,UISearchDisplayDelegate
                 for token in description.componentsSeparatedByString(" ") as [String]{
                     if token.lowercaseString.hasPrefix(searchString.lowercaseString){
                         var itemSearchResult = NSMutableDictionary(dictionary: item)
-                        itemSearchResult["reminderName"] = self.contactsHelper.getContactForUserId(card[kReminderCardOwner] as  String).name
+                        itemSearchResult["reminderName"] = self.contactsHelper.getContactForUserId(GetOtherUsernameFor(reminder: card)).name
                         itemSearchResult["reminderCard"] = card
                         newSearchResults.append(itemSearchResult)
                         break

@@ -13,6 +13,8 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
     @IBOutlet weak var alarmLabel: UILabel!
     @IBOutlet weak var remindSwitch: UISwitch!
     @IBOutlet weak var datePicker: UIDatePicker!
+    @IBOutlet weak var addToRemindersSwitch: UISwitch!
+
     let dateFormatter = NSDateFormatter()
     
     var card: PFObject!
@@ -23,20 +25,28 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
         let tap = UITapGestureRecognizer(target: self, action:"touchOutside:")
         tap.cancelsTouchesInView = false
         self.tableView.addGestureRecognizer(tap)
-        dateFormatter.locale = NSLocale.currentLocale()
-        dateFormatter.dateStyle = NSDateFormatterStyle.MediumStyle
-        dateFormatter.timeStyle = NSDateFormatterStyle.MediumStyle
+        self.dateFormatter.locale = NSLocale.currentLocale()
+        self.dateFormatter.dateStyle = NSDateFormatterStyle.MediumStyle
+        self.dateFormatter.timeStyle = NSDateFormatterStyle.MediumStyle
         let currentDate = NSDate()
-        alarmLabel.text = dateFormatter.stringFromDate(currentDate)
-        datePicker.minimumDate = currentDate
+        self.alarmLabel.text = dateFormatter.stringFromDate(currentDate)
+        self.datePicker.minimumDate = currentDate
         
-        taskTextView.text = item[kReminderItemDescription] as String
+        self.taskTextView.text = item[kReminderItemDescription] as String
         let alarmDate = item[kReminderItemAlarmDate] as NSDate
         if alarmDate != NSDate(timeIntervalSince1970: 0){
-            remindSwitch.on = true
-            alarmLabel.text = dateFormatter.stringFromDate(alarmDate)
-            datePicker.date = alarmDate
+            self.remindSwitch.on = true
+            self.alarmLabel.text = dateFormatter.stringFromDate(alarmDate)
+            self.datePicker.date = alarmDate
         }
+        
+        let itemIds = item[kReminderItemCalendarIds] as NSDictionary
+        if let itemId = itemIds[PFUser.currentUser().username] as? String {
+            if itemId != "0" {
+                addToRemindersSwitch.setOn(true, animated: true)
+            }
+        }
+        
     }
     
     func editItem(card:PFObject,itemIndex:Int){
@@ -50,10 +60,14 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
         self.taskTextView.endEditing(false)
     }
     
+    
     @IBAction func saveButtonPressed(sender: AnyObject) {
         item[kReminderItemDescription] = taskTextView.text
         if remindSwitch.on {
             item[kReminderItemAlarmDate] = datePicker.date
+        }
+        if addToRemindersSwitch.on {
+            UDOReminderManager.sharedInstance.addItemToReminders(item)
         }
         self.performSegueWithIdentifier("SaveItemEdit", sender: nil)
     }
@@ -61,9 +75,9 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
     @IBAction func remindSwitchChanged(sender: AnyObject) {
         self.tableView.beginUpdates()
         if(remindSwitch.on){
-            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: 1, inSection: 1),NSIndexPath(forRow: 2, inSection: 1)], withRowAnimation: UITableViewRowAnimation.Automatic)
+            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: 2, inSection: 1),NSIndexPath(forRow: 3, inSection: 1)], withRowAnimation: UITableViewRowAnimation.Automatic)
         }else{
-            self.tableView.deleteRowsAtIndexPaths([NSIndexPath(forRow: 1, inSection: 1),NSIndexPath(forRow: 2, inSection: 1)], withRowAnimation:  UITableViewRowAnimation.Automatic)
+            self.tableView.deleteRowsAtIndexPaths([NSIndexPath(forRow: 2, inSection: 1),NSIndexPath(forRow: 3, inSection: 1)], withRowAnimation:  UITableViewRowAnimation.Automatic)
         }
         self.tableView.endUpdates()
     }
@@ -92,8 +106,7 @@ class TaskEditViewController: UITableViewController,UITextViewDelegate{
     
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 1 && !remindSwitch.on {
-            // reminder is off
-            return 1
+            return 2
         }
         return super.tableView(tableView, numberOfRowsInSection: section)
     }

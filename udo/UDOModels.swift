@@ -8,98 +8,98 @@
 
 import Foundation
 
+let KReminderPushReceivedNotification = "KReminderPushReceivedNotification"
+let KRemindersChangedNotification = "KRemindersChangedNotification"
 
-enum ReminderTaskStatus: Int {
-    case New = 1, Done, Deleted
-}
+let kReminderTitle = "title"
+let kReminderAlarmDate = "alarmDate"
+let kReminderCollaborators = "collaborators"
+let kReminderDones = "dones"
 
-let kReminderItemCalendarIds = "itemId"
-let kReminderItemStatus = "status"
-let kReminderItemDescription = "description"
-let kReminderItemAlarmDate = "alarmDate"
-
-let kReminderCardItems = "items"
-let kReminderCardCollaborators = "collaborators"
-let kReminderCardClassName = "ReminderCard"
 
 let kUserCalendarId = "calendarId"
 
-class ReminderItem : PFObject, PFSubclassing {
+class Reminder : PFObject, PFSubclassing{
+    @NSManaged var collaborators:[String]!
+    @NSManaged var dones:[String]!
     @NSManaged var title:String!
-    @NSManaged var alarmDate:NSDate!
+    @NSManaged var dueDate:NSDate!
     
     override class func load() {
         self.registerSubclass()
     }
     class func parseClassName() -> String! {
-        return "ReminderItem"
+        return "Reminder"
     }
-}
+    
+    func getOthers() -> [String] {
+        return self.collaborators.filter({ (collaborator) -> Bool in
+            return collaborator != PFUser.currentUser().username
+        })
+    }
+    
 
-class ReminderCard : PFObject, PFSubclassing {
-    @NSManaged var owners:[String]!
-    @NSManaged var items:[ReminderItem]!
-    
-    override class func load() {
-        self.registerSubclass()
-    }
-    class func parseClassName() -> String! {
-        return kReminderCardClassName
-    }
-}
-
-
-let kUserReminders = "UserReminders"
-let kUserReminderCards = "UserReminder"
-class UserReminders : PFObject, PFSubclassing,UDOReminderManagerDelegate {
-    @NSManaged var cards: [ReminderCard]!
-    @NSManaged var metaItems: Dictionary<String,String>!
-    
-    var reminderManager:UDOReminderManager!
-    
-   override  init() {
-        super.init()
-        self.reminderManager = UDOReminderManager.sharedInstance
-        self.reminderManager.delegate = self
+    func isCurrentUserDone() -> Bool {
+        return self.isUserDoneOnModel(PFUser.currentUser().username)
     }
     
-    override class func load() {
-        self.registerSubclass()
+    func isUserDone(username:String) -> Bool {
+        return self.isUserDoneOnModel(username)
     }
     
-    class func parseClassName() -> String! {
-        return kUserReminders
-    }
-    
-    func addCard(card:ReminderCard!){
-        self.addObject(card, forKey: kUserReminderCards)
-    }
-    
-    func addItem(item:ReminderItem!, toCard card:ReminderCard!, addToEventStore:Bool){
-        card.addObject(item, forKey: kReminderCardItems)
-    }
-    
-    func itemAddedToEventStore(item:ReminderItem!, withEventStoreId id:String!){
-        self.metaItems[item.objectId] = id
-    }
-    
-    func itemRemovedFromEventStore(eventStoreId:String!){
-        for itemId in self.metaItems.keys{
-            if self.metaItems[itemId] == eventStoreId {
-                self.metaItems[itemId] = "0"
+    private func isUserDoneOnModel(username:String) -> Bool {
+        if self.dones == nil {
+            return false
+        }
+        for done in self.dones {
+            if done == username {
+                return true
             }
         }
+        return false
     }
-
+    
+    func isCurrentUserAdmin() -> Bool {
+        return self.collaborators.first? == PFUser.currentUser().username
+    }
+    
+    override func isEqual(object: AnyObject?) -> Bool {
+        let other = object as Reminder
+        if self.title != other.title {
+            return false
+        }
+        if self.dueDate.isEqualToDate(other.dueDate) {
+            return false
+        }
+        if !NSSet(array: self.dones).isEqualToSet(NSSet(array: other.dones)) {
+            return false
+        }
+        if !NSSet(array: self.dones).isEqualToSet(NSSet(array: other.dones)) {
+            return false
+        }
+        return true
+    }
+    
+    func doneRatio() -> Double {
+        if self.dones == nil {
+            return 0
+        }
+        return Double(self.dones.count) / Double(self.collaborators.count)
+    }
 }
 
-
-func GetOtherUsernameFor(#reminder:ReminderCard) -> String? {
-    let owners = reminder.owners
-    for owner in owners {
-        if owner != PFUser.currentUser().username {
-            return owner
+class Reminders {
+    class func updateReminderStatusInBackground(reminders:[Reminder]){
+        var application = UIApplication.sharedApplication()
+        var bgTask:UIBackgroundTaskIdentifier!
+        bgTask = application.beginBackgroundTaskWithExpirationHandler { () -> Void in
+            application.endBackgroundTask(bgTask)
+            bgTask = UIBackgroundTaskInvalid
         }
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), { () -> Void in
+            application.endBackgroundTask(bgTask)
+            bgTask = UIBackgroundTaskInvalid
+        })
+        
     }
-    return nil
 }

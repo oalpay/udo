@@ -36,6 +36,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
     
     
     var contact:Contact!
+    var contactsHelper = ContactsHelper.sharedInstance
     
     override func viewDidLoad() {
         name.text = contact.name
@@ -67,7 +68,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
             let messageController = MFMessageComposeViewController()
             messageController.messageComposeDelegate = self
             messageController.recipients = recipents
-            messageController.body = self.getInvitationLetter()
+            //messageController.body = self.getInvitationLetter()
             self.presentViewController(messageController, animated: true, completion: nil)
         }else{
             let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
@@ -101,7 +102,7 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
         let contactDetailsCell = tableView.dequeueReusableCellWithIdentifier("ContactDetails", forIndexPath: indexPath) as ContactPhoneNumberTableViewCell
         let number = contact.numbers[indexPath.row]
         contactDetailsCell.number.text = number.original
-        if number.isRegistered {
+        if contactsHelper.isNumberRegistered(number) {
             contactDetailsCell.isRegisteredImageView.hidden = false
             contactDetailsCell.inviteButton.hidden = true
         }else{
@@ -118,14 +119,14 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
-        if selectedNumber.isRegistered{
+       if contactsHelper.isNumberRegistered(selectedNumber) {
             self.performSegueWithIdentifier("ContactSelected", sender: self)
         }
     }
 }
 
 class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
-    var contactsHelper:ContactsHelper!
+    var contactsHelper = ContactsHelper.sharedInstance
     var sectionHeaders:[String]!
     var sectionContacts:Dictionary<String,NSMutableArray>!
     
@@ -134,7 +135,6 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
     
     override func viewDidLoad() {
         (self.sectionHeaders,self.sectionContacts)  = self.divideContactsToSection(contactsHelper.contacts)
-        self.getAppUsers()
     }
     
     func divideContactsToSection( contacts:[Contact] ) -> ([String]!,Dictionary<String,NSMutableArray>!) {
@@ -154,39 +154,6 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             return n1.compare(n2, options: NSStringCompareOptions.CaseInsensitiveSearch, range: nil, locale: nil) == NSComparisonResult.OrderedAscending
         }
         return (headers, sections)
-    }
-    
-    func updateContactsWithAppUserIds(userIds:[String]) {
-        //there should be a more cpu efficient way of doing this!
-        for contact in contactsHelper.contacts{
-            for number in contact.numbers{
-                for userId in userIds{
-                    if number.userId == userId {
-                        number.isRegistered = true
-                    }
-                }
-            }
-        }
-        self.tableView.reloadData()
-    }
-    
-    func getAppUsers(){
-        var numbers:[String] = []
-        for contact in contactsHelper.contacts{
-            for number in contact.numbers{
-                if let userId = number.userId{
-                    numbers.append(userId)
-                }
-            }
-        }
-        var params = Dictionary<String,AnyObject>()
-        params["numbers"] = numbers
-        PFCloud.callFunctionInBackground("appUsers", withParameters:params) {
-            (result: AnyObject!, error: NSError!) -> Void in
-            if error == nil {
-                self.updateContactsWithAppUserIds(result as [String])
-            }
-        }
     }
     
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
@@ -221,6 +188,10 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             let s = self.sectionHeaders[section]
             return self.sectionContacts[s]!.count
         }
+    }
+    
+    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        return 44
     }
     
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {

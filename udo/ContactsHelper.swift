@@ -11,9 +11,9 @@ import AddressBookUI
 import MessageUI
 
 class ContactNumber{
+    var contact:Contact!
     var original:String!
-    var userId:String?
-    var isRegistered = false
+    var userId:String!
     init(){
         
     }
@@ -29,9 +29,18 @@ class Contact{
 }
 
 class ContactsHelper{
+    class var sharedInstance : ContactsHelper {
+    struct Static {
+        static let instance : ContactsHelper = ContactsHelper()
+        }
+        return Static.instance
+    }
+    
+    var registeredNumbers:NSSet!
     var phoneUtil:NBPhoneNumberUtil! = NBPhoneNumberUtil.sharedInstance()
     var addressBook: ABAddressBookRef?
     var contacts:[Contact]!
+    var isAuthorized = false
     
     init() {
         var errorRef: Unmanaged<CFError>? = nil
@@ -43,8 +52,9 @@ class ContactsHelper{
             var errorRef: Unmanaged<CFError>? = nil
             ABAddressBookRequestAccessWithCompletion(addressBook, { s, e in
                 if s {
-                     self.getContacts()
-                     success()
+                    self.isAuthorized = true
+                    self.getContacts()
+                    success()
                 }
                 else {
                     println("ContactsViewController: \(e)")
@@ -56,10 +66,11 @@ class ContactsHelper{
             fail()
         }
         else if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Authorized) {
+            self.isAuthorized = true
             self.getContacts()
             success()
         }
-
+        
     }
     
     func getContacts(){
@@ -86,6 +97,7 @@ class ContactsHelper{
                 var contactNumber = ContactNumber()
                 contactNumber.original = phoneNumber
                 contactNumber.userId = convertPhoneNumberToUserId(phoneNumber)
+                contactNumber.contact = contact
                 contact.numbers.append(contactNumber)
             }
             if contact.numbers.count > 0 {
@@ -100,7 +112,7 @@ class ContactsHelper{
         }
         return nil
     }
-   
+    
     
     func convertPhoneNumberToUserId(phoneNumber:String) -> String? {
         let user = PFUser.currentUser()
@@ -115,17 +127,61 @@ class ContactsHelper{
     }
     
     
-    func getContactForUserId(userId:String!) -> Contact{
+    func getContactNumberForUserId(userId:String!) -> ContactNumber{
+        if userId == PFUser.currentUser().username {
+            var me = Contact()
+            me.name = PFUser.currentUser()["name"] as String
+            var number = ContactNumber()
+            number.contact = me
+            number.userId = userId
+            return number
+        }
         for contact in contacts{
             for number in contact.numbers{
                 if number.userId == userId {
-                    return contact
+                    return number
                 }
             }
         }
         let unknownContact = Contact()
         unknownContact.name = userId
-        return unknownContact
+        var unknownNumber = ContactNumber()
+        unknownNumber.contact = unknownContact
+        unknownNumber.userId = userId
+        return unknownNumber
     }
-
+    
+    func isNumberRegistered(number:ContactNumber) -> Bool{
+        if let numbers = self.registeredNumbers {
+            return numbers.containsObject(number.userId)
+        }
+        return false
+    }
+    
+    func getAppUsers(){
+        var numbers:[String] = []
+        for contact in self.contacts{
+            for number in contact.numbers{
+                if let userId = number.userId{
+                    numbers.append(userId)
+                }
+            }
+        }
+        var params = Dictionary<String,AnyObject>()
+        params["numbers"] = numbers
+        PFCloud.callFunctionInBackground("appUsers", withParameters:params) {
+            (result: AnyObject!, error: NSError!) -> Void in
+            if error == nil {
+                self.registeredNumbers = NSSet(array: result as [String])
+            }
+        }
+    }
+    
+    func reset() {
+        if self.isAuthorized {
+            self.getAppUsers()
+            self.getContacts()
+        }
+    }
+    
 }

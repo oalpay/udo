@@ -15,7 +15,9 @@
 #import <Parse/Parse.h>
 #import "FXBlurView.h"
 #import "UIImage+ImageEffects.h"
-
+#import "NSArray+LongestCommonSubsequence.h"
+#import "StaticDataTableViewController.h"
+#import "MHPrettyDate.h"
 
 
 #endif

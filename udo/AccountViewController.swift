@@ -8,10 +8,39 @@
 
 import Foundation
 
-class AccountViewController:UITableViewController{
+class AccountViewController:UITableViewController, UITextFieldDelegate{
+    @IBOutlet weak var saveButton: UIBarButtonItem!
+    @IBOutlet weak var nameTextField: UITextField!
     
+    override func viewWillAppear(animated: Bool) {
+        self.saveButton.enabled = false
+        var user = PFUser.currentUser()
+        self.nameTextField.text = user["name"] as String
+    }
+    
+    @IBAction func saveButtonPressed(sender: AnyObject) {
+        var user = PFUser.currentUser()
+        user["name"] = self.nameTextField.text
+        user.saveEventually()
+        self.navigationController?.popViewControllerAnimated(true)
+    }
+    
+    func textField(textField: UITextField, shouldChangeCharactersInRange range: NSRange, replacementString string: String) -> Bool {
+        var txtAfterUpdate:NSString = textField.text as NSString
+        txtAfterUpdate = txtAfterUpdate.stringByReplacingCharactersInRange(range, withString: string)
+        let name = PFUser.currentUser()["name"] as String
+        if txtAfterUpdate != name && txtAfterUpdate != "" {
+             self.saveButton.enabled = true
+        }else{
+            self.saveButton.enabled = false
+        }
+
+        return true
+    }
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        PFUser.logOut()
-        self.performSegueWithIdentifier("Logout", sender: nil)
+        if indexPath.section == 1 {
+            PFUser.logOut()
+            self.performSegueWithIdentifier("Logout", sender: nil)
+        }
     }
 }

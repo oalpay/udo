@@ -14,7 +14,7 @@ import EventKit
 
 
 protocol UDOReminderManagerDelegate{
-    func itemAddedToEventStore(item:ReminderItem!, withEventStoreId id:String!)
+    func itemAddedToEventStore(item:Reminder!, withEventStoreId id:String!)
     func itemRemovedFromEventStore(eventStoreId:String!)
 }
 
@@ -32,12 +32,40 @@ class UDOReminderManager{
     
     var accessGranted = false
     
+    var userDefaults = NSUserDefaults.standardUserDefaults()
+    
+    private func getCalendarIdForReminder( reminder:Reminder! ) -> String? {
+        let settings = userDefaults.dictionaryForKey("reminders") as? Dictionary<String,String>
+        return settings?[reminder.objectId]
+    }
+    
+    private func getEKReminderForReminder( reminder:Reminder! ) -> EKReminder? {
+        if let id = self.getCalendarIdForReminder(reminder) {
+            return self.eventStore.calendarItemWithIdentifier(id) as? EKReminder
+        }
+        return nil
+    }
+    
+    private func saveCalendarId( calendarId:String, forReminder:Reminder!){
+        var newSettings:Dictionary<String,String>!
+        let settings = userDefaults.dictionaryForKey("reminders") as? Dictionary<String,String>
+        if let s = settings {
+            newSettings = s as Dictionary<String,String>
+        } else {
+            newSettings = Dictionary<String,String>()
+        }
+        newSettings[forReminder.objectId] = calendarId
+        userDefaults.setObject(newSettings, forKey: "reminders")
+        userDefaults.synchronize()
+    }
+    
     
     func requestAccess(callerCompletion: EKEventStoreRequestAccessCompletionHandler!) {
         self.eventStore.requestAccessToEntityType(EKEntityTypeReminder, completion: { (granted:Bool, error:NSError!) -> Void in
             self.accessGranted = granted
             callerCompletion(granted,error)
         })
+        self.eventStore.refreshSourcesIfNecessary()
     }
     
     private func createCalendar() -> EKCalendar? {
@@ -60,9 +88,9 @@ class UDOReminderManager{
         return calendar
     }
     
-    func getCalendar() -> EKCalendar? {
+    private func getCalendar() -> EKCalendar? {
         var calendarOption:EKCalendar?
-        let calendarIdOption = PFUser.currentUser()[kUserCalendarId] as? String
+        let calendarIdOption = userDefaults.stringForKey("calendarId")
         if let calendarId = calendarIdOption {
             calendarOption = self.eventStore.calendarWithIdentifier(calendarId)
             if calendarOption == nil {
@@ -74,103 +102,88 @@ class UDOReminderManager{
         }
         if calendarOption != nil {
             if calendarIdOption == nil || calendarIdOption? != calendarOption?.calendarIdentifier{
-                PFUser.currentUser()[kUserCalendarId] = calendarOption!.calendarIdentifier
-                PFUser.currentUser().saveInBackground()
+                self.userDefaults.setObject(calendarOption!.calendarIdentifier, forKey: "calendarId")
+                self.userDefaults.synchronize()
             }
         }
         return calendarOption
     }
     
-    func addItemToReminders(item:NSMutableDictionary!){
-        self.mergeItem(item, forceAdd: true, commit: true)
-    }
-    
-    private func createItem() -> EKReminder {
+    private func createEKReminder() -> EKReminder {
         var reminder = EKReminder(eventStore: self.eventStore)
         reminder.calendar = getCalendar()
         return reminder
     }
     
-    private func mergeItem(item:NSMutableDictionary!,forceAdd:Bool,commit:Bool) -> Bool{
-        var isItemDirty = false
-        var ekReminder:EKReminder?
-        var itemIds = NSMutableDictionary(dictionary: item[kReminderItemCalendarIds] as NSDictionary)
-        if let itemId = itemIds[PFUser.currentUser().username] as? String{
-            if itemId != "0" {
-                ekReminder = self.eventStore.calendarItemWithIdentifier(itemId) as? EKReminder
-                if ekReminder == nil {
-                    //item is deleted from reminders
-                    itemIds[PFUser.currentUser().username] = "0"
-                    isItemDirty = true
-                }
-            } else if forceAdd {
-                ekReminder = self.createItem()
-                itemIds[PFUser.currentUser().username] = ekReminder!.calendarItemIdentifier
-                isItemDirty = true
-            }
-        }else{
-            //new item
-            ekReminder = self.createItem()
-            itemIds[PFUser.currentUser().username] = ekReminder!.calendarItemIdentifier
-            isItemDirty = true
+    private func saveEKReminder(ekReminder:EKReminder!, commit:Bool) -> NSError? {
+        var error:NSError?
+        self.eventStore.saveReminder(ekReminder, commit: commit, error: &error)
+        if error != nil{
+            println("e:saveEKReminder:\(error)")
         }
-        if isItemDirty {
-            item[kReminderItemCalendarIds] = itemIds
-        }
-        if let ekr = ekReminder {
-            if ekr.title != item[kReminderItemDescription] as? String {
-                ekr.title = item[kReminderItemDescription] as String
-                var error:NSError?
-                self.eventStore.saveReminder(ekr, commit: commit, error: &error)
-                if error != nil{
-                    println("e:mergeReminders:\(error)")
-                }
-            }
-        }
-        return isItemDirty
+        return error
     }
     
-    func mergeReminders(reminders:[ReminderCard] ){
-        if !self.accessGranted {
-            return
+    private func deleteEKReminder(ekReminder:EKReminder!, commit:Bool) -> NSError? {
+        var error:NSError?
+        self.eventStore.removeReminder(ekReminder, commit: commit, error: &error)
+        if error != nil{
+            println("e:saveEKReminder:\(error)")
         }
-        let calendar = self.getCalendar()
-        if calendar == nil {
-            println("e:mergeReminders:calendar is nil")
-            return
+        return error
+    }
+    
+    
+    func isReminderOnCalendar(reminder:Reminder) -> Bool {
+        if reminder.objectId == nil {
+            return false
         }
-        
-        for reminder in reminders as [PFObject]{
-            var newItems:[NSMutableDictionary] = []
-            var isItemDirty = false
-            for newItem in reminder[kReminderCardItems] as [NSDictionary] {
-                var item = NSMutableDictionary(dictionary: newItem)
-                newItems.append(item)
-                isItemDirty = self.mergeItem(item, forceAdd:false, commit:false)
+        var ekReminder = self.getEKReminderForReminder(reminder)
+        if ekReminder != nil {
+            return true
+        }
+        return false
+    }
+    
+    private func setEKReminder(ekReminder:EKReminder!, withReminder:Reminder!, andAlarmDate:NSDate!){
+        ekReminder.title = withReminder.title
+        if andAlarmDate != nil {
+            let alarm = EKAlarm(absoluteDate: andAlarmDate)
+            ekReminder.alarms = [alarm]
+        }else{
+            ekReminder.alarms = []
+        }
+    }
+    
+    func mergeReminderToEventStore(reminder:Reminder!, alarmDate:NSDate!){
+        var ekReminderOption = self.getEKReminderForReminder(reminder)
+        if let ekReminder = ekReminderOption {
+             self.setEKReminder(ekReminder, withReminder: reminder, andAlarmDate: alarmDate)
+            self.saveEKReminder(ekReminder,commit: true)
+        }else{
+            var ekReminder = self.createEKReminder()
+            self.setEKReminder(ekReminder, withReminder: reminder, andAlarmDate: alarmDate)
+            self.saveEKReminder(ekReminder,commit: true)
+            self.saveCalendarId(ekReminder.calendarItemIdentifier, forReminder: reminder)
+        }
+    }
+    
+    func removeReminderFromEventStore(reminder:Reminder){
+        var ekReminder = self.getEKReminderForReminder(reminder)
+        if ekReminder != nil {
+            self.deleteEKReminder(ekReminder,commit:true)
+        }
+    }
+    
+    func getAlarmDateForReminder(reminder:Reminder) -> NSDate! {
+        var ekReminder = self.getEKReminderForReminder(reminder)
+        if let ekr = ekReminder {
+            if ekr.alarms?.count > 0 {
+                var alarm = ekr.alarms[0] as EKAlarm
+                return alarm.absoluteDate
             }
-            if isItemDirty || reminder.isDirty() {
-                reminder[kReminderCardItems] = newItems
-                reminder.saveInBackgroundWithBlock({ (success:Bool, parseError:NSError!) -> Void in
-                    var eventError:NSError?
-                    if success {
-                        self.eventStore.commit(&eventError)
-                        if eventError != nil {
-                            println("e:mergeReminders:\(eventError)")
-                        }
-                    }else{
-                        println("e:mergeReminders:\(parseError)")
-                    }
-                })
-            }else {
-                var error:NSError?
-                self.eventStore.commit(&error)
-                if error != nil {
-                    println("e:mergeReminders:\(error)")
-                }
-                
-            }
         }
-        
+        return nil
     }
     
 }

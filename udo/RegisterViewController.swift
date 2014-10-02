@@ -143,6 +143,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
     }
     
     func resetPassword( button:ActionButton ) {
+        self.passcodeTextField.resignFirstResponder()
         button.showActivity()
         var params = Dictionary<String,String>()
         params["username"] = self.username
@@ -185,6 +186,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
     }
     
     func queryUser( button:ActionButton ){
+        self.phoneNumberTextField.resignFirstResponder()
         button.showActivity()
         var query = PFUser.query()
         query.whereKey("username", equalTo: self.username)
@@ -209,6 +211,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
     }
     
     @IBAction func unwindToMain(unwindSegue:UIStoryboardSegue){
+        
     }
     
     func createUserAndGoBackToMain( button:ActionButton ){

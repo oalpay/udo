@@ -18,8 +18,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Parse.setApplicationId("ZfTTFTJ49Sb3mJK2Xbi5lw1nhcNsUnO4ayEXP565", clientKey: "nHWUQHYcfkSG1mZNLZqSc35nNpgQ9taEdz46EoE2")
         PFAnalytics.trackAppOpenedWithLaunchOptions(launchOptions)
         PFConfig.getConfigInBackgroundWithBlock(nil)
+        
         return true
     }
+    
+    func application(application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: NSData) {
+        // Store the deviceToken in the current installation and save it to Parse.
+        var currentInstallation = PFInstallation.currentInstallation()
+        currentInstallation.setDeviceTokenFromData(deviceToken)
+        currentInstallation.channels =  ["global"]
+        currentInstallation["username"] = PFUser.currentUser().username
+        currentInstallation.saveEventually()
+    }
+    
+    func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject]) {
+        NSNotificationCenter.defaultCenter().postNotificationName(KReminderPushReceivedNotification, object: nil)
+        PFPush.handlePush(userInfo)
+        self.clearBadge()
+    }
+    
 
     func applicationWillResignActive(application: UIApplication!) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
@@ -37,10 +54,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(application: UIApplication!) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+        if PFUser.currentUser() != nil {
+            ContactsHelper.sharedInstance.reset()
+            self.clearBadge()
+            NSNotificationCenter.defaultCenter().postNotificationName(KReminderPushReceivedNotification, object: nil)
+        }
     }
 
     func applicationWillTerminate(application: UIApplication!) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
+    }
+    
+    func clearBadge(){
+        var currentInstallation = PFInstallation.currentInstallation()
+        if currentInstallation.badge != 0 {
+            currentInstallation.badge = 0
+            currentInstallation.saveEventually()
+        }
     }
 
 

@@ -40,6 +40,7 @@ class AccountViewController:UITableViewController, UITextFieldDelegate{
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
         if indexPath.section == 1 {
             PFUser.logOut()
+            NSNotificationCenter.defaultCenter().postNotificationName(kUserLoggedOutNotification, object: nil)
             self.performSegueWithIdentifier("Logout", sender: nil)
         }
     }

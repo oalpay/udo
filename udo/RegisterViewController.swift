@@ -15,6 +15,7 @@ class ActionButton:UIButton{
     var activityIndicator:UIActivityIndicatorView!
     var action:ActionCall?
     var oldEnabledState:Bool!
+    var textField:UITextField!
     
     override func awakeFromNib() {
         self.activityIndicator = UIActivityIndicatorView(frame: CGRect(x: self.bounds.width - 30, y: 2.5 , width: 25, height: 25))
@@ -37,16 +38,18 @@ class ActionButton:UIButton{
         UIGraphicsEndImageContext();
         return image
     }
-
     
-    func setAction(action:ActionCall!,withTitle title:String){
+    
+    func setAction(action:ActionCall!,withTitle title:String, textField: UITextField) {
         self.setTitle(title, forState: UIControlState.Normal)
         self.setTitle(title, forState: UIControlState.Highlighted)
         self.setTitle(title, forState: UIControlState.Disabled)
         self.action = action
+        self.textField = textField
     }
     
     func callAction(sender:AnyObject){
+        self.textField.resignFirstResponder()
         if let action = self.action{
             action( button:self )
         }
@@ -75,9 +78,10 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
     var nbPhoneNumber:NBPhoneNumber!
     var username:String!
     var passcode:String!
+    var loginAction:ActionCall!
     
     override func viewDidLoad() {
-        self.cancelButton.setAction(askNumber, withTitle: "Cancel")
+        self.cancelButton.setAction(askNumber, withTitle: "Cancel",textField: self.phoneNumberTextField)
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -106,7 +110,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
         self.nameTextField.hidden = true
         self.passcodeTextField.hidden = true
         self.passcodeTextField.text = ""
-        self.loginButton.setAction(queryUser, withTitle: "Login")
+        self.loginButton.setAction(queryUser, withTitle: "Login",textField: self.phoneNumberTextField)
     }
     
     func askName(){
@@ -116,17 +120,13 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
         self.nameTextField.becomeFirstResponder()
         self.phoneNumberTextField.enabled = false
         self.loginButton.enabled = false
-        //new user
-        self.loginButton.setAction(self.setPasscodeWithSuccess({ () -> Void in
-            self.askPasscode()
-            self.loginButton.setAction(self.createUserAndGoBackToMain, withTitle: "Login")
-        }), withTitle: "Send SMS Code")
+        self.loginAction = self.createUserAndGoBackToMain
+        self.loginButton.setAction( self.createAndSendPasscode , withTitle: "Send SMS Code",textField: self.nameTextField)
     }
     
     func askPasscode(){
         self.nameTextField.enabled = false
         self.passcodeTextField.hidden = false
-        self.loginButton.enabled = false
         self.passcodeTextField.becomeFirstResponder()
     }
     
@@ -136,14 +136,11 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
         self.phoneNumberTextField.enabled = false
         self.loginButton.enabled = true
         self.cancelButton.hidden = false
-        self.loginButton.setAction(self.setPasscodeWithSuccess({ () -> Void in
-            self.askPasscode()
-            self.loginButton.setAction(self.resetPassword, withTitle: "Login")
-        }), withTitle: "Send SMS Code")
+        self.loginAction = self.resetPassword
+        self.loginButton.setAction(self.createAndSendPasscode, withTitle: "Send SMS Code",textField: self.phoneNumberTextField)
     }
     
     func resetPassword( button:ActionButton ) {
-        self.passcodeTextField.resignFirstResponder()
         button.showActivity()
         var params = Dictionary<String,String>()
         params["username"] = self.username
@@ -154,55 +151,63 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
             if error != nil {
                 button.hideActivity()
                 println("e:resetPassword:\(error.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Okey").show()
+                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
             }else{
                 PFUser.logInWithUsernameInBackground(self.username, password: self.devId(), block: { (_, error:NSError!) -> Void in
                     button.hideActivity()
                     if error != nil {
                         println("e:resetPassword:\(error.description)")
-                        UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Okey").show()
+                        UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
                     }else{
-                         self.performSegueWithIdentifier("Loggedin", sender: self)
+                        self.performSegueWithIdentifier("Loggedin", sender: self)
                     }
                 })
             }
         }
     }
     
-    func setPasscodeWithSuccess(success:() -> Void ) ( button:ActionButton ) {
+    func createAndSendPasscode( button:ActionButton ) {
         button.showActivity()
         var params = Dictionary<String,String>()
         params["username"] = self.username
-        PFCloud.callFunctionInBackground("setPasscode", withParameters:params) {
+        PFCloud.callFunctionInBackground("createAndSendPasscode", withParameters:params) {
             (result: AnyObject!, error: NSError!) -> Void in
             button.hideActivity()
             if error != nil {
                 println("e:setPasscodeWithSuccess:\(error.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Okey").show()
+                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
             }else{
-                success()
+                self.askPasscode()
+                self.loginButton.setAction(self.createAndSendPasscode, withTitle: "Resend SMS Code",textField: self.phoneNumberTextField)
             }
         }
     }
     
     func queryUser( button:ActionButton ){
-        self.phoneNumberTextField.resignFirstResponder()
         button.showActivity()
         var query = PFUser.query()
         query.whereKey("username", equalTo: self.username)
-        query.getFirstObjectInBackgroundWithBlock({ (userObject:PFObject!, e: NSError!) -> Void in
+        query.getFirstObjectInBackgroundWithBlock({ (userObject:PFObject!, error: NSError!) -> Void in
             button.hideActivity()
-            if userObject == nil {
+            if error != nil && error.code != kPFErrorObjectNotFound{
+                println("e:queryUser:\(error.description)")
+                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+            }else if userObject == nil {
                 //new user
                 self.askName()
             }else{
                 //existing user
                 let user = userObject as PFUser
                 PFUser.logInWithUsernameInBackground(user.username, password: self.devId(), block: { (_, error:NSError!) -> Void in
-                    if let e = error{
-                        self.askResetPasswordForUser(user.username)
+                    if error != nil {
+                        if error.code == kPFErrorObjectNotFound {
+                            self.askResetPasswordForUser(user.username)
+                        }else{
+                            println("e:queryUser:\(error.description)")
+                            UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+                        }
                     }else{
-                        self.performSegueWithIdentifier("Loggedin", sender: self)
+                        self.userLoggedIn()
                     }
                 })
             }
@@ -227,19 +232,24 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
             if error != nil {
                 button.hideActivity()
                 println("createUserAndGoBackToMain:\(error.userInfo?.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Okey").show()
+                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
             }else{
                 PFUser.becomeInBackground(result["sessionToken"] as String , block: { (_, error:NSError!) -> Void in
                     button.hideActivity()
                     if error != nil {
                         println("createUserAndGoBackToMain:\(error.userInfo?.description)")
-                        UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Okey").show()
+                        UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
                     }else{
-                        self.performSegueWithIdentifier("Loggedin", sender: self)
+                       self.userLoggedIn()
                     }
                 })
             }
         }
+    }
+    
+    func userLoggedIn(){
+        NSNotificationCenter.defaultCenter().postNotificationName(kUserLoggedInNotification, object: nil)
+        self.performSegueWithIdentifier("Loggedin", sender: self)
     }
     
     func textFieldShouldReturn(textField: UITextField) -> Bool {
@@ -272,9 +282,12 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
                 loginButton.enabled = true
             }
         }else if textField == self.passcodeTextField {
-            if countElements(newText) > 3 {
-                loginButton.enabled = true
+            if countElements(newText) > 0 {
+                self.loginButton.setAction(self.loginAction, withTitle: "Login",textField: self.passcodeTextField)
+            } else {
+                self.loginButton.setAction(self.createAndSendPasscode, withTitle: "Resend SMS Code",textField: self.phoneNumberTextField)
             }
+            loginButton.enabled = true
         }
         return true
     }

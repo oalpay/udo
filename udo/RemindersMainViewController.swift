@@ -10,293 +10,292 @@ import Foundation
 import EventKit
 
 
-class RemindersMainViewController:UIViewController,UISearchDisplayDelegate,UITableViewDataSource,UITableViewDelegate{
-    @IBOutlet weak var searchBar: UISearchBar!
-    @IBOutlet weak var tableView: UITableView!
-    var contactsHelper = ContactsHelper.sharedInstance
-    var reminders:[Reminder] = []
-    var searchResults:[Reminder] = []
+class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,EventStoreManagerDelegate{
+    var contactsManager = ContactsManager.sharedInstance
     
-    var reminderManager = UDOReminderManager.sharedInstance
+    var reminderKeys:[String] = []
+    
+    var searchResults:[String] = []
+    
+    var eventStoreManager = EventStoreManager.sharedInstance
+    
+    var reminderManager = ReminderManager.sharedInstance
     
     let reminderItemCellNib = UINib(nibName: "ReminderItemCell", bundle: nil)
     
+    var navSearchDisplayController:UISearchDisplayController!
+    
+    var oldTitleView:UIView!
+    
+    var activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.Gray)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.tableView.backgroundColor = UIColor(patternImage: UIImage(named: "geometry2"))
         self.tableView.registerNib(reminderItemCellNib, forCellReuseIdentifier: "ReminderCell")
+        self.tableView.setContentOffset(CGPoint(x: 0, y: 44), animated: true)
         
-        var refreshControl = UIRefreshControl()
-        refreshControl.addTarget(self, action: "refresh:", forControlEvents: UIControlEvents.ValueChanged)
-        self.tableView.addSubview(refreshControl)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
         
-        if (PFUser.currentUser() != nil ) {
-            self.userLoggedIn()
-        }
-    }
-    
-    deinit {
-        NSNotificationCenter.defaultCenter().removeObserver(self)
-    }
-    
-    func reminderChangedNotificationReceived( notification:NSNotification ){
-        self.refresh(nil)
-    }
-    
-    
-    @IBAction func unwindToMain(unwindSegue:UIStoryboardSegue){
-        if unwindSegue.identifier == "Loggedin"{
-            self.userLoggedIn()
-        }else if unwindSegue.identifier == "SaveItemEdit" {
-            //save item
-            let reminderVC = unwindSegue.sourceViewController as ReminderViewController
-            self.saveItemFromReminderVC(reminderVC)
-        }
-    }
-    
-    func saveItemFromReminderVC(reminderVC:ReminderViewController){
-        let reminder = reminderVC.reminder
-        if reminder.title != reminderVC.taskTextView.text{
-            reminder.title = reminderVC.taskTextView.text
-        }
-        if reminderVC.dueDateSwitchAdmin.on {
-            if (reminder.dueDate == nil || ( reminder.dueDate != nil && !reminder.dueDate.isEqualToDate(reminderVC.dueDatePickerAdmin.date))) {
-                reminder.dueDate = reminderVC.dueDatePickerAdmin.date
-            }
-        }else if reminder.dueDate != nil {
-            reminder.dueDate = nil
-        }
-        //only admin can change collaborator
-        var addedItemsAfterSave:NSArray!
-        if reminder.collaborators.first? == PFUser.currentUser().username {
-            // parse cannot hande addAtomic and removeAtomic at the same time
-            // do addAtomic after save
-            var removedItems = NSMutableArray(array: reminder.collaborators)
-            removedItems.removeObjectsInArray(reminderVC.collaborators)
-            if removedItems.count > 0 {
-                reminder.removeObjectsInArray(removedItems, forKey: kReminderCollaborators)
-            }
-            var addedItems = NSMutableArray(array: reminderVC.collaborators)
-            addedItems.removeObjectsInArray(reminder.collaborators)
-            if removedItems.count == 0 && addedItems.count > 0 {
-                reminder.addUniqueObjectsFromArray(addedItems, forKey: kReminderCollaborators)
-            } else if removedItems.count > 0 && addedItems.count > 0 {
-                addedItemsAfterSave = addedItems
-            }
-        }
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "applicationWillEnterForegroundNotification:", name: UIApplicationWillEnterForegroundNotification, object: nil)
         
-        var reminderManager = UDOReminderManager.sharedInstance
-        var isOnMyReminders = false
-        if reminder.objectId != nil {
-            isOnMyReminders = reminderManager.isReminderOnCalendar(reminder)
-        }
-        var isAddToMyCalendarOn = reminderVC.addToMyRemindersSwitch.on
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "userLoggedOut:", name: kUserLoggedOutNotification, object: nil)
         
-        var alarmDate:NSDate!
-        if reminderVC.remindMeOnADaySwitch.on {
-            alarmDate = reminderVC.remindMeDatePicker.date
-        }
+        self.eventStoreManager.delegate = self
         
-        self.saveReminder(reminder, onSuccess: { () -> Void in
-            if isAddToMyCalendarOn {
-                UDOReminderManager.sharedInstance.mergeReminderToEventStore(reminder, alarmDate: alarmDate)
-            }else if isOnMyReminders {
-                UDOReminderManager.sharedInstance.removeReminderFromEventStore(reminder)
-            }
-            if addedItemsAfterSave != nil {
-                reminder.addUniqueObjectsFromArray(addedItemsAfterSave, forKey: kReminderCollaborators)
-                reminder.saveEventually()
-            }
-        })
-    }
-    
-    func findReminderIndexPath(objectId:String) -> NSIndexPath? {
-        for (var index = 0; index < self.reminders.count; index++){
-            var reminder = self.reminders[index]
-            if (reminder.objectId != nil && reminder.objectId == objectId) {
-                return NSIndexPath(forRow: index, inSection: 0)
-            }
-        }
-        return nil
-    }
-    
-    
-    func saveReminder(reminder:Reminder, onSuccess:() -> Void){
-        reminder.saveInBackgroundWithBlock { (success:Bool, _ ) -> Void in
-            if success {
-                onSuccess()
-            }
-        }
-        if reminder.objectId == nil {
-            //new item
-            self.reminders.insert(reminder, atIndex: 0)
-            self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection: 0)], withRowAnimation: UITableViewRowAnimation.Automatic)
-        }else{
-            var selectedIndexPathOption = self.findReminderIndexPath(reminder.objectId)
-            if let selectedIndexPath = selectedIndexPathOption {
-                if selectedIndexPath.row == 0 {
-                    self.tableView.reloadRowsAtIndexPaths([selectedIndexPath], withRowAnimation: UITableViewRowAnimation.Automatic)
-                }else{
-                    self.tableView.beginUpdates()
-                    self.reminders.removeAtIndex(selectedIndexPath.row)
-                    self.tableView.deleteRowsAtIndexPaths([selectedIndexPath], withRowAnimation: UITableViewRowAnimation.Automatic)
-                    self.reminders.insert(reminder, atIndex: 0)
-                    self.tableView.insertRowsAtIndexPaths([NSIndexPath(forRow: 0, inSection:0)], withRowAnimation: UITableViewRowAnimation.Automatic)
-                    self.tableView.endUpdates()
-                }
-            }
+        self.navigationController?.navigationBar.titleTextAttributes =  [NSForegroundColorAttributeName: AppTheme.logoColor, NSFontAttributeName: UIFont(name: "HelveticaNeue", size: 22)]
+        
+        if PFUser.currentUser() != nil {
+            self.checkContactsAuthThenRefreshData()
         }
     }
-    
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if segue.identifier == "ShowReminder"{
-            let reminderVC = segue.destinationViewController as ReminderViewController
-            reminderVC.reminder = sender as Reminder
-        }else if segue.identifier == "ShowContacts"{
-            let navC = segue.destinationViewController as UINavigationController
-            let contactsVC = navC.topViewController as  ContactsViewController
-            contactsVC.contactsHelper = self.contactsHelper
-        }
-    }
-    
     
     override func viewDidAppear(animated: Bool) {
-        if PFUser.currentUser() == nil{
+        if PFUser.currentUser() == nil {
             self.performSegueWithIdentifier("Login", sender: self)
         }
     }
     
-    @IBAction func newReminderCardButtonPressed(sender: AnyObject) {
-        var reminder = Reminder()
-        reminder.title = ""
-        reminder.collaborators = [PFUser.currentUser().username]
-        self.performSegueWithIdentifier("ShowReminder", sender: reminder)
+    func userLoggedOut(notification:NSNotification){
+        self.reminderKeys.removeAll(keepCapacity: true)
+        self.tableView.reloadData()
     }
     
-    func refresh(refreshControl:UIRefreshControl) {
-        self.refresh { () -> Void in
+    func showReminder(key:String){
+        var index = self.nsReminderKeys().indexOfObject(key)
+        if index != NSNotFound {
+            self.tableView.scrollToRowAtIndexPath(NSIndexPath(forRow: index, inSection: 0), atScrollPosition: UITableViewScrollPosition.Top, animated: true)
+        }
+        self.performSegueWithIdentifier("ShowReminder", sender: key)
+    }
+    
+    func nsReminderKeys() -> NSArray {
+        return self.reminderKeys as NSArray
+    }
+    
+    func itemChangedInStore(key:String!){
+        var index = self.nsReminderKeys().indexOfObject(key)
+        if index != NSNotFound {
+            if let cell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: index, inSection: 0)) {
+                var reminderCell = cell as ReminderItemTableViewCell
+                reminderCell.updateAlaramLabels()
+            }
+        }
+    }
+    
+    // notifications
+    func reminderLoadingNotification(notification:NSNotification){
+        var key = notification.object as String
+        self.updateReminderCellActivity(key)
+    }
+    
+    func reminderLoadingFinishedNotification(notification:NSNotification){
+         var key = notification.object as String
+        self.updateReminderCellActivity(key)
+        //if reminder was new key is changed to objectId
+        var reminder = self.reminderManager.getReminder(key)
+        if reminder.objectId != key {
+            var index = self.nsReminderKeys().indexOfObject(key)
+            if  index != NSNotFound {
+                self.reminderKeys.removeAtIndex(index)
+                self.reminderKeys.insert(reminder.key(), atIndex: index)
+                var cell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: index, inSection: 0)) as ReminderItemTableViewCell?
+                cell?.reminderKey = reminder.key()
+            }
+        }
+    }
+    
+    func remindersChangedNotification(notification:NSNotification){
+        var change = notification.object as RemindersChanged!
+        self.mergeReminders(change)
+    }
+    // notifications end
+    
+    func updateReminderCellActivity(key:String){
+        var index = self.nsReminderKeys().indexOfObject(key)
+        if index != NSNotFound {
+            if let cell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: index, inSection: 0)) {
+                var reminderCell = cell as ReminderItemTableViewCell
+                reminderCell.updateActivity()
+                reminderCell.updateErrorMsg()
+                reminderCell.updateAlaramLabels()
+                reminderCell.updateCalendarLabels()
+            }
+        }
+    }
+
+    
+    func mergeReminders(change:RemindersChanged){
+        var insertKeys = NSMutableArray(array: change.inserts)
+        insertKeys.sortUsingComparator { (key1:AnyObject!, key2:AnyObject!) -> NSComparisonResult in
+            var r1 = self.reminderManager.getReminder(key1 as String)
+            var r2 = self.reminderManager.getReminder(key2 as String)
+            if let r1Date = r1.updatedAt {
+                if let r2Date = r2.updatedAt {
+                    return r1Date.compare(r2Date)
+                }else{
+                    return NSComparisonResult.OrderedAscending
+                }
+            }else{
+                return NSComparisonResult.OrderedDescending
+            }
+        }
+        var mergedKeys = NSMutableArray(array: self.reminderKeys)
+        for newKey in insertKeys {
+            if mergedKeys.indexOfObject(newKey) == NSNotFound {
+                mergedKeys.insertObject(newKey, atIndex: 0)
+            }
+        }
+        // save old keys
+        var oldKeys = self.nsReminderKeys()
+        self.tableView.beginUpdates()
+        self.reminderKeys = NSArray(array: mergedKeys) as [String]
+        for ( var index = 0; index < mergedKeys.count; index++ ) {
+            var key = mergedKeys.objectAtIndex(index) as String
+            var indexPath = NSIndexPath(forRow: index, inSection: 0)
+            var oldIndex = oldKeys.indexOfObject(key)
+            if oldIndex != NSNotFound {
+                if index != oldIndex {
+                    //moved
+                    self.tableView.moveRowAtIndexPath(NSIndexPath(forRow: oldIndex, inSection: 0), toIndexPath: indexPath)
+                }
+            }else {
+                // new
+                self.tableView.insertRowsAtIndexPaths([indexPath], withRowAnimation: UITableViewRowAnimation.Automatic)
+            }
+        }
+        self.tableView.endUpdates()
+        for key in change.updates {
+            var index = self.nsReminderKeys().indexOfObject(key)
+            if index != NSNotFound {
+                var cell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: index, inSection: 0)) as ReminderItemTableViewCell?
+                cell?.updateAll()
+            }
+        }
+    }
+    
+    
+    
+    func checkContactsAuthThenRefreshData(){
+        self.contactsManager.authorize({ () -> Void in
+            self.refreshContactsAndAppUsers()
+            }, error: { () -> Void in
+                self.performSegueWithIdentifier("ContactsAccessDenied", sender: nil)
+        })
+    }
+    
+    
+    func applicationWillEnterForegroundNotification( notification:NSNotification ){
+        if PFUser.currentUser() != nil {
+            self.checkContactsAuthThenRefreshData()
+        }
+    }
+    
+    
+    
+    func refreshContactsAndAppUsers() {
+        self.showActivity()
+        self.contactsManager.refreshContactsAndAppUsers({ () -> Void in
+            var cells = self.tableView.visibleCells() as [ReminderItemTableViewCell]
+            for cell in cells {
+                cell.updateTitle()
+                cell.updateAlaramLabels()
+            }
+            }, appUsersLoaded: { () -> Void in
+                self.hideActivity()
+        })
+    }
+    
+    @IBAction func refreshActivated(refreshControl: UIRefreshControl) {
+        refreshControl.beginRefreshing()
+        self.reminderManager.refresh { (_, _) -> Void in
             refreshControl.endRefreshing()
         }
     }
     
-    func mergeReminders(newReminders:[Reminder]){
-        var index = 0
-        var insertIndexes = [NSIndexPath]()
-        self.tableView.beginUpdates()
-        for newReminder in newReminders {
-            insertIndexes.append(NSIndexPath(forRow: index++, inSection: 0))
-            var existingIndexPathOption = self.findReminderIndexPath(newReminder.objectId)
-            if let existingIndexPath = existingIndexPathOption{
-                self.reminders.removeAtIndex(existingIndexPath.row)
-                self.tableView.deleteRowsAtIndexPaths([existingIndexPath], withRowAnimation: UITableViewRowAnimation.Automatic)
-            }
-        }
-        for newReminders in newReminders {
-            self.reminders.insert(newReminders, atIndex: 0)
-        }
-        self.tableView.insertRowsAtIndexPaths(insertIndexes, withRowAnimation: UITableViewRowAnimation.Automatic)
-        self.tableView.endUpdates()
+    
+    
+    @IBAction func newReminderCardButtonPressed(sender: AnyObject) {
+        self.performSegueWithIdentifier("ShowReminder", sender: nil)
     }
     
-    func refresh( done: (() -> Void)? ){
-        var lastUpdated = NSDate(timeIntervalSince1970: 0)
-        for reminder in self.reminders {
-            if reminder.updatedAt != nil {
-                if lastUpdated.compare(reminder.updatedAt) == NSComparisonResult.OrderedAscending {
-                    lastUpdated = reminder.updatedAt
-                }
-            }
-        }
-        let remindersQuery = Reminder.query()
-        remindersQuery.whereKey(kReminderCollaborators,equalTo:PFUser.currentUser().username)
-        remindersQuery.whereKey("updatedAt", greaterThan: lastUpdated)
-        remindersQuery.orderByAscending("updatedAt")
-        remindersQuery.findObjectsInBackgroundWithBlock({
-            (reminders:[AnyObject]!, error: NSError!) -> Void in
-            done?()
-            if error == nil{
-                self.mergeReminders(reminders as [Reminder])
-                NSNotificationCenter.defaultCenter().postNotificationName(KRemindersChangedNotification, object: self.reminders)
-            }else{
-                //handle error
-                println("getReminders: \(error)")
-            }
+    
+    
+    @IBAction func unwindToMain(unwindSegue:UIStoryboardSegue){
+        if unwindSegue.identifier == "ContactsAccessGranted"{
+            self.refreshContactsAndAppUsers()
+        }else if unwindSegue.identifier == "Loggedin"{
+            self.checkContactsAuthThenRefreshData()
+        }else if unwindSegue.identifier == "SaveItemEdit" {
             
-        })
-    }
-    
-    func userLoggedIn(){
-        self.checkPushNotifications()
-        self.contactsHelper.authorize({ () -> Void in
-            self.refresh({ () -> Void in
-                NSNotificationCenter.defaultCenter().addObserver(self, selector: "reminderChangedNotificationReceived:", name: KReminderPushReceivedNotification, object: nil)
-            })
-            }, fail: { () -> Void in
-                UIAlertView(title: "Error", message: "Contacts access failed!", delegate: nil, cancelButtonTitle: nil).show()
-                return
-        })
-    }
-    
-    func checkPushNotifications(){
-        var application = UIApplication.sharedApplication()
-        if application.isRegisteredForRemoteNotifications() {
-            //           return
         }
-        // Register for Push Notitications, if running iOS 8
-        if (application.respondsToSelector("registerUserNotificationSettings:")) {
-            var userNotificationTypes = UIUserNotificationType.Alert | UIUserNotificationType.Badge | UIUserNotificationType.Sound
-            var settings =  UIUserNotificationSettings(forTypes: userNotificationTypes, categories: nil)
-            application.registerUserNotificationSettings(settings)
-            application.registerForRemoteNotifications()
-        } else {
-            // Register for Push Notifications before iOS 8
-            application.registerForRemoteNotificationTypes(UIRemoteNotificationType.Alert | UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound)
-        }
-        
-        
     }
     
-    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == "ShowReminder"{
+            let reminderVC = segue.destinationViewController as ReminderViewController
+            reminderVC.reminderKey = sender as String!
+        }else if segue.identifier == "ShowContacts"{
+            let navC = segue.destinationViewController as UINavigationController
+            let contactsVC = navC.topViewController as  ContactsViewController
+        }
+    }
+    
+    func showActivity(){
+        self.activityIndicator.startAnimating()
+        self.navigationItem.titleView = activityIndicator
+    }
+    
+    func hideActivity(){
+        self.activityIndicator.stopAnimating()
+        self.navigationItem.titleView = nil
+    }
+    
+    
+    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         return 70.0
     }
     
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if self.tableView == tableView {
-            return reminders.count
+            return self.reminderKeys.count
         }else{
             //search
             return searchResults.count
         }
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         var reminderCell = tableView.dequeueReusableCellWithIdentifier("ReminderCell", forIndexPath: indexPath) as ReminderItemTableViewCell
-        var reminder:Reminder!
+        var key:String!
         if self.tableView == tableView {
-            reminder = self.reminders[indexPath.row]
+            key = self.reminderKeys[indexPath.row]
         }else{
-            reminder = self.searchResults[indexPath.row]
+            key = self.searchResults[indexPath.row]
         }
-        reminderCell.setReminder(reminder)
+        reminderCell.reminderKey = key
+        reminderCell.updateAll()
         return reminderCell
     }
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if self.tableView == tableView{
-            self.performSegueWithIdentifier("ShowReminder", sender: self.reminders[indexPath.row])
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        var key:String!
+        if tableView == self.tableView {
+            key = self.reminderKeys[indexPath.row]
         }else{
-            self.performSegueWithIdentifier("ShowReminder", sender: self.searchResults[indexPath.row])
+            key = self.searchResults[indexPath.row]
         }
+        self.performSegueWithIdentifier("ShowReminder", sender: key)
     }
     
-    func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        var reminder = self.reminders[indexPath.row]
-        reminder.removeObject(PFUser.currentUser().username, forKey: kReminderCollaborators)
-        reminder.removeObject(PFUser.currentUser().username, forKey: kReminderDones)
-        reminder.saveEventually()
-        self.reminders.removeAtIndex(indexPath.row)
+    override  func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
+        var key = self.reminderKeys[indexPath.row]
+        self.reminderManager.deleteReminder(key)
+        self.reminderKeys.removeAtIndex(indexPath.row)
         self.tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: UITableViewRowAnimation.Automatic)
     }
     
@@ -305,11 +304,12 @@ class RemindersMainViewController:UIViewController,UISearchDisplayDelegate,UITab
     }
     
     func searchDisplayController(controller: UISearchDisplayController!, shouldReloadTableForSearchString searchString: String!) -> Bool {
-        var newSearchResults:[Reminder] = []
-        for reminder in self.reminders {
+        var newSearchResults:[String] = []
+        for key in self.reminderKeys {
+            var reminder = self.reminderManager.getReminder(key)
             for token in reminder.title.componentsSeparatedByString(" ") as [String]{
                 if token.lowercaseString.hasPrefix(searchString.lowercaseString){
-                    newSearchResults.append(reminder)
+                    newSearchResults.append(reminder.key())
                     break
                 }
             }
@@ -323,4 +323,16 @@ class RemindersMainViewController:UIViewController,UISearchDisplayDelegate,UITab
         return false
     }
     
+}
+
+class ContactsAccessWarningViewController:UIViewController{
+    override func viewWillAppear(animated: Bool) {
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "applicationDidBeconeActive:", name: UIApplicationDidBecomeActiveNotification, object: nil)
+    }
+    
+    func applicationDidBeconeActive( notification:NSNotification ){
+        if ContactsManager.sharedInstance.isAuthorized() {
+            self.performSegueWithIdentifier("ContactsAccessGranted", sender: nil)
+        }
+    }
 }

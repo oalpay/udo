@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AC004E7B19AA032E00970D00 /* sativa.png in Resources */ = {isa = PBXBuildFile; fileRef = AC004E7A19AA032E00970D00 /* sativa.png */; };
 		AC004E7D19AA53EE00970D00 /* geometry2.png in Resources */ = {isa = PBXBuildFile; fileRef = AC004E7C19AA53EE00970D00 /* geometry2.png */; };
 		AC004E7F19AD1BED00970D00 /* ReminderItemCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */; };
 		AC004E8319AE5F2400970D00 /* ReminderItemCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */; };
 		AC00831919DDD70A002EC27C /* MHPrettyDate.strings in Resources */ = {isa = PBXBuildFile; fileRef = AC00831319DDD70A002EC27C /* MHPrettyDate.strings */; };
 		AC00831A19DDD70A002EC27C /* MHPrettyDate.m in Sources */ = {isa = PBXBuildFile; fileRef = AC00831719DDD70A002EC27C /* MHPrettyDate.m */; };
+		AC00831D19DE09B2002EC27C /* udoAvatar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC00831C19DE09B2002EC27C /* udoAvatar@2x.png */; };
 		AC0C72AE198E63E100B803B5 /* RegisterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */; };
 		AC0C72C1198E9C7A00B803B5 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72C0198E9C7A00B803B5 /* AudioToolbox.framework */; };
 		AC0C72C3198E9C8700B803B5 /* CFNetwork.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72C2198E9C8700B803B5 /* CFNetwork.framework */; };
@@ -24,15 +24,20 @@
 		AC0C72CF198E9CE300B803B5 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72CE198E9CE300B803B5 /* Security.framework */; };
 		AC0C72D1198E9CEC00B803B5 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72D0198E9CEC00B803B5 /* StoreKit.framework */; };
 		AC0C72D3198E9CF900B803B5 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC0C72D2198E9CF900B803B5 /* SystemConfiguration.framework */; };
-		AC1B48F119AFB24100C7B6B4 /* default-avatar.png in Resources */ = {isa = PBXBuildFile; fileRef = AC1B48EF19AFB24100C7B6B4 /* default-avatar.png */; };
+		AC11601319EEF90D00789FA5 /* calendar32@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC11601119EEF90D00789FA5 /* calendar32@2x.png */; };
+		AC11601419EEF90D00789FA5 /* notifications32@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC11601219EEF90D00789FA5 /* notifications32@2x.png */; };
+		AC11601619EEFA7F00789FA5 /* add25@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC11601519EEFA7F00789FA5 /* add25@2x.png */; };
 		AC1B48F219AFB24100C7B6B4 /* default-avatar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC1B48F019AFB24100C7B6B4 /* default-avatar@2x.png */; };
 		AC1B48F419AFCC9500C7B6B4 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC1B48F319AFCC9500C7B6B4 /* MessageUI.framework */; };
 		AC35BA1419CB6A9B005C3AAD /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC35BA1219CB6A9B005C3AAD /* Bolts.framework */; };
 		AC35BA1519CB6A9B005C3AAD /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC35BA1319CB6A9B005C3AAD /* Parse.framework */; };
-		AC404ACF19A140B400FBA16B /* lightpaperfibers_@2X.png in Resources */ = {isa = PBXBuildFile; fileRef = AC404ACD19A140B400FBA16B /* lightpaperfibers_@2X.png */; };
-		AC404AD019A140B400FBA16B /* lightpaperfibers.png in Resources */ = {isa = PBXBuildFile; fileRef = AC404ACE19A140B400FBA16B /* lightpaperfibers.png */; };
+		AC743D1919EEFD98004E730F /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC743D1819EEFD98004E730F /* Theme.swift */; };
+		AC743D2619EF94B3004E730F /* APAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = AC743D1C19EF94B3004E730F /* APAddress.m */; };
+		AC743D2719EF94B3004E730F /* APAddressBook.m in Sources */ = {isa = PBXBuildFile; fileRef = AC743D1E19EF94B3004E730F /* APAddressBook.m */; };
+		AC743D2819EF94B3004E730F /* APContact.m in Sources */ = {isa = PBXBuildFile; fileRef = AC743D2019EF94B3004E730F /* APContact.m */; };
+		AC743D2919EF94B3004E730F /* APPhoneWithLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = AC743D2219EF94B3004E730F /* APPhoneWithLabel.m */; };
+		AC743D2A19EF94B3004E730F /* APSocialProfile.m in Sources */ = {isa = PBXBuildFile; fileRef = AC743D2419EF94B3004E730F /* APSocialProfile.m */; };
 		AC7C4AD219D6D79C00BE25DC /* NSArray+LongestCommonSubsequence.m in Sources */ = {isa = PBXBuildFile; fileRef = AC7C4AD119D6D79C00BE25DC /* NSArray+LongestCommonSubsequence.m */; };
-		AC86751619A7DC19008CFCA8 /* clouds.jpg in Resources */ = {isa = PBXBuildFile; fileRef = AC86751519A7DC19008CFCA8 /* clouds.jpg */; };
 		ACA0DEBA19DC21D00003B893 /* StaticDataTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA0DEB819DC21D00003B893 /* StaticDataTableViewController.m */; };
 		ACA2FFA0198FFBD60098A5D5 /* NBAsYouTypeFormatter.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF92198FFBD60098A5D5 /* NBAsYouTypeFormatter.m */; };
 		ACA2FFA1198FFBD60098A5D5 /* NBNumberFormat.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF94198FFBD60098A5D5 /* NBNumberFormat.m */; };
@@ -43,30 +48,27 @@
 		ACA2FFA6198FFBD60098A5D5 /* NSArray+NBAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA2FF9F198FFBD60098A5D5 /* NSArray+NBAdditions.m */; };
 		ACA2FFAB198FFC590098A5D5 /* NBPhoneNumberMetadata.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACA2FFA9198FFC590098A5D5 /* NBPhoneNumberMetadata.plist */; };
 		ACA2FFAC198FFC590098A5D5 /* NBPhoneNumberMetadataForTesting.plist in Resources */ = {isa = PBXBuildFile; fileRef = ACA2FFAA198FFC590098A5D5 /* NBPhoneNumberMetadataForTesting.plist */; };
-		ACA925AB1996C8BD00FA86A1 /* sent.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A51996C8BD00FA86A1 /* sent.png */; };
-		ACA925AC1996C8BD00FA86A1 /* sending@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A61996C8BD00FA86A1 /* sending@2x.png */; };
 		ACA925AD1996C8BD00FA86A1 /* sent@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A71996C8BD00FA86A1 /* sent@2x.png */; };
-		ACA925AE1996C8BD00FA86A1 /* received.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A81996C8BD00FA86A1 /* received.png */; };
-		ACA925AF1996C8BD00FA86A1 /* sending.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925A91996C8BD00FA86A1 /* sending.png */; };
-		ACA925B01996C8BD00FA86A1 /* received@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACA925AA1996C8BD00FA86A1 /* received@2x.png */; };
-		ACAE74CF19A7C21A00072BF5 /* colors.jpg in Resources */ = {isa = PBXBuildFile; fileRef = ACAE74CE19A7C21A00072BF5 /* colors.jpg */; };
 		ACAE74D219A7C69600072BF5 /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */; };
-		ACD60AFE19C78886002F550A /* UDOReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF119C78886002F550A /* UDOReminderManager.swift */; };
+		ACBB74F919EC670000D44510 /* left@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACBB74F719EC670000D44510 /* left@2x.png */; };
+		ACBB74FA19EC670000D44510 /* right@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACBB74F819EC670000D44510 /* right@2x.png */; };
+		ACBB74FD19EC700A00D44510 /* UIImage+Tint.m in Sources */ = {isa = PBXBuildFile; fileRef = ACBB74FC19EC700A00D44510 /* UIImage+Tint.m */; };
+		ACBB750519EDB61B00D44510 /* NSDate+ISO8601.m in Sources */ = {isa = PBXBuildFile; fileRef = ACBB750419EDB61B00D44510 /* NSDate+ISO8601.m */; };
+		ACD60AFE19C78886002F550A /* EventStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF119C78886002F550A /* EventStoreManager.swift */; };
 		ACD60AFF19C78886002F550A /* RemindersMainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF219C78886002F550A /* RemindersMainViewController.swift */; };
 		ACD60B0019C78886002F550A /* AccountViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF319C78886002F550A /* AccountViewController.swift */; };
-		ACD60B0419C78886002F550A /* settings.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF719C78886002F550A /* settings.png */; };
 		ACD60B0519C78886002F550A /* settings@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AF819C78886002F550A /* settings@2x.png */; };
-		ACD60B0819C78886002F550A /* checkmark.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AFB19C78886002F550A /* checkmark.png */; };
-		ACD60B0919C78886002F550A /* checkmark@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60AFC19C78886002F550A /* checkmark@2x.png */; };
-		ACD60B0A19C78886002F550A /* ContactsHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AFD19C78886002F550A /* ContactsHelper.swift */; };
-		ACD60B0D19CA0AAF002F550A /* udo.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60B0B19CA0AAF002F550A /* udo.png */; };
+		ACD60B0A19C78886002F550A /* ContactsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AFD19C78886002F550A /* ContactsManager.swift */; };
 		ACD60B0E19CA0AAF002F550A /* udo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACD60B0C19CA0AAF002F550A /* udo@2x.png */; };
+		ACDB1CBE19E88AE1007D731D /* SettingsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDB1CBD19E88AE1007D731D /* SettingsTableViewController.swift */; };
+		ACDB1CC119E8FD9C007D731D /* calendar@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACDB1CBF19E8FD9C007D731D /* calendar@2x.png */; };
+		ACDB1CC219E8FD9C007D731D /* notifications@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACDB1CC019E8FD9C007D731D /* notifications@2x.png */; };
+		ACDB1CC419EAB909007D731D /* ReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACDB1CC319EAB909007D731D /* ReminderManager.swift */; };
 		ACE869221992CB5C00F26D67 /* ReminderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE869211992CB5C00F26D67 /* ReminderViewController.swift */; };
 		ACF35C3C19A3E92E00831391 /* plus@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF35C3A19A3E92E00831391 /* plus@2x.png */; };
-		ACF35C3D19A3E92E00831391 /* plus.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF35C3B19A3E92E00831391 /* plus.png */; };
 		ACF35C4019A3EC9C00831391 /* FXBlurView.m in Sources */ = {isa = PBXBuildFile; fileRef = ACF35C3F19A3EC9C00831391 /* FXBlurView.m */; };
 		ACF9BDEB19CEBE6C00E28504 /* UDOModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACF9BDEA19CEBE6C00E28504 /* UDOModels.swift */; };
-		ACF9BDED19D33D8A00E28504 /* add.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF9BDEC19D33D8A00E28504 /* add.png */; };
+		ACF9BDED19D33D8A00E28504 /* add@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF9BDEC19D33D8A00E28504 /* add@2x.png */; };
 		ACFB6C2B198AB7BB0091E4AB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */; };
 		ACFB6C32198AB7BB0091E4AB /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = ACFB6C30198AB7BB0091E4AB /* Main.storyboard */; };
 		ACFB6C34198AB7BB0091E4AB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ACFB6C33198AB7BB0091E4AB /* Images.xcassets */; };
@@ -85,15 +87,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		AC004E7A19AA032E00970D00 /* sativa.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sativa.png; sourceTree = "<group>"; };
 		AC004E7C19AA53EE00970D00 /* geometry2.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = geometry2.png; sourceTree = "<group>"; };
 		AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ReminderItemCell.xib; sourceTree = "<group>"; };
-		AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderItemCell.swift; sourceTree = "<group>"; };
+		AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = ReminderItemCell.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		AC00831419DDD70A002EC27C /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/MHPrettyDate.strings; sourceTree = "<group>"; };
 		AC00831519DDD70A002EC27C /* MHPrettyDate-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "MHPrettyDate-Prefix.pch"; sourceTree = "<group>"; };
 		AC00831619DDD70A002EC27C /* MHPrettyDate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MHPrettyDate.h; sourceTree = "<group>"; };
 		AC00831719DDD70A002EC27C /* MHPrettyDate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MHPrettyDate.m; sourceTree = "<group>"; };
 		AC00831819DDD70A002EC27C /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/MHPrettyDate.strings; sourceTree = "<group>"; };
+		AC00831C19DE09B2002EC27C /* udoAvatar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "udoAvatar@2x.png"; sourceTree = "<group>"; };
 		AC0C72AA198DA47200B803B5 /* UDO-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UDO-Bridging-Header.h"; sourceTree = "<group>"; };
 		AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegisterViewController.swift; sourceTree = "<group>"; };
 		AC0C72C0198E9C7A00B803B5 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
@@ -106,16 +108,27 @@
 		AC0C72CE198E9CE300B803B5 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		AC0C72D0198E9CEC00B803B5 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		AC0C72D2198E9CF900B803B5 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
-		AC1B48EF19AFB24100C7B6B4 /* default-avatar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "default-avatar.png"; sourceTree = "<group>"; };
+		AC11601119EEF90D00789FA5 /* calendar32@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "calendar32@2x.png"; sourceTree = "<group>"; };
+		AC11601219EEF90D00789FA5 /* notifications32@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "notifications32@2x.png"; sourceTree = "<group>"; };
+		AC11601519EEFA7F00789FA5 /* add25@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "add25@2x.png"; sourceTree = "<group>"; };
 		AC1B48F019AFB24100C7B6B4 /* default-avatar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "default-avatar@2x.png"; sourceTree = "<group>"; };
 		AC1B48F319AFCC9500C7B6B4 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
 		AC35BA1219CB6A9B005C3AAD /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Bolts.framework; path = udo/Bolts.framework; sourceTree = "<group>"; };
 		AC35BA1319CB6A9B005C3AAD /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Parse.framework; path = udo/Parse.framework; sourceTree = "<group>"; };
-		AC404ACD19A140B400FBA16B /* lightpaperfibers_@2X.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "lightpaperfibers_@2X.png"; sourceTree = "<group>"; };
-		AC404ACE19A140B400FBA16B /* lightpaperfibers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = lightpaperfibers.png; sourceTree = "<group>"; };
+		AC743D1819EEFD98004E730F /* Theme.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		AC743D1B19EF94B3004E730F /* APAddress.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APAddress.h; sourceTree = "<group>"; };
+		AC743D1C19EF94B3004E730F /* APAddress.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APAddress.m; sourceTree = "<group>"; };
+		AC743D1D19EF94B3004E730F /* APAddressBook.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APAddressBook.h; sourceTree = "<group>"; };
+		AC743D1E19EF94B3004E730F /* APAddressBook.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APAddressBook.m; sourceTree = "<group>"; };
+		AC743D1F19EF94B3004E730F /* APContact.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APContact.h; sourceTree = "<group>"; };
+		AC743D2019EF94B3004E730F /* APContact.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APContact.m; sourceTree = "<group>"; };
+		AC743D2119EF94B3004E730F /* APPhoneWithLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APPhoneWithLabel.h; sourceTree = "<group>"; };
+		AC743D2219EF94B3004E730F /* APPhoneWithLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APPhoneWithLabel.m; sourceTree = "<group>"; };
+		AC743D2319EF94B3004E730F /* APSocialProfile.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APSocialProfile.h; sourceTree = "<group>"; };
+		AC743D2419EF94B3004E730F /* APSocialProfile.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APSocialProfile.m; sourceTree = "<group>"; };
+		AC743D2519EF94B3004E730F /* APTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APTypes.h; sourceTree = "<group>"; };
 		AC7C4AD019D6D79C00BE25DC /* NSArray+LongestCommonSubsequence.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSArray+LongestCommonSubsequence.h"; sourceTree = "<group>"; };
 		AC7C4AD119D6D79C00BE25DC /* NSArray+LongestCommonSubsequence.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+LongestCommonSubsequence.m"; sourceTree = "<group>"; };
-		AC86751519A7DC19008CFCA8 /* clouds.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = clouds.jpg; sourceTree = "<group>"; };
 		ACA0DEB819DC21D00003B893 /* StaticDataTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = StaticDataTableViewController.m; sourceTree = "<group>"; };
 		ACA0DEB919DC21D00003B893 /* StaticDataTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StaticDataTableViewController.h; sourceTree = "<group>"; };
 		ACA2FF91198FFBD60098A5D5 /* NBAsYouTypeFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NBAsYouTypeFormatter.h; sourceTree = "<group>"; };
@@ -135,35 +148,34 @@
 		ACA2FF9F198FFBD60098A5D5 /* NSArray+NBAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSArray+NBAdditions.m"; sourceTree = "<group>"; };
 		ACA2FFA9198FFC590098A5D5 /* NBPhoneNumberMetadata.plist */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = NBPhoneNumberMetadata.plist; sourceTree = "<group>"; };
 		ACA2FFAA198FFC590098A5D5 /* NBPhoneNumberMetadataForTesting.plist */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = NBPhoneNumberMetadataForTesting.plist; sourceTree = "<group>"; };
-		ACA925A51996C8BD00FA86A1 /* sent.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sent.png; sourceTree = "<group>"; };
-		ACA925A61996C8BD00FA86A1 /* sending@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sending@2x.png"; sourceTree = "<group>"; };
 		ACA925A71996C8BD00FA86A1 /* sent@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "sent@2x.png"; sourceTree = "<group>"; };
-		ACA925A81996C8BD00FA86A1 /* received.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = received.png; sourceTree = "<group>"; };
-		ACA925A91996C8BD00FA86A1 /* sending.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = sending.png; sourceTree = "<group>"; };
-		ACA925AA1996C8BD00FA86A1 /* received@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "received@2x.png"; sourceTree = "<group>"; };
-		ACAE74CE19A7C21A00072BF5 /* colors.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = colors.jpg; sourceTree = "<group>"; };
 		ACAE74D019A7C69600072BF5 /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+ImageEffects.m"; sourceTree = "<group>"; };
-		ACD60AF119C78886002F550A /* UDOReminderManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDOReminderManager.swift; sourceTree = "<group>"; };
-		ACD60AF219C78886002F550A /* RemindersMainViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemindersMainViewController.swift; sourceTree = "<group>"; };
+		ACBB74F719EC670000D44510 /* left@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "left@2x.png"; sourceTree = "<group>"; };
+		ACBB74F819EC670000D44510 /* right@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "right@2x.png"; sourceTree = "<group>"; };
+		ACBB74FB19EC700A00D44510 /* UIImage+Tint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Tint.h"; sourceTree = "<group>"; };
+		ACBB74FC19EC700A00D44510 /* UIImage+Tint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Tint.m"; sourceTree = "<group>"; };
+		ACBB750319EDB61B00D44510 /* NSDate+ISO8601.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSDate+ISO8601.h"; sourceTree = "<group>"; };
+		ACBB750419EDB61B00D44510 /* NSDate+ISO8601.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSDate+ISO8601.m"; sourceTree = "<group>"; };
+		ACD60AF119C78886002F550A /* EventStoreManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = EventStoreManager.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		ACD60AF219C78886002F550A /* RemindersMainViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = RemindersMainViewController.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		ACD60AF319C78886002F550A /* AccountViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AccountViewController.swift; sourceTree = "<group>"; };
-		ACD60AF719C78886002F550A /* settings.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = settings.png; sourceTree = "<group>"; };
 		ACD60AF819C78886002F550A /* settings@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "settings@2x.png"; sourceTree = "<group>"; };
-		ACD60AFB19C78886002F550A /* checkmark.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = checkmark.png; sourceTree = "<group>"; };
-		ACD60AFC19C78886002F550A /* checkmark@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "checkmark@2x.png"; sourceTree = "<group>"; };
-		ACD60AFD19C78886002F550A /* ContactsHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsHelper.swift; sourceTree = "<group>"; };
-		ACD60B0B19CA0AAF002F550A /* udo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = udo.png; sourceTree = "<group>"; };
+		ACD60AFD19C78886002F550A /* ContactsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContactsManager.swift; sourceTree = "<group>"; };
 		ACD60B0C19CA0AAF002F550A /* udo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "udo@2x.png"; sourceTree = "<group>"; };
-		ACE869211992CB5C00F26D67 /* ReminderViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReminderViewController.swift; sourceTree = "<group>"; };
+		ACDB1CBD19E88AE1007D731D /* SettingsTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsTableViewController.swift; sourceTree = "<group>"; };
+		ACDB1CBF19E8FD9C007D731D /* calendar@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "calendar@2x.png"; sourceTree = "<group>"; };
+		ACDB1CC019E8FD9C007D731D /* notifications@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "notifications@2x.png"; sourceTree = "<group>"; };
+		ACDB1CC319EAB909007D731D /* ReminderManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = ReminderManager.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
+		ACE869211992CB5C00F26D67 /* ReminderViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = ReminderViewController.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		ACF35C3A19A3E92E00831391 /* plus@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "plus@2x.png"; sourceTree = "<group>"; };
-		ACF35C3B19A3E92E00831391 /* plus.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = plus.png; sourceTree = "<group>"; };
 		ACF35C3E19A3EC9C00831391 /* FXBlurView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FXBlurView.h; sourceTree = "<group>"; };
 		ACF35C3F19A3EC9C00831391 /* FXBlurView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FXBlurView.m; sourceTree = "<group>"; };
 		ACF9BDEA19CEBE6C00E28504 /* UDOModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDOModels.swift; sourceTree = "<group>"; };
-		ACF9BDEC19D33D8A00E28504 /* add.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = add.png; sourceTree = "<group>"; };
+		ACF9BDEC19D33D8A00E28504 /* add@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "add@2x.png"; sourceTree = "<group>"; };
 		ACFB6C25198AB7BB0091E4AB /* udo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = udo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ACFB6C29198AB7BB0091E4AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; lineEnding = 0; path = AppDelegate.swift; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 		ACFB6C31198AB7BB0091E4AB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		ACFB6C33198AB7BB0091E4AB /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		ACFB6C39198AB7BC0091E4AB /* udoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = udoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -212,6 +224,25 @@
 				AC00831719DDD70A002EC27C /* MHPrettyDate.m */,
 			);
 			path = MHPrettyDate;
+			sourceTree = "<group>";
+		};
+		AC743D1A19EF94B3004E730F /* APAddressBook */ = {
+			isa = PBXGroup;
+			children = (
+				AC743D1B19EF94B3004E730F /* APAddress.h */,
+				AC743D1C19EF94B3004E730F /* APAddress.m */,
+				AC743D1D19EF94B3004E730F /* APAddressBook.h */,
+				AC743D1E19EF94B3004E730F /* APAddressBook.m */,
+				AC743D1F19EF94B3004E730F /* APContact.h */,
+				AC743D2019EF94B3004E730F /* APContact.m */,
+				AC743D2119EF94B3004E730F /* APPhoneWithLabel.h */,
+				AC743D2219EF94B3004E730F /* APPhoneWithLabel.m */,
+				AC743D2319EF94B3004E730F /* APSocialProfile.h */,
+				AC743D2419EF94B3004E730F /* APSocialProfile.m */,
+				AC743D2519EF94B3004E730F /* APTypes.h */,
+			);
+			name = APAddressBook;
+			path = Core;
 			sourceTree = "<group>";
 		};
 		AC7C4AD319D6D7A300BE25DC /* NSArray+LongestCommonSubsequence */ = {
@@ -267,29 +298,21 @@
 		ACA9259C1996C24C00FA86A1 /* images */ = {
 			isa = PBXGroup;
 			children = (
-				ACF9BDEC19D33D8A00E28504 /* add.png */,
-				ACD60B0B19CA0AAF002F550A /* udo.png */,
+				AC11601519EEFA7F00789FA5 /* add25@2x.png */,
+				AC11601119EEF90D00789FA5 /* calendar32@2x.png */,
+				AC11601219EEF90D00789FA5 /* notifications32@2x.png */,
+				ACBB74F719EC670000D44510 /* left@2x.png */,
+				ACBB74F819EC670000D44510 /* right@2x.png */,
+				ACDB1CBF19E8FD9C007D731D /* calendar@2x.png */,
+				ACDB1CC019E8FD9C007D731D /* notifications@2x.png */,
+				AC00831C19DE09B2002EC27C /* udoAvatar@2x.png */,
+				ACF9BDEC19D33D8A00E28504 /* add@2x.png */,
 				ACD60B0C19CA0AAF002F550A /* udo@2x.png */,
-				ACD60AF719C78886002F550A /* settings.png */,
 				ACD60AF819C78886002F550A /* settings@2x.png */,
-				ACD60AFB19C78886002F550A /* checkmark.png */,
-				ACD60AFC19C78886002F550A /* checkmark@2x.png */,
-				AC86751519A7DC19008CFCA8 /* clouds.jpg */,
-				ACAE74CE19A7C21A00072BF5 /* colors.jpg */,
-				AC1B48EF19AFB24100C7B6B4 /* default-avatar.png */,
 				AC1B48F019AFB24100C7B6B4 /* default-avatar@2x.png */,
-				AC004E7A19AA032E00970D00 /* sativa.png */,
 				ACF35C3A19A3E92E00831391 /* plus@2x.png */,
-				ACF35C3B19A3E92E00831391 /* plus.png */,
 				AC004E7C19AA53EE00970D00 /* geometry2.png */,
-				AC404ACD19A140B400FBA16B /* lightpaperfibers_@2X.png */,
-				AC404ACE19A140B400FBA16B /* lightpaperfibers.png */,
-				ACA925A51996C8BD00FA86A1 /* sent.png */,
-				ACA925A61996C8BD00FA86A1 /* sending@2x.png */,
 				ACA925A71996C8BD00FA86A1 /* sent@2x.png */,
-				ACA925A81996C8BD00FA86A1 /* received.png */,
-				ACA925A91996C8BD00FA86A1 /* sending.png */,
-				ACA925AA1996C8BD00FA86A1 /* received@2x.png */,
 			);
 			name = images;
 			sourceTree = "<group>";
@@ -301,6 +324,24 @@
 				ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */,
 			);
 			name = "UIImage+ImageEffects";
+			sourceTree = "<group>";
+		};
+		ACBB74FE19EC701100D44510 /* UIImage+Tint */ = {
+			isa = PBXGroup;
+			children = (
+				ACBB74FB19EC700A00D44510 /* UIImage+Tint.h */,
+				ACBB74FC19EC700A00D44510 /* UIImage+Tint.m */,
+			);
+			name = "UIImage+Tint";
+			sourceTree = "<group>";
+		};
+		ACBB750219EDB38200D44510 /* ISO8601DateFormatter */ = {
+			isa = PBXGroup;
+			children = (
+				ACBB750319EDB61B00D44510 /* NSDate+ISO8601.h */,
+				ACBB750419EDB61B00D44510 /* NSDate+ISO8601.m */,
+			);
+			name = ISO8601DateFormatter;
 			sourceTree = "<group>";
 		};
 		ACF35C4119A3ECA200831391 /* FXBlurView */ = {
@@ -347,10 +388,12 @@
 		ACFB6C27198AB7BB0091E4AB /* udo */ = {
 			isa = PBXGroup;
 			children = (
+				ACDB1CC319EAB909007D731D /* ReminderManager.swift */,
 				ACF9BDEA19CEBE6C00E28504 /* UDOModels.swift */,
-				ACD60AF119C78886002F550A /* UDOReminderManager.swift */,
+				ACD60AF119C78886002F550A /* EventStoreManager.swift */,
 				ACD60AF319C78886002F550A /* AccountViewController.swift */,
-				ACD60AFD19C78886002F550A /* ContactsHelper.swift */,
+				ACDB1CBD19E88AE1007D731D /* SettingsTableViewController.swift */,
+				ACD60AFD19C78886002F550A /* ContactsManager.swift */,
 				ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */,
 				ACFB6C49198ACE2E0091E4AB /* ContactsViewController.swift */,
 				ACE869211992CB5C00F26D67 /* ReminderViewController.swift */,
@@ -359,6 +402,10 @@
 				ACFB6C30198AB7BB0091E4AB /* Main.storyboard */,
 				AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */,
 				AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */,
+				AC743D1819EEFD98004E730F /* Theme.swift */,
+				AC743D1A19EF94B3004E730F /* APAddressBook */,
+				ACBB750219EDB38200D44510 /* ISO8601DateFormatter */,
+				ACBB74FE19EC701100D44510 /* UIImage+Tint */,
 				AC00831219DDD70A002EC27C /* MHPrettyDate */,
 				ACA0DEBB19DC21DB0003B893 /* StaticDataTableViewController */,
 				AC7C4AD319D6D7A300BE25DC /* NSArray+LongestCommonSubsequence */,
@@ -484,35 +531,27 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC1B48F119AFB24100C7B6B4 /* default-avatar.png in Resources */,
-				AC404AD019A140B400FBA16B /* lightpaperfibers.png in Resources */,
+				ACDB1CC119E8FD9C007D731D /* calendar@2x.png in Resources */,
+				AC11601619EEFA7F00789FA5 /* add25@2x.png in Resources */,
 				ACFB6C32198AB7BB0091E4AB /* Main.storyboard in Resources */,
-				ACF9BDED19D33D8A00E28504 /* add.png in Resources */,
-				AC86751619A7DC19008CFCA8 /* clouds.jpg in Resources */,
-				ACA925B01996C8BD00FA86A1 /* received@2x.png in Resources */,
-				ACA925AB1996C8BD00FA86A1 /* sent.png in Resources */,
+				AC11601319EEF90D00789FA5 /* calendar32@2x.png in Resources */,
+				ACF9BDED19D33D8A00E28504 /* add@2x.png in Resources */,
 				ACA925AD1996C8BD00FA86A1 /* sent@2x.png in Resources */,
-				ACD60B0919C78886002F550A /* checkmark@2x.png in Resources */,
 				AC00831919DDD70A002EC27C /* MHPrettyDate.strings in Resources */,
-				ACF35C3D19A3E92E00831391 /* plus.png in Resources */,
 				ACA2FFAB198FFC590098A5D5 /* NBPhoneNumberMetadata.plist in Resources */,
-				ACD60B0D19CA0AAF002F550A /* udo.png in Resources */,
 				AC004E7F19AD1BED00970D00 /* ReminderItemCell.xib in Resources */,
 				ACFB6C34198AB7BB0091E4AB /* Images.xcassets in Resources */,
 				AC004E7D19AA53EE00970D00 /* geometry2.png in Resources */,
 				ACF35C3C19A3E92E00831391 /* plus@2x.png in Resources */,
+				ACDB1CC219E8FD9C007D731D /* notifications@2x.png in Resources */,
+				ACBB74FA19EC670000D44510 /* right@2x.png in Resources */,
 				AC1B48F219AFB24100C7B6B4 /* default-avatar@2x.png in Resources */,
-				ACA925AF1996C8BD00FA86A1 /* sending.png in Resources */,
-				ACAE74CF19A7C21A00072BF5 /* colors.jpg in Resources */,
-				ACD60B0419C78886002F550A /* settings.png in Resources */,
+				ACBB74F919EC670000D44510 /* left@2x.png in Resources */,
 				ACD60B0E19CA0AAF002F550A /* udo@2x.png in Resources */,
 				ACA2FFAC198FFC590098A5D5 /* NBPhoneNumberMetadataForTesting.plist in Resources */,
-				ACA925AE1996C8BD00FA86A1 /* received.png in Resources */,
-				AC004E7B19AA032E00970D00 /* sativa.png in Resources */,
-				ACD60B0819C78886002F550A /* checkmark.png in Resources */,
 				ACD60B0519C78886002F550A /* settings@2x.png in Resources */,
-				ACA925AC1996C8BD00FA86A1 /* sending@2x.png in Resources */,
-				AC404ACF19A140B400FBA16B /* lightpaperfibers_@2X.png in Resources */,
+				AC11601419EEF90D00789FA5 /* notifications32@2x.png in Resources */,
+				AC00831D19DE09B2002EC27C /* udoAvatar@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -530,27 +569,37 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AC743D1919EEFD98004E730F /* Theme.swift in Sources */,
+				AC743D2719EF94B3004E730F /* APAddressBook.m in Sources */,
 				ACA2FFA3198FFBD60098A5D5 /* NBPhoneNumber.m in Sources */,
+				AC743D2819EF94B3004E730F /* APContact.m in Sources */,
 				ACA2FFA1198FFBD60098A5D5 /* NBNumberFormat.m in Sources */,
 				ACF9BDEB19CEBE6C00E28504 /* UDOModels.swift in Sources */,
 				ACF35C4019A3EC9C00831391 /* FXBlurView.m in Sources */,
 				AC004E8319AE5F2400970D00 /* ReminderItemCell.swift in Sources */,
 				ACA2FFA2198FFBD60098A5D5 /* NBPhoneMetaData.m in Sources */,
+				AC743D2A19EF94B3004E730F /* APSocialProfile.m in Sources */,
 				ACD60B0019C78886002F550A /* AccountViewController.swift in Sources */,
-				ACD60B0A19C78886002F550A /* ContactsHelper.swift in Sources */,
+				ACBB74FD19EC700A00D44510 /* UIImage+Tint.m in Sources */,
+				ACD60B0A19C78886002F550A /* ContactsManager.swift in Sources */,
 				ACE869221992CB5C00F26D67 /* ReminderViewController.swift in Sources */,
+				ACDB1CC419EAB909007D731D /* ReminderManager.swift in Sources */,
 				ACA0DEBA19DC21D00003B893 /* StaticDataTableViewController.m in Sources */,
 				AC00831A19DDD70A002EC27C /* MHPrettyDate.m in Sources */,
 				AC0C72AE198E63E100B803B5 /* RegisterViewController.swift in Sources */,
+				AC743D2919EF94B3004E730F /* APPhoneWithLabel.m in Sources */,
 				ACFB6C4A198ACE2E0091E4AB /* ContactsViewController.swift in Sources */,
 				ACA2FFA5198FFBD60098A5D5 /* NBPhoneNumberUtil.m in Sources */,
 				ACA2FFA6198FFBD60098A5D5 /* NSArray+NBAdditions.m in Sources */,
-				ACD60AFE19C78886002F550A /* UDOReminderManager.swift in Sources */,
+				ACD60AFE19C78886002F550A /* EventStoreManager.swift in Sources */,
+				ACBB750519EDB61B00D44510 /* NSDate+ISO8601.m in Sources */,
 				ACA2FFA0198FFBD60098A5D5 /* NBAsYouTypeFormatter.m in Sources */,
+				AC743D2619EF94B3004E730F /* APAddress.m in Sources */,
 				ACD60AFF19C78886002F550A /* RemindersMainViewController.swift in Sources */,
 				AC7C4AD219D6D79C00BE25DC /* NSArray+LongestCommonSubsequence.m in Sources */,
 				ACA2FFA4198FFBD60098A5D5 /* NBPhoneNumberDesc.m in Sources */,
 				ACAE74D219A7C69600072BF5 /* UIImage+ImageEffects.m in Sources */,
+				ACDB1CBE19E88AE1007D731D /* SettingsTableViewController.swift in Sources */,
 				ACFB6C2B198AB7BB0091E4AB /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -684,15 +733,15 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/udo",
-					"/Users/osman/Documents/pop-master/build/Debug",
 				);
 				INFOPLIST_FILE = udo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "92bd51a4-12aa-460b-a2bf-8a9c4a4f6f49";
+				PROVISIONING_PROFILE = "738a9da7-f551-4ec7-8be4-89653b91f5fd";
 				SWIFT_OBJC_BRIDGING_HEADER = "UDO-Bridging-Header.h";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "UDO-Bridging-Header.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -707,14 +756,14 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/udo",
-					"/Users/osman/Documents/pop-master/build/Debug",
 				);
 				INFOPLIST_FILE = udo/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE = "92bd51a4-12aa-460b-a2bf-8a9c4a4f6f49";
+				PROVISIONING_PROFILE = "738a9da7-f551-4ec7-8be4-89653b91f5fd";
 				"SWIFT_OBJC_BRIDGING_HEADER[arch=*]" = "UDO-Bridging-Header.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};

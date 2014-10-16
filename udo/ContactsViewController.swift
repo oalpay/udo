@@ -9,7 +9,6 @@
 import Foundation
 import UIKit
 import AddressBookUI
-import MessageUI
 
 class ContactTableViewCell:UITableViewCell{
     @IBOutlet weak var name: UILabel!
@@ -30,13 +29,12 @@ class ContactPhoneNumberTableViewCell:UITableViewCell{
 }
 
 
-class ContactDetailsViewController:UITableViewController,MFMessageComposeViewControllerDelegate{
+class ContactDetailsViewController:UITableViewController{
     @IBOutlet weak var name: UILabel!
     @IBOutlet weak var image: UIImageView!
     
-    
     var contact:Contact!
-    var contactsHelper = ContactsHelper.sharedInstance
+    var contactsManager = ContactsManager.sharedInstance
     
     override func viewDidLoad() {
         name.text = contact.name
@@ -46,63 +44,14 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
         if let img = contact.image{
             image.image = img
         }
-        
     }
-    
-    
-    @IBAction func inviteButtonPressed(sender: AnyObject) {
-        let point = sender.convertPoint(CGPointZero, toView: self.tableView)
-        let indexPath = self.tableView.indexPathForRowAtPoint(point)
-        self.tableView.selectRowAtIndexPath(indexPath!, animated: false, scrollPosition: UITableViewScrollPosition.Bottom)
-        sendInvitation()
-    }
-    
-    func getInvitationLetter() -> String {
-        return PFConfig.getConfig()["invitationSMS"] as String
-    }
-    
-    func sendInvitation(){
-        if MFMessageComposeViewController.canSendText() {
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
-            let recipents = [selectedNumber.original]
-            let messageController = MFMessageComposeViewController()
-            messageController.messageComposeDelegate = self
-            messageController.recipients = recipents
-            //messageController.body = self.getInvitationLetter()
-            self.presentViewController(messageController, animated: true, completion: nil)
-        }else{
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
-            invitationSent(selectedNumber)
-            self.performSegueWithIdentifier("ContactSelected", sender: nil)
-        }
-    }
-    
-    func invitationSent(number:ContactNumber){
-        var invitation = PFObject(className: "Invitation")
-        invitation["to"] = number.userId
-        invitation["from"] = PFUser.currentUser().username
-        invitation.saveInBackground()
-    }
-    
-    func messageComposeViewController(controller: MFMessageComposeViewController!, didFinishWithResult result: MessageComposeResult) {
-        if result.value == MessageComposeResultFailed.value{
-            UIAlertView(title: "Error", message: "Failed to send message", delegate: nil, cancelButtonTitle: "Continue").show()
-            controller.dismissViewControllerAnimated(true, completion: nil)
-        }else if result.value == MessageComposeResultSent.value {
-            let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
-            invitationSent(selectedNumber)
-            controller.dismissViewControllerAnimated(true, completion: nil)
-            self.performSegueWithIdentifier("ContactSelected", sender: nil)
-        }else if result.value == MessageComposeResultCancelled.value {
-            controller.dismissViewControllerAnimated(true, completion: nil)
-        }
-    }
-    
+   
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let contactDetailsCell = tableView.dequeueReusableCellWithIdentifier("ContactDetails", forIndexPath: indexPath) as ContactPhoneNumberTableViewCell
         let number = contact.numbers[indexPath.row]
         contactDetailsCell.number.text = number.original
-        if contactsHelper.isNumberRegistered(number) {
+        contactDetailsCell.inviteButton.addTarget(self, action: "inviteButtonPreseed:", forControlEvents: UIControlEvents.TouchUpInside)
+        if contactsManager.isNumberRegistered(number) {
             contactDetailsCell.isRegisteredImageView.hidden = false
             contactDetailsCell.inviteButton.hidden = true
         }else{
@@ -118,30 +67,40 @@ class ContactDetailsViewController:UITableViewController,MFMessageComposeViewCon
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        let selectedNumber = contact.numbers[self.tableView.indexPathForSelectedRow()!.row]
-       if contactsHelper.isNumberRegistered(selectedNumber) {
+        self.performSegueWithIdentifier("ContactSelected", sender: self)
+    }
+    
+    func inviteButtonPreseed(button:UIButton){
+        var point = button.convertPoint(CGPointZero, toView:self.tableView)
+        if let indexPath =  self.tableView.indexPathForRowAtPoint(point) {
+            self.tableView.selectRowAtIndexPath(indexPath, animated: true, scrollPosition: UITableViewScrollPosition.None)
             self.performSegueWithIdentifier("ContactSelected", sender: self)
         }
     }
 }
 
 class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
-    var contactsHelper = ContactsHelper.sharedInstance
+    var contactsManager = ContactsManager.sharedInstance
     var sectionHeaders:[String]!
     var sectionContacts:Dictionary<String,NSMutableArray>!
     
     var searchHeaders:[String]! = []
     var searchSections:Dictionary<String,NSMutableArray>! = Dictionary<String,NSMutableArray>()
     
+    var contacts:[Contact]!
+    var previousSearchResultSet = NSSet()
+    
     override func viewDidLoad() {
-        (self.sectionHeaders,self.sectionContacts)  = self.divideContactsToSection(contactsHelper.contacts)
+        self.navigationController?.navigationBar.titleTextAttributes =  [NSForegroundColorAttributeName: AppTheme.logoColor]
+        self.contacts = contactsManager.contacts
+        (self.sectionHeaders,self.sectionContacts)  = self.divideContactsToSection(self.contacts)
     }
     
     func divideContactsToSection( contacts:[Contact] ) -> ([String]!,Dictionary<String,NSMutableArray>!) {
         var sections = Dictionary<String,NSMutableArray>()
         for contact in contacts{
             var section:NSMutableArray!
-            let sectionChar = contact.name.substringToIndex(contact.name.startIndex.successor()).uppercaseString
+            let sectionChar = contact.name!.substringToIndex(contact.name!.startIndex.successor()).uppercaseString
             if let s = sections[sectionChar] as NSMutableArray?{
                 section = s
             }else{
@@ -239,25 +198,20 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
     
     func searchDisplayController(controller: UISearchDisplayController, shouldReloadTableForSearchString searchString: String) -> Bool {
         var newSearchResults:[Contact] = []
-        for contact in contactsHelper.contacts {
-            let name:NSString = contact.name
-            for token in name.componentsSeparatedByString(" ") as [String]{
-                if token.lowercaseString.hasPrefix(searchString.lowercaseString){
+        var lowercaseSearchString = searchString.lowercaseString
+        for contact in self.contacts {
+            for token in contact.tokens {
+                if token.hasPrefix(lowercaseSearchString) {
                     newSearchResults.append(contact)
                     break
                 }
             }
         }
-        var oldResultSet = NSSet()
-        for section in self.searchSections.values {
-            for contact in section {
-                oldResultSet.setByAddingObject(contact)
-            }
-        }
         let newResultSet:NSSet = NSSet(array: newSearchResults)
-        if oldResultSet.isEqualToSet(newResultSet){
+        if self.previousSearchResultSet.isEqualToSet(newResultSet){
             return false
         }else{
+            self.previousSearchResultSet = newResultSet
             (self.searchHeaders, self.searchSections) = self.divideContactsToSection(newSearchResults)
             return true
         }

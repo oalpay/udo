@@ -8,9 +8,6 @@
 
 import Foundation
 
-let KReminderPushReceivedNotification = "KReminderPushReceivedNotification"
-let KRemindersChangedNotification = "KRemindersChangedNotification"
-
 let kReminderTitle = "title"
 let kReminderAlarmDate = "alarmDate"
 let kReminderCollaborators = "collaborators"
@@ -25,6 +22,7 @@ class Reminder : PFObject, PFSubclassing{
     @NSManaged var title:String!
     @NSManaged var dueDate:NSDate!
     
+    
     override class func load() {
         self.registerSubclass()
     }
@@ -38,7 +36,14 @@ class Reminder : PFObject, PFSubclassing{
         })
     }
     
-
+    func setUserDone(){
+        self.addUniqueObject(PFUser.currentUser().username, forKey: kReminderDones)
+    }
+    
+    func setUserUnDone(){
+        self.removeObject(PFUser.currentUser().username, forKey: kReminderDones)
+    }
+    
     func isCurrentUserDone() -> Bool {
         return self.isUserDoneOnModel(PFUser.currentUser().username)
     }
@@ -63,32 +68,25 @@ class Reminder : PFObject, PFSubclassing{
         return self.collaborators.first? == PFUser.currentUser().username
     }
     
-    override func isEqual(object: AnyObject?) -> Bool {
-        let other = object as Reminder
-        if self.title != other.title {
-            return false
-        }
-        if self.dueDate.isEqualToDate(other.dueDate) {
-            return false
-        }
-        if !NSSet(array: self.dones).isEqualToSet(NSSet(array: other.dones)) {
-            return false
-        }
-        if !NSSet(array: self.dones).isEqualToSet(NSSet(array: other.dones)) {
-            return false
-        }
-        return true
-    }
-    
     func doneRatio() -> Double {
         if self.dones == nil {
             return 0
         }
         return Double(self.dones.count) / Double(self.collaborators.count)
     }
+    
+    func key() -> String {
+        if self.objectId == nil {
+            return String(self.hash)
+        }else{
+            return self.objectId
+        }
+    }
+    
 }
 
 class Reminders {
+    /*
     class func updateReminderStatusInBackground(reminders:[Reminder]){
         var application = UIApplication.sharedApplication()
         var bgTask:UIBackgroundTaskIdentifier!
@@ -100,6 +98,6 @@ class Reminders {
             application.endBackgroundTask(bgTask)
             bgTask = UIBackgroundTaskInvalid
         })
-        
     }
+    */
 }

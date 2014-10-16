@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="6245" systemVersion="13F34" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES">
     <dependencies>
-        <deployment defaultVersion="1808" identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6238"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
@@ -14,62 +12,108 @@
             <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="kNH-at-1nb" id="xyS-uc-pnM">
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Due 07/16/1984" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="d4n-qu-2C4" userLabel="Reminder Date">
-                        <rect key="frame" x="50" y="51" width="130" height="13"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="07/16/1984" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="d4n-qu-2C4" userLabel="Reminder Date">
+                        <rect key="frame" x="68" y="49" width="115" height="15.5"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="130" id="Rbh-jA-iKP"/>
+                            <constraint firstAttribute="width" constant="115" id="Rbh-jA-iKP"/>
                         </constraints>
-                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="11"/>
+                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="13"/>
                         <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bahar Yilmaz" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4hP-t7-FCk" userLabel="Reminder Name">
-                        <rect key="frame" x="50" y="8" width="262" height="12"/>
-                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="10"/>
+                        <rect key="frame" x="62" y="7" width="147" height="15.5"/>
+                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="13"/>
                         <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <view contentMode="scaleToFill" ambiguous="YES" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HUu-dG-ZmT">
+                    <view contentMode="scaleToFill" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HUu-dG-ZmT">
                         <rect key="frame" x="0.0" y="0.0" width="42" height="69.5"/>
                         <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="calibratedWhite"/>
-                    </view>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Alarm 07/16/1984" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="erN-Nz-CVv" userLabel="Reminder Date">
-                        <rect key="frame" x="152" y="51" width="120" height="13"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="120" id="oaR-EL-dbW"/>
+                            <constraint firstAttribute="width" constant="70" id="gf6-c6-9KQ"/>
                         </constraints>
-                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="11"/>
+                    </view>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="calendar.png" translatesAutoresizingMaskIntoConstraints="NO" id="rTk-Ov-hYx" userLabel="CalendarIcon">
+                        <rect key="frame" x="52" y="49" width="14" height="14"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="14" id="KHh-OS-MNV"/>
+                            <constraint firstAttribute="width" constant="14" id="r2n-sA-uG5"/>
+                        </constraints>
+                    </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="07/16/1984" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="erN-Nz-CVv" userLabel="Reminder Date">
+                        <rect key="frame" x="220" y="49" width="66.5" height="15.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="lessThanOrEqual" constant="115" id="oaR-EL-dbW"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="13"/>
                         <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Gelirken patates neyin al da gel" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vq3-4i-jQG">
-                        <rect key="frame" x="50" y="24" width="222" height="21"/>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="1000" verticalHuggingPriority="251" text="Failed to save!" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2qv-bT-Ngo" userLabel="Error Msg Label">
+                        <rect key="frame" x="209" y="8" width="78" height="14"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="lessThanOrEqual" constant="120" id="icY-mI-vzb"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="12"/>
+                        <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Gelirken patates neyin al da gel" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vq3-4i-jQG" userLabel="Title">
+                        <rect key="frame" x="50" y="24" width="237" height="21"/>
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="highlightedColor"/>
                     </label>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="notifications.png" translatesAutoresizingMaskIntoConstraints="NO" id="rC9-4P-jP9" userLabel="AlarmIcon">
+                        <rect key="frame" x="208" y="50" width="14" height="14"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="14" id="g6h-9a-ADQ"/>
+                            <constraint firstAttribute="width" constant="14" id="pLu-kq-k1e"/>
+                        </constraints>
+                    </imageView>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="right.png" translatesAutoresizingMaskIntoConstraints="NO" id="Ffn-Yb-F03" userLabel="Direction">
+                        <rect key="frame" x="50" y="9" width="12" height="12"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="12" id="hUe-Er-U0V"/>
+                            <constraint firstAttribute="height" constant="12" id="wRp-si-oiO"/>
+                        </constraints>
+                    </imageView>
                 </subviews>
                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                 <constraints>
+                    <constraint firstItem="4hP-t7-FCk" firstAttribute="leading" secondItem="Ffn-Yb-F03" secondAttribute="trailing" id="18p-tT-hxt"/>
                     <constraint firstAttribute="bottom" secondItem="Vq3-4i-jQG" secondAttribute="bottom" constant="24.5" id="2g8-Jh-KTq"/>
+                    <constraint firstItem="Ffn-Yb-F03" firstAttribute="centerY" secondItem="4hP-t7-FCk" secondAttribute="centerY" id="4hx-Zb-xAv"/>
                     <constraint firstAttribute="bottom" secondItem="erN-Nz-CVv" secondAttribute="bottom" constant="5" id="AQ3-v3-Xb9"/>
                     <constraint firstItem="HUu-dG-ZmT" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" id="Aul-CK-gvY"/>
                     <constraint firstItem="Vq3-4i-jQG" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="24" id="BGR-E0-YCZ"/>
+                    <constraint firstItem="rTk-Ov-hYx" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="52" id="EcC-xF-MAI"/>
+                    <constraint firstItem="rTk-Ov-hYx" firstAttribute="centerY" secondItem="d4n-qu-2C4" secondAttribute="centerY" id="Gko-70-2rf"/>
                     <constraint firstAttribute="bottom" secondItem="HUu-dG-ZmT" secondAttribute="bottom" id="JhO-Uy-Wnl"/>
-                    <constraint firstItem="4hP-t7-FCk" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="topMargin" id="MTN-Zx-96j"/>
-                    <constraint firstAttribute="trailing" secondItem="erN-Nz-CVv" secondAttribute="trailing" constant="15" id="OXz-tR-bIP"/>
+                    <constraint firstItem="erN-Nz-CVv" firstAttribute="leading" secondItem="rC9-4P-jP9" secondAttribute="trailing" constant="3.5" id="OXS-E1-ptf"/>
+                    <constraint firstAttribute="trailing" secondItem="erN-Nz-CVv" secondAttribute="trailing" id="OXz-tR-bIP"/>
                     <constraint firstAttribute="bottom" secondItem="d4n-qu-2C4" secondAttribute="bottom" constant="5" id="ROo-TF-yhy"/>
-                    <constraint firstAttribute="trailingMargin" secondItem="4hP-t7-FCk" secondAttribute="trailing" constant="-33" id="YQQ-Im-q3a"/>
-                    <constraint firstItem="4hP-t7-FCk" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leadingMargin" constant="42" id="a8i-Uy-cUh"/>
-                    <constraint firstAttribute="trailing" secondItem="Vq3-4i-jQG" secondAttribute="trailing" constant="15" id="eg1-VY-fRy"/>
-                    <constraint firstItem="d4n-qu-2C4" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="50" id="f1C-pC-xKQ"/>
+                    <constraint firstItem="Ffn-Yb-F03" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="9" id="e35-5F-mFu"/>
+                    <constraint firstAttribute="trailing" secondItem="Vq3-4i-jQG" secondAttribute="trailing" id="eg1-VY-fRy"/>
+                    <constraint firstAttribute="trailing" secondItem="2qv-bT-Ngo" secondAttribute="trailing" id="gXB-cf-lxd"/>
+                    <constraint firstItem="2qv-bT-Ngo" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="8" id="ie8-Py-rJS"/>
+                    <constraint firstItem="Ffn-Yb-F03" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="50" id="mzE-UK-UCa"/>
                     <constraint firstItem="HUu-dG-ZmT" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" id="nCB-Gn-LoR"/>
+                    <constraint firstItem="2qv-bT-Ngo" firstAttribute="leading" secondItem="4hP-t7-FCk" secondAttribute="trailing" id="oG8-1a-ath"/>
+                    <constraint firstItem="d4n-qu-2C4" firstAttribute="leading" secondItem="rTk-Ov-hYx" secondAttribute="trailing" constant="2" id="sfK-Vs-fc8"/>
+                    <constraint firstItem="rC9-4P-jP9" firstAttribute="centerY" secondItem="erN-Nz-CVv" secondAttribute="centerY" id="yZ9-fG-ayR"/>
                     <constraint firstItem="Vq3-4i-jQG" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="50" id="zzu-jd-xJr"/>
                 </constraints>
             </tableViewCellContentView>
             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+            <color key="tintColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
             <connections>
                 <outlet property="alarmDateLabel" destination="erN-Nz-CVv" id="2sy-IK-eE6"/>
+                <outlet property="alarmIconView" destination="rC9-4P-jP9" id="5Ve-VE-SzF"/>
+                <outlet property="calendarIconView" destination="rTk-Ov-hYx" id="TcR-jr-Zfx"/>
+                <outlet property="directionImageView" destination="Ffn-Yb-F03" id="jW0-6D-tjh"/>
                 <outlet property="dueDateLabel" destination="d4n-qu-2C4" id="Dmm-ym-ivI"/>
+                <outlet property="errorMsgLabel" destination="2qv-bT-Ngo" id="AXZ-no-LUz"/>
                 <outlet property="reminderNameLabel" destination="4hP-t7-FCk" id="aKj-Ti-WD4"/>
                 <outlet property="statusView" destination="HUu-dG-ZmT" id="CzH-rg-BCS"/>
                 <outlet property="titleLabel" destination="Vq3-4i-jQG" id="uJz-ch-AUH"/>
@@ -77,4 +121,9 @@
             <point key="canvasLocation" x="249" y="5"/>
         </tableViewCell>
     </objects>
+    <resources>
+        <image name="calendar.png" width="14" height="14"/>
+        <image name="notifications.png" width="14" height="14"/>
+        <image name="right.png" width="12" height="12"/>
+    </resources>
 </document>

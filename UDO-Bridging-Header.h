@@ -9,6 +9,7 @@
 #ifndef udo_UDO_Bridging_Header_h
 #define udo_UDO_Bridging_Header_h
 
+#import "NBAsYouTypeFormatter.h"
 #import "NBPhoneNumber.h"
 #import "NBPhoneNumberUtil.h"
 #import <Parse/PFObject+Subclass.h>
@@ -18,6 +19,13 @@
 #import "NSArray+LongestCommonSubsequence.h"
 #import "StaticDataTableViewController.h"
 #import "MHPrettyDate.h"
+#import "UIImage+Tint.h"
+#import "NSDate+ISO8601.h"
+
+#import "APAddressBook.h"
+#import "APContact.h"
+#import "APAddress.h"
+#import "APPhoneWithLabel.h"
 
 
 #endif

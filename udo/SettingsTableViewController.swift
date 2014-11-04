@@ -36,7 +36,7 @@ class SettingsTableViewController:UITableViewController,MFMessageComposeViewCont
     
     func messageComposeViewController(controller: MFMessageComposeViewController!, didFinishWithResult result: MessageComposeResult) {
         if result.value == MessageComposeResultFailed.value{
-            UIAlertView(title: "Error", message: "Failed to send message", delegate: nil, cancelButtonTitle: "Continue").show()
+              TSMessage.showNotificationWithTitle("Error", subtitle: "Failed to send message", type: TSMessageNotificationType.Error)
         }else if result.value == MessageComposeResultSent.value {
             self.contactsManager.invitationSent(controller.recipients)
         }

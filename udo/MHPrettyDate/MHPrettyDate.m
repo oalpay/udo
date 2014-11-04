@@ -258,6 +258,7 @@
         if (dateFormat == MHPrettyDateFormatWithTime)
         {
             // today show only time
+            /*
             if ([MHPrettyDate isToday:date])
             {
                dateString = @"HH:mm";
@@ -267,6 +268,8 @@
                // otherwise show date string and time
                dateString = [NSString stringWithFormat:@"%@ HH:mm", dateString];
             }
+            */
+            dateString = [NSString stringWithFormat:@"%@ HH:mm", dateString];
         }
         
         // special case for MHPrettyDateFormatTodayTimeOnly

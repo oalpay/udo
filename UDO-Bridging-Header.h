@@ -14,6 +14,7 @@
 #import "NBPhoneNumberUtil.h"
 #import <Parse/PFObject+Subclass.h>
 #import <Parse/Parse.h>
+#import <Bolts/Bolts.h>
 #import "FXBlurView.h"
 #import "UIImage+ImageEffects.h"
 #import "NSArray+LongestCommonSubsequence.h"
@@ -27,5 +28,10 @@
 #import "APAddress.h"
 #import "APPhoneWithLabel.h"
 
+#import "TSMessage.h"
+#import <JSQMessagesViewController/JSQMessages.h>
+#import "JSBadgeView.h"
+#import "UIImage+Resize.h"
+#import <MSCellAccessory.h>
 
 #endif

@@ -16,46 +16,55 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     @IBOutlet weak var taskTextView: UITextView!
     
+    
+    @IBOutlet weak var addNewNoteLabel: UILabel!
+    @IBOutlet weak var notesLoadingIndicator: UIActivityIndicatorView!
+    @IBOutlet weak var notesImageView: PFImageView!
+    @IBOutlet weak var notesLabel: UILabel!
+    @IBOutlet weak var notesDateLabel: UILabel!
+    var notesBadgeView: JSBadgeView!
+    @IBOutlet weak var notesCell: UITableViewCell!
+    
+    @IBOutlet weak var dueDateSwitch: UISwitch!
+    @IBOutlet weak var dueDateSwitchCell: UITableViewCell!
+    @IBOutlet weak var calendarIconImageView: UIImageView!
     @IBOutlet weak var dueDateLabel: UILabel!
-    
-    @IBOutlet weak var dueDateSwitchAdmin: UISwitch!
-    @IBOutlet weak var dueDateLabelAdmin: UILabel!
-    var dueDatePickerAdmin: UIDatePicker!
-    
+    @IBOutlet weak var dueDateCell: UITableViewCell!
+    var dueDatePicker: UIDatePicker!
+    @IBOutlet weak var dueDatePickerCell: UITableViewCell!
+    @IBOutlet weak var dueDateRepeatLabel: UILabel!
+    @IBOutlet weak var dueDateRepeatCell: UITableViewCell!
     
     @IBOutlet weak var addToMyRemindersSwitch: UISwitch!
     @IBOutlet weak var remindMeOnADaySwitch: UISwitch!
-    @IBOutlet weak var remindMeAlarmDateLabel: UILabel!
-    var remindMeDatePicker: UIDatePicker!
-    
-    
-    @IBOutlet weak var dueDateLabelCell: UITableViewCell!
-    
-    @IBOutlet weak var dueDateSwitchAdminCell: UITableViewCell!
-    @IBOutlet weak var dueDateLabelAdminCell: UITableViewCell!
-    @IBOutlet weak var dueDatePickerAdminCell: UITableViewCell!
-    
     @IBOutlet weak var remindMeOnADayCell: UITableViewCell!
-    @IBOutlet weak var remindMeAlarmDateLabelCell: UITableViewCell!
+    @IBOutlet weak var notificationIconImageView: UIImageView!
+    @IBOutlet weak var remindMeAlarmDateLabel: UILabel!
+    @IBOutlet weak var remindMeAlarmDateCell: UITableViewCell!
+    var remindMeDatePicker: UIDatePicker!
     @IBOutlet weak var remindMeDatePickerCell: UITableViewCell!
+    @IBOutlet weak var remindMeRepeatLabel: UILabel!
+    @IBOutlet weak var remindMeRepeatCell: UITableViewCell!
     
     private let dateFormatter = NSDateFormatter()
-    private var contactsManager = ContactsManager.sharedInstance
-    private var reminderManager = ReminderManager.sharedInstance
+    private let contactsManager = ContactsManager.sharedInstance
+    private let reminderManager = ReminderManager.sharedInstance
+    private let notesManager = NotesManager.sharedInstance
     var reminderKey:String!
     private var reminder: Reminder!
     private var collaborators:[String] = []
     private var actionSheetOpertaion = Dictionary<Int,()->Void>()
-    private var sendInvitationToNumber:ContactNumber!
-    
-    private var defaulImage = UIImage(named: "default-avatar")
-    @IBOutlet weak var calendarIconImageView: UIImageView!
-    @IBOutlet weak var notificationIconImageView: UIImageView!
+    private var sendInvitationToNumber:String!
     
     private var activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.Gray)
     
     private var selectedDueDate:NSDate!
-
+    private var selectedDuaDateRepeatInterval:NSCalendarUnit!
+    private var selectedAlarmDate:NSDate!
+    private var selectedAlarmDateRepeatInterval:NSCalendarUnit!
+    
+    private var nc = NSNotificationCenter.defaultCenter()
+    private var userDefaults = NSUserDefaults.standardUserDefaults()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -67,6 +76,10 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         self.dateFormatter.dateStyle = NSDateFormatterStyle.MediumStyle
         self.dateFormatter.timeStyle = NSDateFormatterStyle.ShortStyle
         
+        self.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
+        
+        self.addToMyRemindersSwitch.onTintColor = AppTheme.doneColor
+        self.remindMeOnADaySwitch.onTintColor = AppTheme.doneColor
         
         //empty means not set yet
         self.remindMeAlarmDateLabel.text = ""
@@ -77,26 +90,60 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         self.insertTableViewRowAnimation = UITableViewRowAnimation.Top
         self.deleteTableViewRowAnimation = UITableViewRowAnimation.Automatic
         
-        var calendarImage = UIImage(named: "calendar32").imageTintedWithColor(AppTheme.iconMaskColor)
+        var calendarImage = UIImage(named: "calendar32")?.imageTintedWithColor(AppTheme.iconMaskColor)
         self.calendarIconImageView.image = calendarImage
-        var notificationImage = UIImage(named: "notifications32").imageTintedWithColor(AppTheme.iconMaskColor)
+        var notificationImage = UIImage(named: "notifications32")?.imageTintedWithColor(AppTheme.iconMaskColor)
         self.notificationIconImageView.image = notificationImage
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
+        
+        self.notesImageView.layer.cornerRadius = self.notesImageView.frame.size.height / 2
+        self.notesImageView.layer.masksToBounds = true
+        
+        self.notesBadgeView = JSBadgeView(parentView: self.notesCell.contentView, alignment: JSBadgeViewAlignment.CenterRight)
+        self.notesBadgeView.badgeTextFont = UIFont.systemFontOfSize(17)
+        self.notesBadgeView.badgeBackgroundColor = AppTheme.tintColor
+        self.notesBadgeView.badgePositionAdjustment.x =  self.notesBadgeView.badgePositionAdjustment.x - 5
+        self.notesBadgeView.badgeText = "0"
+        
+        self.addListeners()
+        
+        self.tableView.contentInset = UIEdgeInsets(top: -15, left: 0, bottom: 0, right: 0)
         
         self.prepareReminder()
         self.updateAllFields()
-    }
-    
-    
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if segue.destinationViewController is RemindersMainViewController {
-            NSNotificationCenter.defaultCenter().removeObserver(self)
+        if reminder.objectId == nil {
+            self.taskTextView.becomeFirstResponder()
         }
     }
     
+    func addListeners(){
+        nc.addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
+        nc.addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
+        nc.addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
+        nc.addObserver(self, selector: "reminderCreatedNotification:", name: kReminderCreatedNotification, object: nil)
+        nc.addObserver(self, selector: "contactsChanged:", name: kContactsChangedNotification, object: nil)
+        
+        nc.addObserver(self, selector: "noteUpdatesAvailable:", name: kReminderNoteUpdatesAvailableNotification, object: nil)
+        nc.addObserver(self, selector: "noteLoading:", name: kReminderNoteLoadingNotification, object: nil)
+        nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
+        nc.addObserver(self, selector: "noteSaveFinished:", name: kReminderNoteSaveFinishedNotification, object: nil)
+        
+        
+    }
+    
+    func removeListeners(){
+        NSNotificationCenter.defaultCenter().removeObserver(self)
+    }
+    
+    override func didMoveToParentViewController(parent: UIViewController?) {
+        if parent == nil {
+            self.removeListeners()
+        }
+    }
+    
+    override func viewWillAppear(animated: Bool) {
+        self.updateNavigationItemButtons()
+    }
     
     override func viewDidAppear(animated: Bool) {
         if self.sendInvitationToNumber != nil {
@@ -105,10 +152,35 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         }
     }
     
+    func contactsChanged(notification:NSNotification) {
+        self.collaboratorsView.refresh()
+    }
+    
+    func reminderCreatedNotification(notification:NSNotification){
+        let keyInfo = notification.object as NSDictionary
+        let oldKey = keyInfo["oldKey"] as String
+        if self.reminderKey == oldKey {
+            self.reminderKey = keyInfo["newKey"] as String
+        }
+    }
+    
+    func reminderChangedNotificationReceived(notification: NSNotification){
+        if self.reminder.objectId == nil {
+            return
+        }
+        let newReminders = notification.object as [Reminder]
+        for newReminder in newReminders {
+            if (newReminder.objectId == self.reminder.objectId && newReminder.updatedAt.compare(self.reminder.updatedAt) == NSComparisonResult.OrderedDescending ){
+                self.reminder = newReminder
+                self.updateAllFields()
+            }
+        }
+    }
+    
     func reminderLoadingNotification(notification:NSNotification){
         var key = notification.object as String
         if self.reminder.key() == key {
-            self.showActivity()
+            self.updateActivity()
         }
     }
     
@@ -122,11 +194,179 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     func remindersChangedNotification(notification:NSNotification){
         var change = notification.object as RemindersChanged!
-        for key in change.updates {
-            if key == self.reminder.key() {
-                self.prepareReminder()
-                self.updateAllFields()
+        if change.hasKeyInUpdateSet(self.reminderKey) {
+            self.prepareReminder()
+            self.updateDueDateFields()
+            self.updateCollaborators()
+            self.updateTitle()
+        }
+    }
+    
+    func noteUpdatesAvailable(notification:NSNotification){
+        if self.reminderKey == notification.object as String {
+            if self.notesManager.loadNotesForReminderId(self.reminderKey) {
+                self.showNoteLoading()
             }
+        }
+    }
+    func showNoteLoading(){
+        self.notesLoadingIndicator.startAnimating()
+        self.addNewNoteLabel.hidden = true
+        self.notesImageView.hidden = true
+        self.notesLabel.hidden = true
+        self.notesBadgeView.hidden = true
+        self.notesDateLabel.hidden = true
+    }
+    func noteLoading(notification:NSNotification){
+        if self.reminderKey == notification.object as String {
+            self.showNoteLoading()
+        }
+    }
+    
+    func updateLastNote(){
+        self.notesLoadingIndicator.stopAnimating()
+        var isNotesEmpty = true
+        if let notes =  self.notesManager.getNotesForReminder(self.reminderKey){
+            if let lastNote = notes.lastObject as? ReminderNote {
+                var contact = self.contactsManager.getUDContactForUserId(lastNote.sender)
+                self.notesImageView.image = contact.image()
+                if let userPublic = contact.userPublic {
+                    if let imageFile = userPublic.image {
+                        self.notesImageView.file = imageFile
+                        self.notesImageView.loadInBackground()
+                    }
+                }
+                self.notesLabel.text = "\(contact.name()): \(lastNote.text)"
+                self.notesDateLabel.text = JSQMessagesTimestampFormatter.sharedFormatter().timestampForDate(lastNote.date())
+                if self.navigationController?.topViewController is NotesViewController {
+                    self.notesBadgeView.badgeText = "0"
+                }else{
+                    var count = self.notesManager.getUnreadMessageCount(self.reminderKey)
+                    self.notesBadgeView.badgeText = "\(count)"
+                }
+                isNotesEmpty = false
+            }
+        }
+        if isNotesEmpty {
+            self.addNewNoteLabel.hidden = false
+        }else{
+            self.addNewNoteLabel.hidden = true
+            self.notesImageView.hidden = false
+            self.notesLabel.hidden = false
+            if self.notesBadgeView.badgeText != "0" {
+                self.notesBadgeView.hidden = false
+            }
+            self.notesDateLabel.hidden = false
+        }
+    }
+    
+    func noteLoadingFinished(notification:NSNotification){
+        if self.reminderKey == notification.object as String {
+            self.updateLastNote()
+        }
+    }
+    func noteSaveFinished(notification:NSNotification){
+        if self.reminderKey == notification.object as String {
+            self.updateLastNote()
+        }
+    }
+    
+    func isCollaboratorsDirty() -> Bool {
+        var newCollaborators = NSSet(array: self.collaborators)
+        var currentCollaborators  = NSSet(array: self.reminder.collaborators)
+        return !newCollaborators.isEqualToSet(currentCollaborators)
+    }
+    
+    func isTitleDirty() -> Bool {
+        if self.reminder.title != self.taskTextView.text {
+            return true
+        }
+        return false
+    }
+    
+    func isDueDateDirty() -> Bool {
+        if self.dueDateSwitch.on {
+            if (reminder.dueDate == nil || ( self.reminder.dueDate != nil && !self.reminder.dueDate.isEqualToDate(self.selectedDueDate))) {
+                return true
+            }
+        }else if reminder.dueDate != nil {
+            return true
+        }
+        return false
+    }
+    func isDueDateIntervalDirty() -> Bool {
+        if (self.reminder.dueDateInterval == nil && self.selectedDuaDateRepeatInterval != nil) || (self.reminder.dueDateInterval != nil && self.selectedDuaDateRepeatInterval == nil) || (self.reminder.dueDateInterval != nil && self.selectedAlarmDateRepeatInterval != nil && !self.reminder.dueDateInterval.isEqual(self.selectedAlarmDateRepeatInterval.rawValue)) {
+            return true
+        }
+        return false
+    }
+    
+    func isAddToMyRemindersDirty() -> Bool {
+        return self.addToMyRemindersSwitch.on != self.reminder.isOnReminders
+    }
+    
+    func isAlarmDateDirty() -> Bool {
+        if self.remindMeOnADaySwitch.on {
+            if (self.reminder.alarmDate == nil || ( self.reminder.alarmDate != nil && !self.reminder.alarmDate.isEqualToDate(self.selectedAlarmDate))) {
+                return true
+            }
+        }else if reminder.alarmDate != nil {
+            return true
+        }
+        return false
+    }
+    
+    func cancelButtonPresses(sender:AnyObject){
+        self.performSegueWithIdentifier("BackToMain", sender: nil)
+    }
+    
+    func updateNavigationItemButtons(){
+        let taskText = self.taskTextView.text.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+        if taskText != "" &&  (self.isDirty() || self.reminder.isDirty()){
+            self.navigationItem.rightBarButtonItem?.enabled = true
+            self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: UIBarButtonItemStyle.Plain, target: self, action: "cancelButtonPresses:")
+        }else {
+            self.navigationItem.rightBarButtonItem?.enabled = false
+            self.navigationItem.leftBarButtonItem = nil
+        }
+    }
+    
+    
+    func isDirty() -> Bool {
+        return self.isCollaboratorsDirty() || self.isTitleDirty() || self.isDueDateDirty() || self.isDueDateIntervalDirty() || self.isAddToMyRemindersDirty() || self.isAlarmDateDirty()
+    }
+    
+    func prepareReminder(){
+        if self.reminderKey == nil {
+            self.reminder = Reminder()
+            self.reminder.title = ""
+            self.reminder.collaborators = [PFUser.currentUser().username]
+            self.reminderKey = self.reminder.key()
+        }else {
+            self.reminder = self.reminderManager.getReminder(self.reminderKey)
+            self.reminderManager.setReminderAsSeen(self.reminderKey)
+        }
+    }
+    
+    func updateAllWithoutDatePickersFields(){
+        self.updateActivity()
+        self.updateCollaborators()
+        self.updateTitle()
+        self.reloadDataAnimated(false)
+    }
+    
+    func updateAllFields(){
+        self.updateNotes()
+        self.updateDueDateFields()
+        self.updateRemindMeFields()
+        self.updateAllWithoutDatePickersFields()
+    }
+    
+    func updateActivity(){
+        if self.reminderManager.isReminderLoadingWithKey(self.reminderKey) {
+            self.showActivity()
+        }else{
+            self.hideActivity()
         }
     }
     
@@ -137,9 +377,9 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     }
     
     func hideActivity(){
-        self.saveButton.enabled = true
         self.activityIndicator.stopAnimating()
         self.navigationItem.titleView = nil
+        self.updateNavigationItemButtons()
     }
     
     func nextHourDate() -> NSDate? {
@@ -167,9 +407,9 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         
         if let collaborators = self.reminder.collaborators  {
             for collaborator in collaborators {
-                var number = self.contactsManager.getContactNumberForUserId(collaborator)
-                self.collaborators.append(number.userId!)
-                self.collaboratorsView.addCollabarator(number, done: self.reminder.isUserDone(number.userId))
+                var contact = self.contactsManager.getUDContactForUserId(collaborator)
+                self.collaborators.append(contact.userId!)
+                self.collaboratorsView.addCollabarator(collaborator, state: self.reminder.stateForUser(collaborator))
             }
         }
     }
@@ -184,93 +424,168 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         self.taskTextView.editable = self.reminder.isCurrentUserAdmin()
     }
     
+    
+    func updateNotes(){
+        if self.reminder.objectId == nil {
+            self.cell(self.notesCell, setHidden: true)
+        }else{
+            self.cell(self.notesCell,setHidden: false)
+            self.notesImageView.image = DefaultAvatarImage
+            self.notesLabel.text = ""
+            if self.notesManager.loadNotesForReminderId(self.reminder.key()) {
+                self.showNoteLoading()
+            }
+        }
+    }
+    
     func updateDueDateFields(){
         let isAdmin = self.reminder.isCurrentUserAdmin()
         var isDueDateSet = false
         if let dueDate = self.reminder.dueDate{
             isDueDateSet = true
-            self.dueDateLabel.text = dateFormatter.stringFromDate(dueDate)
-            self.dueDateSwitchAdmin.setOn(true, animated: true)
-            self.dueDateLabelAdmin.text = dateFormatter.stringFromDate(dueDate)
+            self.dueDateSwitch.setOn(true, animated: true)
             self.selectedDueDate = dueDate
+            var interval:NSCalendarUnit!
+            if let dueDateInterval = self.reminder.dueDateInterval {
+                interval = NSCalendarUnit(self.reminder.dueDateInterval.unsignedLongValue)
+            }
+            self.selectedDuaDateRepeatInterval = interval
+            self.dueDateLabel.text = dateFormatter.stringFromDate(self.reminder.dueDate)
+            self.dueDateRepeatLabel.text = self.textForCelandarUnit(interval)
         }else {
-            if let nextHourDate = self.nextHourDate(){
-                self.selectedDueDate = nextHourDate
+            let nextHourDate = self.nextHourDate()
+            if nextHourDate != nil{
+                self.selectedDueDate = nextHourDate!
             }else {
                 self.selectedDueDate = NSDate()
             }
-            self.dueDateLabelAdmin.text = dateFormatter.stringFromDate(selectedDueDate)
+            self.dueDateLabel.text = dateFormatter.stringFromDate(self.selectedDueDate)
         }
-        
-        self.cell(self.dueDateLabelCell, setHidden: isAdmin | !isDueDateSet)
-        self.cell(self.dueDateSwitchAdminCell, setHidden: !isAdmin)
-        self.cell(self.dueDateLabelAdminCell, setHidden: !isAdmin | !isDueDateSet)
-        self.cell(self.dueDatePickerAdminCell, setHidden: true)
+        self.cell(self.dueDateSwitchCell, setHidden: !isAdmin)
+        self.cell(self.dueDateCell, setHidden:  !isDueDateSet)
+        self.cell(self.dueDatePickerCell, setHidden: true)
+        self.cell(self.dueDateRepeatCell, setHidden: !isDueDateSet)
+        if !isAdmin {
+            self.dueDateRepeatCell.accessoryType = UITableViewCellAccessoryType.None
+        }else{
+            self.dueDateRepeatCell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+        }
     }
     
     func updateRemindMeFields(){
-        var isOnMyReminders = false
-        var isAlarmSet = false
-        if self.reminder.objectId != nil {
-            var eventStore = EventStoreManager.sharedInstance
-            if eventStore.isStored(self.reminder.key()) {
-                isOnMyReminders = true
-                if let alarmDate = eventStore.getAlarmDateForKey(self.reminder.key()){
-                    isAlarmSet = true
-                    self.remindMeAlarmDateLabel.text = dateFormatter.stringFromDate(alarmDate)
-                    self.remindMeDatePicker.date = alarmDate
-                    
-                }else {
-                    isAlarmSet = false
-                }
+        if self.reminder.isOnReminders {
+            if let alarmDate = self.reminder.alarmDate {
+                self.remindMeAlarmDateLabel.text = dateFormatter.stringFromDate(alarmDate)
+                self.selectedAlarmDate = alarmDate
             }
         }
-        self.addToMyRemindersSwitch.setOn(isOnMyReminders, animated: true)
-        self.remindMeOnADaySwitch.setOn(isAlarmSet, animated: true)
-        self.cell(self.remindMeOnADayCell, setHidden: !isOnMyReminders)
-        self.cell(self.remindMeAlarmDateLabelCell, setHidden: !isAlarmSet)
+        self.addToMyRemindersSwitch.setOn(self.reminder.isOnReminders, animated: true)
+        self.remindMeOnADaySwitch.setOn((self.reminder.alarmDate != nil), animated: true)
+        self.cell(self.remindMeOnADayCell, setHidden: !self.reminder.isOnReminders)
+        self.cell(self.remindMeAlarmDateCell, setHidden: (self.reminder.alarmDate == nil))
         self.cell(self.remindMeDatePickerCell, setHidden: true)
+        self.cell(self.remindMeRepeatCell, setHidden: true) // not implemented yet
     }
     
-    func prepareReminder(){
-        if self.reminderKey == nil {
-            self.reminder = Reminder()
-            self.reminder.title = ""
-            self.reminder.collaborators = [PFUser.currentUser().username]
-        }else {
-            self.reminder = self.reminderManager.getReminder(self.reminderKey)
-        }
+    func scrollToBottom(){
+        self.tableView.scrollRectToVisible(CGRect(x: 0, y: self.tableView.contentSize.height + 50, width: 10, height: 50), animated: true)
     }
     
-    // slows down the load proccess
-    func updateAllWithoutDatePickersFields(){
-        if self.reminderManager.isReminderLoadingWithKey(self.reminder.key()) {
-            self.showActivity()
-        }else{
-            self.hideActivity()
-        }
-        self.updateCollaborators()
-        self.updateTitle()
-        self.reloadDataAnimated(false)
-    }
-    
-    func updateAllFields(){
-        self.updateDueDateFields()
-        self.updateRemindMeFields()
-        self.updateAllWithoutDatePickersFields()
-    }
-    
-    func reminderChangedNotificationReceived(notification: NSNotification){
-        if self.reminder.objectId == nil {
-            return
-        }
-        let newReminders = notification.object as [Reminder]
-        for newReminder in newReminders {
-            if (newReminder.objectId == self.reminder.objectId && newReminder.updatedAt.compare(self.reminder.updatedAt) == NSComparisonResult.OrderedDescending ){
-                self.reminder = newReminder
-                self.updateAllFields()
+    @IBAction func switchChanged(sender: UISwitch ) {
+        if self.dueDateSwitch == sender{
+            self.cell(self.dueDateCell, setHidden: !sender.on)
+            self.cell(self.dueDateRepeatCell, setHidden: !sender.on)
+            self.cell(self.dueDatePickerCell, setHidden: true)
+            self.reloadDataAnimated(true)
+            if sender.on {
+                self.makeCellVisibleAfterDelay(self.dueDateSwitchCell)
+            }
+        }else if self.addToMyRemindersSwitch == sender {
+            self.reminderManager.requestAccessToEventStore({ (success:Bool, _) -> Void in
+                if success {
+                    self.cell(self.remindMeOnADayCell, setHidden: !sender.on)
+                    self.remindMeOnADaySwitch.setOn(false, animated: false)
+                    self.cell(self.remindMeAlarmDateCell, setHidden: true)
+                    self.cell(self.remindMeDatePickerCell, setHidden: true)
+                    self.reloadDataAnimated(true)
+                    if sender.on {
+                        self.makeCellVisibleAfterDelay(self.remindMeOnADayCell)
+                    }
+                }else {
+                    sender.setOn(!sender.on, animated: true)
+                    TSMessage.showNotificationWithTitle("Error", subtitle: "Please give Reminders access to u.do from privacy settings", type: TSMessageNotificationType.Error)
+                }
+                
+            })
+        }else if self.remindMeOnADaySwitch == sender {
+            if sender.on && self.remindMeAlarmDateLabel.text == "" {
+                self.remindMeAlarmDateLabel.text = self.dueDateLabel.text
+                self.selectedAlarmDate = self.selectedDueDate
+            }
+            if !sender.on {
+                self.selectedAlarmDate = nil
+            }
+            self.cell(self.remindMeAlarmDateCell, setHidden: !sender.on)
+            self.cell(self.remindMeDatePickerCell, setHidden: true)
+            self.reloadDataAnimated(true)
+            if sender.on {
+                self.makeCellVisibleAfterDelay(self.remindMeAlarmDateCell)
             }
         }
+        self.updateNavigationItemButtons()
+    }
+    
+    func makeCellVisibleAfterDelay(cell:UITableViewCell){
+        let delay = dispatch_time(DISPATCH_TIME_NOW, Int64(0.2 * Double(NSEC_PER_SEC)))
+        dispatch_after(delay,  dispatch_get_main_queue()) { () -> Void in
+            if let indexPath = self.tableView.indexPathForCell(cell) {
+                self.tableView.scrollToRowAtIndexPath(indexPath, atScrollPosition: UITableViewScrollPosition.Top, animated: true)
+            }
+        }
+    }
+    
+    
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        var cell = self.tableView.cellForRowAtIndexPath(indexPath)
+        if cell == self.notesCell {
+            self.performSegueWithIdentifier("ShowNotes", sender: self)
+        }else if cell == self.dueDateCell {
+            if !self.reminder.isCurrentUserAdmin() {
+                return
+            }
+            if self.dueDatePicker == nil {
+                self.dueDatePicker = self.createDatePickerForCell(dueDatePickerCell)
+            }
+            let isHidden = self.cellIsHidden(self.dueDatePickerCell)
+            self.cell(self.dueDatePickerCell, setHidden: !isHidden)
+            self.reloadDataAnimated(true)
+            if !self.cellIsHidden(self.dueDatePickerCell) {
+                self.makeCellVisibleAfterDelay(self.dueDateCell)
+            }
+        }else if cell == self.remindMeAlarmDateCell{
+            if self.remindMeDatePicker == nil {
+                self.remindMeDatePicker = self.createDatePickerForCell(self.remindMeDatePickerCell)
+            }
+            let hidden = !self.cellIsHidden(self.remindMeDatePickerCell)
+            self.cell(self.remindMeDatePickerCell, setHidden: hidden)
+            self.reloadDataAnimated(true)
+            if !self.cellIsHidden(self.remindMeDatePickerCell) {
+                self.makeCellVisibleAfterDelay(self.remindMeAlarmDateCell)
+            }
+        }else if cell == self.remindMeRepeatCell || (cell == self.dueDateRepeatCell && self.reminder.isCurrentUserAdmin()) {
+            self.performSegueWithIdentifier("ShowRepeatSelector", sender: self)
+        }
+    }
+    
+    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        if indexPath.section == 0 {
+            self.taskTextView.superview?.layoutIfNeeded()
+            var sizeThatFits = self.taskTextView.frame.size
+            sizeThatFits.width = self.tableView.frame.size.width - 16 //margins
+            sizeThatFits = self.taskTextView.sizeThatFits(sizeThatFits)
+            return max(44,sizeThatFits.height + 28/*margins*/)
+        }
+        return super.tableView(tableView, heightForRowAtIndexPath: indexPath)
     }
     
     func addCollabaratorButtonPressed(){
@@ -278,30 +593,42 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     }
     
     func collabaratorSelected(index:Int){
-        
         var collaborator = self.collaborators[index]
-        var number = self.contactsManager.getContactNumberForUserId(collaborator)
+        var contact = self.contactsManager.getUDContactForUserId(collaborator)
         var actionSheet = UIActionSheet()
         actionSheet.delegate = self
-        if let name = number.contact.name {
-            actionSheet.title = "\(name)(\(number.userId))"
+        if collaborator == PFUser.currentUser().username {
+            actionSheet.title = "Me (\(collaborator))"
+        } else if contact.apContact != nil {
+            actionSheet.title = "\(contact.name()) (\(contact.userId))"
         }else{
-            actionSheet.title = "\(number.userId)"
+            actionSheet.title = "\(contact.name())"
         }
-        if self.collaborators[index] != PFUser.currentUser().username {
-            if self.reminder.isCurrentUserAdmin() {
-                var removeIndex = actionSheet.addButtonWithTitle("Remove User")
-                self.actionSheetOpertaion[removeIndex] = { () -> Void in
-                    self.collaborators.removeAtIndex(index)
-                    self.collaboratorsView.removeCollabaratorAtIndex(index)
-                }
-                actionSheet.destructiveButtonIndex = removeIndex
+        var state = self.reminder.stateForUser(collaborator)
+        if state == 1 {
+            actionSheet.title += "\n Recevied"
+        }else if state == 2 {
+            actionSheet.title += "\n Completed"
+        }else {
+            //actionSheet.title += "\n Sent"
+        }
+        self.actionSheetOpertaion.removeAll(keepCapacity: true)
+        if self.reminder.isCurrentUserAdmin() && self.collaborators[index] != PFUser.currentUser().username {
+            let removeIndex = actionSheet.addButtonWithTitle("Remove User")
+            self.actionSheetOpertaion[removeIndex] = { () -> Void in
+                self.removeCollaboratorAtIndex(index)
             }
-            if !contactsManager.isNumberRegistered(number) {
-                var invitationIndex = actionSheet.addButtonWithTitle("Send invitation")
-                self.actionSheetOpertaion[invitationIndex] = { () -> Void in
-                    self.sendInvitation(number)
-                }
+            actionSheet.destructiveButtonIndex = removeIndex
+        }
+        if !contactsManager.isUserRegistered(collaborator) {
+            let invitationIndex = actionSheet.addButtonWithTitle("Send invitation")
+            self.actionSheetOpertaion[invitationIndex] = { () -> Void in
+                self.sendInvitation(collaborator)
+            }
+        }else {
+            let profileIndex = actionSheet.addButtonWithTitle("Profile")
+            self.actionSheetOpertaion[profileIndex] = { () -> Void in
+                self.performSegueWithIdentifier("ShowProfileImageView", sender: contact)
             }
         }
         var cancelIndex = actionSheet.addButtonWithTitle("Cancel")
@@ -314,28 +641,91 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         self.actionSheetOpertaion[buttonIndex]?()
     }
     
-    func findIndexOfCollaborator(number:ContactNumber) -> Int{
+    func findIndexOfCollaborator(userId:String) -> Int{
         for var index = 0; index < self.collaborators.count; index++ {
-            if self.collaborators[index] == number.userId {
+            if self.collaborators[index] == userId {
                 return index
             }
         }
         return -1
     }
     
+    func textForCelandarUnit(unit:NSCalendarUnit?) -> String {
+        if unit == nil {
+            return "Never"
+        }
+        var text:String!
+        switch unit! {
+        case NSCalendarUnit.DayCalendarUnit:
+            text = "Every Day"
+        case NSCalendarUnit.WeekCalendarUnit:
+            text = "Every Week"
+        case NSCalendarUnit.MonthCalendarUnit:
+            text = "Every Month"
+        case NSCalendarUnit.YearCalendarUnit:
+            text = "Every Year"
+        default:
+            text = "Never"
+        }
+        return text
+    }
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == "ShowRepeatSelector" {
+            if let selectedRow = self.tableView.indexPathForSelectedRow() {
+                let repeatSelectorVC = segue.destinationViewController as RepeatSelectorTableViewController
+                var cell = self.tableView.cellForRowAtIndexPath(selectedRow)
+                if cell == self.remindMeRepeatCell {
+                    repeatSelectorVC.selectedCalendarUnit  = self.selectedAlarmDateRepeatInterval
+                }else {
+                    repeatSelectorVC.selectedCalendarUnit  = self.selectedDuaDateRepeatInterval
+                }
+            }
+        }else if segue.identifier == "ShowNotes" {
+            let notesVC = segue.destinationViewController as NotesViewController
+            notesVC.title = self.reminder.title
+            notesVC.reminderId = self.reminderKey
+        }else if segue.identifier == "ShowProfileImageView" {
+            let profileVC = segue.destinationViewController as ProfileImageViewController
+            profileVC.udContact = sender as UDContact
+        }
+    }
+    
+    func addCollaborator(userId:String){
+        self.collaborators.append(userId)
+        self.collaboratorsView.addCollabarator(userId, state: 0)
+        self.updateNavigationItemButtons()
+    }
+    func removeCollaboratorAtIndex(index:Int){
+        self.collaborators.removeAtIndex(index)
+        self.collaboratorsView.removeCollabaratorAtIndex(index)
+        self.updateNavigationItemButtons()
+    }
     
     @IBAction func unwind(unwindSegue:UIStoryboardSegue){
         if unwindSegue.identifier == "ContactSelected"{
             let contactDetailsVC = unwindSegue.sourceViewController as ContactDetailsViewController
-            let number = contactDetailsVC.contact.numbers[contactDetailsVC.tableView.indexPathForSelectedRow()!.row]
-            if !contactsManager.isNumberRegistered(number) {
-                self.sendInvitationToNumber = number
+            var number = contactDetailsVC.contact.phones[contactDetailsVC.tableView.indexPathForSelectedRow()!.row] as String
+            var userId = self.contactsManager.getUserIdFromPhoneNumber(number)
+            if !contactsManager.isUserRegistered(userId) {
+                self.sendInvitationToNumber = userId
             }
-            if self.findIndexOfCollaborator(number) != -1 {
-                self.collaboratorsView.makeContactAtIndexVisible(self.findIndexOfCollaborator(number))
+            if self.findIndexOfCollaborator(userId) != -1 {
+                self.collaboratorsView.makeContactAtIndexVisible(self.findIndexOfCollaborator(userId))
             }else{
-                self.collaborators.append(number.userId)
-                self.collaboratorsView.addCollabarator(number, done:false)
+                self.addCollaborator(userId)
+            }
+        }else if unwindSegue.identifier == "RepeatIntervalSelected" {
+            if let selectedRow = self.tableView.indexPathForSelectedRow() {
+                let repeatSelectorVC = unwindSegue.sourceViewController as RepeatSelectorTableViewController
+                var cell = self.tableView.cellForRowAtIndexPath(selectedRow)
+                if cell == self.remindMeRepeatCell {
+                    self.selectedAlarmDateRepeatInterval = repeatSelectorVC.selectedCalendarUnit
+                    self.remindMeRepeatLabel.text = self.textForCelandarUnit(self.selectedAlarmDateRepeatInterval)
+                }else {
+                    self.selectedDuaDateRepeatInterval = repeatSelectorVC.selectedCalendarUnit
+                    self.dueDateRepeatLabel.text = self.textForCelandarUnit(self.selectedDuaDateRepeatInterval)
+                }
             }
         }
     }
@@ -348,49 +738,13 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     @IBAction func saveButtonPressed(sender: AnyObject) {
         self.saveReminder()
-        self.performSegueWithIdentifier("SaveItemEdit", sender: nil)
+        self.performSegueWithIdentifier("BackToMain", sender: nil)
     }
     
-    @IBAction func switchChanged(sender: UISwitch ) {
-        if self.dueDateSwitchAdmin == sender{
-            self.cell(self.dueDateLabelAdminCell, setHidden: !sender.on)
-            self.cell(self.dueDatePickerAdminCell, setHidden: true)
-            self.reloadDataAnimated(true)
-            if !self.cellIsHidden(self.dueDateLabelAdminCell) {
-                var indexPath = self.tableView.indexPathForCell(self.dueDateLabelAdminCell)
-                self.tableView.scrollToRowAtIndexPath(indexPath!, atScrollPosition: UITableViewScrollPosition.Bottom, animated: true)
-            }
-        }else if self.addToMyRemindersSwitch == sender {
-            EventStoreManager.sharedInstance.requestAccess({ (success:Bool, _) -> Void in
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    if success {
-                        self.cell(self.remindMeOnADayCell, setHidden: !sender.on)
-                        self.remindMeOnADaySwitch.setOn(false, animated: false)
-                        self.cell(self.remindMeAlarmDateLabelCell, setHidden: true)
-                        self.cell(self.remindMeDatePickerCell, setHidden: true)
-                        self.reloadDataAnimated(true)
-                        if !self.cellIsHidden(self.remindMeOnADayCell) {
-                            var indexPath = self.tableView.indexPathForCell(self.remindMeOnADayCell)
-                            self.tableView.scrollToRowAtIndexPath(indexPath!, atScrollPosition: UITableViewScrollPosition.Bottom, animated: true)
-                        }
-                    }else {
-                        sender.setOn(!sender.on, animated: true)
-                        UIAlertView(title: "Warning", message: "Please give Reminders access to u.do from privacy settings", delegate: nil, cancelButtonTitle: "Ok").show()
-                    }
-                })
-            })
-        }else if self.remindMeOnADaySwitch == sender {
-            if sender.on && self.remindMeAlarmDateLabel.text == "" {
-                self.remindMeAlarmDateLabel.text = self.dueDateLabelAdmin.text
-            }
-            self.cell(self.remindMeAlarmDateLabelCell, setHidden: !sender.on)
-            self.cell(self.remindMeDatePickerCell, setHidden: true)
-            self.reloadDataAnimated(true)
-            if !self.cellIsHidden(self.remindMeAlarmDateLabelCell) {
-                var indexPath = self.tableView.indexPathForCell(self.remindMeAlarmDateLabelCell)
-                self.tableView.scrollToRowAtIndexPath(indexPath!, atScrollPosition: UITableViewScrollPosition.Bottom, animated: true)
-            }
-        }
+    
+    func textViewDidBeginEditing(textView: UITextView) {
+        var rect = textView.convertRect(textView.frame, toView: self.tableView)
+        self.tableView.scrollRectToVisible(rect, animated: true)
     }
     
     
@@ -402,19 +756,23 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         }
         self.tableView.beginUpdates()
         self.tableView.endUpdates()
+        self.updateNavigationItemButtons()
     }
     
     @IBAction func dateChanged(sender: UIDatePicker) {
-        if self.dueDatePickerAdmin == sender {
-            self.dueDateLabelAdmin.text = dateFormatter.stringFromDate(sender.date)
+        if self.dueDatePicker != nil  &&  self.dueDatePicker == sender {
+            self.dueDateLabel.text = dateFormatter.stringFromDate(sender.date)
             self.selectedDueDate = sender.date
-        }else if self.remindMeDatePicker == sender {
+        }else if self.remindMeDatePicker != nil && self.remindMeDatePicker == sender {
             self.remindMeAlarmDateLabel.text = dateFormatter.stringFromDate(sender.date)
+            self.selectedAlarmDate = sender.date
         }
+        self.updateNavigationItemButtons()
     }
     
     func createDatePickerForCell(cell:UIView) -> UIDatePicker {
         var picker = UIDatePicker()
+        picker.addTarget(self, action: "dateChanged:", forControlEvents: UIControlEvents.ValueChanged)
         picker.setDate(self.selectedDueDate, animated: false)
         cell.addSubview(picker)
         
@@ -428,49 +786,9 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         return picker
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == 3 && indexPath.row == 1 {
-            if self.dueDatePickerAdmin == nil {
-               self.dueDatePickerAdmin = self.createDatePickerForCell(dueDatePickerAdminCell)
-            }
-            let isHidden = self.cellIsHidden(self.dueDatePickerAdminCell)
-            self.cell(self.dueDatePickerAdminCell, setHidden: !isHidden)
-            self.reloadDataAnimated(true)
-            if isHidden {
-                var indexPath = self.tableView.indexPathForCell(self.dueDatePickerAdminCell)
-                self.tableView.scrollToRowAtIndexPath(indexPath!, atScrollPosition: UITableViewScrollPosition.Bottom, animated: true)
-            }
-        }else if indexPath.section == 4 && indexPath.row == 2 {
-            if self.remindMeDatePicker == nil {
-                self.remindMeDatePicker = self.createDatePickerForCell(self.remindMeDatePickerCell)
-            }
-            let hidden = !self.cellIsHidden(self.remindMeDatePickerCell)
-            self.cell(self.remindMeDatePickerCell, setHidden: hidden)
-            self.reloadDataAnimated(true)
-            if !self.cellIsHidden(self.remindMeDatePickerCell) {
-                var indexPath = self.tableView.indexPathForCell(self.remindMeDatePickerCell)
-                self.tableView.scrollToRowAtIndexPath(indexPath!, atScrollPosition: UITableViewScrollPosition.Bottom, animated: true)
-            }
-        }
-    }
-    
-    
-    
-    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        if indexPath.section == 1 {
-            self.taskTextView.superview?.layoutIfNeeded()
-            var sizeThatFits = self.taskTextView.frame.size
-            sizeThatFits.width = self.tableView.frame.size.width - 16 //margins
-            sizeThatFits = self.taskTextView.sizeThatFits(sizeThatFits)
-            return max(44,sizeThatFits.height + 20/*margins*/)
-        }
-        return super.tableView(tableView, heightForRowAtIndexPath: indexPath)
-    }
-    
-    
-    func sendInvitation(number:ContactNumber){
+    func sendInvitation(number:String){
         if MFMessageComposeViewController.canSendText() {
-            let recipents = [number.original]
+            let recipents = [number]
             var messageController = MFMessageComposeViewController()
             messageController.messageComposeDelegate = self
             messageController.recipients = recipents
@@ -482,7 +800,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     func messageComposeViewController(controller: MFMessageComposeViewController!, didFinishWithResult result: MessageComposeResult) {
         if result.value == MessageComposeResultFailed.value{
-            UIAlertView(title: "Error", message: "Failed to send message", delegate: nil, cancelButtonTitle: "Continue").show()
+            TSMessage.showNotificationWithTitle("Error", subtitle: "Failed to send message", type: TSMessageNotificationType.Error)
             controller.dismissViewControllerAnimated(true, completion: nil)
         }else if result.value == MessageComposeResultSent.value {
             self.contactsManager.invitationSent(controller.recipients)
@@ -497,9 +815,16 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         if self.reminder.title != self.taskTextView.text {
             self.reminder.title = self.taskTextView.text
         }
-        if self.dueDateSwitchAdmin.on {
-            if (reminder.dueDate == nil || ( reminder.dueDate != nil && !reminder.dueDate.isEqualToDate(self.dueDatePickerAdmin.date))) {
-                reminder.dueDate = self.dueDatePickerAdmin.date
+        if self.dueDateSwitch.on {
+            if (reminder.dueDate == nil || ( self.reminder.dueDate != nil && !self.reminder.dueDate.isEqualToDate(self.selectedDueDate))) {
+                self.reminder.dueDate = self.selectedDueDate
+            }
+            if (self.reminder.dueDateInterval == nil && self.selectedDuaDateRepeatInterval != nil) || (self.reminder.dueDateInterval != nil && self.selectedDuaDateRepeatInterval == nil) || (self.reminder.dueDateInterval != nil && self.selectedAlarmDateRepeatInterval != nil && !self.reminder.dueDateInterval.isEqual(self.selectedAlarmDateRepeatInterval.rawValue)) {
+                if self.selectedDuaDateRepeatInterval == nil {
+                    self.reminder.dueDateInterval = nil
+                }else {
+                    self.reminder.dueDateInterval = self.selectedDuaDateRepeatInterval.rawValue
+                }
             }
         }else if reminder.dueDate != nil {
             reminder.dueDate = nil
@@ -522,33 +847,19 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
                 addedItemsAfterSave = addedItems
             }
         }
-        if !self.reminder.isDirty() {
-            self.saveEventStoreChanges()
-        }else {
-            self.reminderManager.saveReminder(reminder, resultBlock: { (success:Bool, error:NSError!) -> Void in
-                if success {
-                    if addedItemsAfterSave != nil {
-                        self.reminder.addUniqueObjectsFromArray(addedItemsAfterSave, forKey: kReminderCollaborators)
-                        self.reminder.saveEventually()
-                    }
-                    self.saveEventStoreChanges()
-                }
-            })
+        if !self.remindMeOnADaySwitch.on {
+            self.selectedAlarmDate = nil
         }
+        self.reminderManager.saveReminder(reminder, addToMyReminders: self.addToMyRemindersSwitch.on, alarmDate: self.selectedAlarmDate, repeatInterval: self.selectedAlarmDateRepeatInterval, { (success:Bool, error:NSError!) -> Void in
+            if success {
+                if addedItemsAfterSave != nil {
+                    self.reminder.addUniqueObjectsFromArray(addedItemsAfterSave, forKey: kReminderCollaborators)
+                    self.reminder.saveEventually()
+                }
+            }
+        })
     }
     
-    func saveEventStoreChanges(){
-        var eventStoreManager = EventStoreManager.sharedInstance
-        if self.addToMyRemindersSwitch.on {
-            var alarmDate:NSDate!
-            if self.remindMeOnADaySwitch.on {
-                alarmDate = self.remindMeDatePicker.date
-            }
-            eventStoreManager.upsertWithTitle(self.reminder.title, andAlarmDate: alarmDate, forKey: self.reminder.key())
-        }else if eventStoreManager.isStored(reminder.key()){
-            eventStoreManager.remove(reminder.key())
-        }
-    }
 }
 
 
@@ -557,16 +868,15 @@ protocol CollabaratorViewDelegate{
     func collabaratorSelected(index:Int)
 }
 
-var AddCollaboratorButtonImage = UIImage(named: "add").imageTintedWithColor(AppTheme.tintColor)
+var AddCollaboratorButtonImage = UIImage(named: "add")?.imageTintedWithColor(AppTheme.tintColor)
 
 class CollabaratorView:UIScrollView {
     private var addCollabaratorButton:UIButton!
-    private var defaulImage = UIImage(named: "default-avatar")
     private let imgSize = CGFloat(60)
     private let padding = CGFloat(10)
-    private var collabarators = [(ContactNumber,UIButton)]()
+    private var collabarators = [(String,UIButton)]()
     
-    var contactsManagaer = ContactsManager.sharedInstance
+    var contactsManager = ContactsManager.sharedInstance
     
     var collabaratorDelegate:CollabaratorViewDelegate!
     
@@ -576,50 +886,62 @@ class CollabaratorView:UIScrollView {
         self.addCollabaratorButton.addTarget(self, action: "addCollabaratorButtonPressed:", forControlEvents: UIControlEvents.TouchUpInside)
         self.addSubview(self.addCollabaratorButton)
         self.alwaysBounceVertical = false
+        self.alwaysBounceHorizontal = true
+    }
+    
+    func refresh(){
+        //todo refresh user names
     }
     
     func addCollabaratorButtonPressed(sender:UIButton){
         self.collabaratorDelegate.addCollabaratorButtonPressed()
     }
     
-    func addCollabarator(number:ContactNumber, done: Bool){
+    // state : 0 none
+    // state : 1 received
+    // state : 2 done
+    func addCollabarator(userId:String, state: Int){
         var cView = UIView(frame: CGRect(x: self.nextXPosiotion(), y: 0, width: self.imgSize, height: self.bounds.height))
+        cView.backgroundColor = UIColor.clearColor()
         self.addSubview(cView)
         var cButton = UIButton(frame: CGRect(x: 0, y: self.padding, width: self.imgSize, height: self.imgSize))
         cButton.layer.backgroundColor = UIColor.clearColor().CGColor
         cButton.layer.cornerRadius = CGFloat(imgSize/2)
         cButton.layer.masksToBounds = true
-        if let img = number.contact.image {
-            cButton.setImage(img, forState: UIControlState.Normal)
-        }else {
-            cButton.setImage(defaulImage, forState: UIControlState.Normal)
+        var pfImageView = PFImageView(image: DefaultAvatarImage)
+        pfImageView.frame = CGRect(x: 0, y: 0, width: self.imgSize, height: self.imgSize)
+        cButton.addSubview(pfImageView)
+        var contact = self.contactsManager.getUDContactForUserId(userId)
+        if let userPublic = contact.userPublic {
+            if let imageFile = userPublic.image {
+                pfImageView.file = imageFile
+                pfImageView.loadInBackground()
+            }
         }
         cButton.layer.borderWidth = 5
-        if done {
+        if state == 2 {
             cButton.layer.borderColor = AppTheme.doneColor.CGColor
+        }else if state == 1 {
+            cButton.layer.borderColor = AppTheme.receivedColor.CGColor
         }else {
-            cButton.layer.borderColor = AppTheme.unDoneColor.CGColor
+            cButton.layer.borderColor = AppTheme.notReceivedColor.CGColor
         }
-        if (!contactsManagaer.isNumberRegistered(number) && number.userId != PFUser.currentUser().username ){
+        if (!self.contactsManager.isUserRegistered(userId) && userId != PFUser.currentUser().username ){
             cButton.layer.borderColor = AppTheme.unRegisteredUserColor.CGColor
         }
         cButton.addTarget(self, action: "collabaratorPressed:", forControlEvents: UIControlEvents.TouchUpInside)
         cView.addSubview(cButton)
         var nameLabel = UILabel(frame: CGRect(x: 0 , y: self.padding + self.imgSize, width: self.imgSize, height: 30))
         nameLabel.font = UIFont.systemFontOfSize(10)
-        if let name = number.contact.name {
-            nameLabel.text = name
-        }else{
-            nameLabel.text = number.userId
-        }
+        nameLabel.text = contact.name()
         nameLabel.numberOfLines = 2
         nameLabel.lineBreakMode = NSLineBreakMode.ByWordWrapping
         nameLabel.textAlignment = NSTextAlignment.Center
-        if (!contactsManagaer.isNumberRegistered(number) && number.userId != PFUser.currentUser().username ){
+        if (!contactsManager.isUserRegistered(userId) && userId != PFUser.currentUser().username ){
             nameLabel.textColor = UIColor.redColor()
         }
         cView.addSubview(nameLabel)
-        self.collabarators.append((number,cButton))
+        self.collabarators.append((userId,cButton))
         self.setContentWidthAndAddButtonPosition()
         self.scrollRectToVisible(self.addCollabaratorButton.frame, animated: true)
     }
@@ -672,5 +994,66 @@ class CollabaratorView:UIScrollView {
             }
         }
     }
-    
 }
+
+class RepeatSelectorTableViewController : UITableViewController {
+    var selectedCalendarUnit:NSCalendarUnit!
+    
+    func indexPathForSelectedCalendarUnit() -> NSIndexPath {
+        var index:Int!
+        if selectedCalendarUnit == nil {
+            index = 0
+        }else {
+            switch selectedCalendarUnit {
+            case NSCalendarUnit.DayCalendarUnit:
+                index = 1
+            case NSCalendarUnit.WeekCalendarUnit:
+                index = 2
+            case NSCalendarUnit.MonthCalendarUnit:
+                index = 3
+            case NSCalendarUnit.YearCalendarUnit:
+                index = 4
+            default:
+                index = 0
+            }
+        }
+        return NSIndexPath(forRow: index, inSection: 0)
+    }
+    
+    func setCalendarUnitForIndexPath(indexPath:NSIndexPath) {
+        switch indexPath.row {
+        case 1:
+            self.selectedCalendarUnit = NSCalendarUnit.DayCalendarUnit
+        case 2:
+            self.selectedCalendarUnit = NSCalendarUnit.WeekCalendarUnit
+        case 3:
+            self.selectedCalendarUnit = NSCalendarUnit.MonthCalendarUnit
+        case 4:
+            self.selectedCalendarUnit = NSCalendarUnit.YearCalendarUnit
+        default:
+            self.selectedCalendarUnit = nil
+        }
+    }
+    
+    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        var cell = super.tableView(tableView, cellForRowAtIndexPath: indexPath)
+        if self.indexPathForSelectedCalendarUnit() == indexPath {
+            cell.accessoryType = UITableViewCellAccessoryType.Checkmark
+        }else {
+            cell.accessoryType = UITableViewCellAccessoryType.None
+        }
+        return cell
+    }
+    
+    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+        var previousSelection = self.tableView.cellForRowAtIndexPath(self.indexPathForSelectedCalendarUnit())
+        previousSelection?.accessoryType = UITableViewCellAccessoryType.None
+        
+        self.setCalendarUnitForIndexPath(indexPath)
+        var currentSelection = self.tableView.cellForRowAtIndexPath(indexPath)
+        currentSelection?.accessoryType = UITableViewCellAccessoryType.Checkmark
+        
+        self.performSegueWithIdentifier("RepeatIntervalSelected", sender: nil)
+    }
+}
+

@@ -10,186 +10,232 @@ import Foundation
 import AddressBookUI
 import MessageUI
 
-class ContactNumber{
-    var contact:Contact!
-    var original:String!
+class  UDContact {
+    init (userId:String!,imageCache:NSCache){
+        self.userId = userId
+        self.imageCache = imageCache
+    }
+    private let imageCache:NSCache!
+    var userPublic:UserPublic?
     var userId:String!
-    init(){
-        
+    var apContact:APContact?
+    private var thumbnail:UIImage!
+    func name() -> String {
+        if let up = userPublic {
+            return up.name
+        }else if let apc = apContact{
+            if let apName = apc.compositeName {
+                return apName
+            }
+        }
+        return userId
     }
-    
-    func toDictionary() -> NSDictionary! {
-        var dic = NSMutableDictionary()
-        dic.setObject(original, forKey: "original")
-        dic.setObject(userId, forKey: "userId")
-        return dic
+    func image() -> UIImage!{
+        if let up = userPublic {
+            if let imageFile = up.image {
+                if let cachedImage = self.imageCache.objectForKey(self.userId) as? UIImage{
+                    return cachedImage
+                }else {
+                    imageFile.getDataInBackgroundWithBlock({ (data:NSData!, error:NSError!) -> Void in
+                        if error == nil {
+                            if let profileImage = UIImage(data: data!) {
+                                self.imageCache.setObject(profileImage, forKey: self.userId)
+                            }
+                        }
+                    })
+                }
+            }
+        }
+        if thumbnail != nil {
+            return thumbnail!
+        }
+        if let apImage = apContact?.thumbnail {
+            return apImage
+        }
+        return DefaultAvatarImage
     }
-    
-    class func fromDictionary(dic:NSDictionary!,contact:Contact) -> ContactNumber{
-        var number = ContactNumber()
-        number.contact = contact
-        number.original = dic.objectForKey("original") as String?
-        number.userId = dic.objectForKey("userId") as String?
-        return number
+    func hasImage() -> Bool {
+        if self.thumbnail != nil {
+            return true
+        }
+        if apContact?.thumbnail != nil {
+            return true
+        }
+        return false
     }
 }
 
-class Contact{
-    var image:UIImage?
-    var name:String?
-    var tokens:[String]!
-    var numbers:[ContactNumber] = []
-    init(){
-        
-    }
-    
-    func toDictionary() -> NSDictionary! {
-        var dic = NSMutableDictionary()
-        dic.setObject(name!, forKey: "name")
-        var numbersDic = [NSDictionary]()
-        for number in self.numbers {
-            numbersDic.append(number.toDictionary())
-        }
-        dic.setObject(numbersDic, forKey: "numbers")
-        return dic
-    }
-    
-    class func fromDictionary(dic:NSDictionary!) -> Contact{
-        var contact = Contact()
-        contact.name = dic.objectForKey("name") as String?
-        contact.numbers = [ContactNumber]()
-        for numberDic in dic.objectForKey("numbers") as [NSDictionary]{
-             contact.numbers.append(ContactNumber.fromDictionary(numberDic, contact: contact))
-        }
-        return contact
-    }
-}
 
 var kContactsAccessGrantedNotification = "ContactsAccessGrantedNotification"
 var kContactsAccessDenieddNotification = "ContactsAccessDenieddNotification"
-var kContactsChangedNotification = "ContactsChanged"
+var kContactsChangedNotification = "ContactsChangedNotification"
+
+var DefaultAvatarImage = UIImage(named: "default-avatar")
 
 class ContactsManager{
     class var sharedInstance : ContactsManager {
-    struct Static {
-        static let instance : ContactsManager = ContactsManager()
+        struct Static {
+            static let instance : ContactsManager = ContactsManager()
         }
         return Static.instance
     }
+    private var imageCache = NSCache()
+    private var registeredUserIds = NSDictionary()
+    private var phoneUtil:NBPhoneNumberUtil! = NBPhoneNumberUtil.sharedInstance()
+    private var addressBook = APAddressBook()
     
-    var registeredNumbers:Dictionary<String,String>!
-    var phoneUtil:NBPhoneNumberUtil! = NBPhoneNumberUtil.sharedInstance()
-    var addressBook: ABAddressBookRef?
+    var contacts:[APContact] = []
+    private var userIdAPContactMap = NSDictionary()
     
-    var contacts:[Contact] = []
-    var contactsMap = Dictionary<String,ContactNumber>()
+    private var numberUserIdCache:NSDictionary!
+    private var userDefaults = NSUserDefaults.standardUserDefaults()
     
-    var numberUserIdMap:Dictionary<String,String>!
-    var userDefaults = NSUserDefaults.standardUserDefaults()
+    private var isListenerRegistered = false
     
     init() {
-        var errorRef: Unmanaged<CFError>? = nil
-        self.addressBook = ABAddressBookCreateWithOptions(nil, &errorRef).takeRetainedValue()
-        self.registeredNumbers = userDefaults.dictionaryForKey("registeredNumbers") as Dictionary<String,String>?
-        if self.registeredNumbers == nil {
-            self.registeredNumbers = Dictionary<String,String>()
-        }
-        var savedNumberUserIdMap =  userDefaults.dictionaryForKey("numberUserIdMap") as Dictionary<String,String>?
+        var savedNumberUserIdMap =  userDefaults.dictionaryForKey("numberUserIdCache") as NSDictionary?
         if savedNumberUserIdMap == nil {
-            self.numberUserIdMap = Dictionary<String,String>()
+            self.numberUserIdCache = NSDictionary()
         }else {
-            self.numberUserIdMap = savedNumberUserIdMap
+            self.numberUserIdCache = savedNumberUserIdMap
+        }
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "applicationWillEnterForegroundNotification:", name: UIApplicationWillEnterForegroundNotification, object: nil)
+    }
+    
+    private func reset(){
+        self.contacts.removeAll(keepCapacity: true)
+        self.userIdAPContactMap = NSDictionary()
+        self.addressBook.stopObserveChanges()
+        self.isListenerRegistered = false
+    }
+    
+    @objc func applicationWillEnterForegroundNotification(notification:NSNotification) {
+        if !self.isAuthorized() {
+            self.reset()
         }
     }
-
     
-    func isAuthorized() -> Bool {
-        return ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Authorized
-    }
     
-    func authorize( success:()->Void, error:()->Void ){
-        if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.NotDetermined) {
-            var errorRef: Unmanaged<CFError>? = nil
-            ABAddressBookRequestAccessWithCompletion(addressBook, { s, e in
-                dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    if s {
-                        success()
-                    }
-                    else {
-                        println("e:ContactsHelper:authorize: \(e)")
-                        error()
-                    }
-                })
+    func requestAccess( callback:(success:Bool,error:NSError!) -> Void ){
+        self.addressBook.requestAccess { (success:Bool, error:NSError!) -> Void in
+            dispatch_async(dispatch_get_main_queue(),{ () -> Void in
+                callback(success: success, error: error)
             })
         }
-        else if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Denied || ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Restricted) {
-            error()
+    }
+    
+    func isAuthorized() -> Bool {
+        if APAddressBook.access().rawValue == APAddressBookAccess.Granted.rawValue {
+            return true
         }
-        else if (ABAddressBookGetAuthorizationStatus() == ABAuthorizationStatus.Authorized) {
-            success()
+        return false
+    }
+    
+    private func syncPhoneNumberUserIdCache(){
+        var mNumberUserIdCache = NSMutableDictionary()
+        var mUserIdAPContactMap = NSMutableDictionary()
+        for contact in self.contacts{
+            for number in contact.phones as [String] {
+                var userId = self.getUserIdFromPhoneNumber(number)
+                mUserIdAPContactMap.setObject(contact, forKey: userId)
+                mNumberUserIdCache.setObject(userId, forKey: number)
+            }
         }
+        self.userIdAPContactMap = NSDictionary(dictionary: mUserIdAPContactMap)
         
+        self.numberUserIdCache = NSDictionary(dictionary: mNumberUserIdCache)
+        self.userDefaults.setObject(self.numberUserIdCache, forKey: "numberUserIdCache")
     }
     
-    private func reloadContacts(){
-        var newContacts = [Contact]()
-        var newContactsMap = Dictionary<String,ContactNumber>()
-        var errorRef: Unmanaged<CFError>?
-        var contactList: NSArray = ABAddressBookCopyArrayOfAllPeople(addressBook).takeRetainedValue()
-        for record:ABRecordRef in contactList {
-            var contact = Contact()
-            contact.image = imageForContact(record)
-            var name = ABRecordCopyCompositeName(record).takeRetainedValue() as NSString?
-            if name == nil {
-                contact.name = ""
-            }else{
-                contact.name = name
-                var tokens = [String]()
-                for token in name!.componentsSeparatedByString(" "){
-                    tokens.append(token.lowercaseString)
-                }
-                contact.tokens = tokens
-            }
-            
-            let uPhoneNumbers = ABRecordCopyValue(record, kABPersonPhoneProperty)
-            let phones: ABMultiValueRef =
-            Unmanaged<NSObject>.fromOpaque(uPhoneNumbers.toOpaque()).takeUnretainedValue() as ABMultiValueRef
-            for (var i = 0; i < ABMultiValueGetCount(phones); ++i)
-            {
-                var uPhoneNumber = ABMultiValueCopyValueAtIndex(phones, i)
-                let phoneNumber: String = Unmanaged<NSObject>.fromOpaque(
-                    uPhoneNumber.toOpaque()).takeUnretainedValue() as String
-                var contactNumber = ContactNumber()
-                contactNumber.original = phoneNumber
-                contactNumber.userId = convertPhoneNumberToUserId(phoneNumber)
-                contactNumber.contact = contact
-                contact.numbers.append(contactNumber)
-                newContactsMap[contactNumber.userId] = contactNumber
-            }
-            if contact.numbers.count > 0 {
-                newContacts.append(contact)
-            }
+    
+    private func loadContactsFromAddressBook( callback:(success:Bool,error:NSError!) -> Void) {
+        self.addressBook.fieldsMask = APContactField.Default | APContactField.CompositeName | APContactField.Thumbnail
+        self.addressBook.sortDescriptors = [NSSortDescriptor(key: "firstName", ascending: true),
+            NSSortDescriptor(key: "lastName", ascending: true)]
+        self.addressBook.filterBlock = {(contact: APContact!) -> Bool in
+            return contact.phones.count > 0
         }
-        newContacts.sort({ (c1:Contact, c2:Contact) -> Bool in
-            return c1.name < c2.name
+        self.addressBook.loadContactsOnQueue(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), completion: { (contacts: [AnyObject]!, error: NSError!) -> Void in
+            if (contacts != nil) {
+                self.contacts = contacts as [APContact]
+                self.syncPhoneNumberUserIdCache()
+            }
+            var success = true
+            if error != nil {
+                success = false
+            }
+            dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                callback(success: success, error: error)
+            })
         })
-        self.contacts = newContacts
-        self.contactsMap = newContactsMap
-        userDefaults.setObject(self.numberUserIdMap, forKey: "numberUserIdMap")
-        userDefaults.synchronize()
     }
     
-    func imageForContact(recordRed:ABRecordRef) -> UIImage?{
-        if (ABPersonHasImageData(recordRed)) {
-            var imgData:CFData = ABPersonCopyImageDataWithFormat(recordRed, kABPersonImageFormatThumbnail).takeRetainedValue()
-            return UIImage(data: imgData)
+    func getUDContactsForAPcontact(apContact:APContact!) -> [UDContact]{
+        var udContacts = [UDContact]()
+        for phoneNumber in apContact.phones as [String]{
+            if let udContact = self.getUDContactForPhoneNumber(phoneNumber) {
+                udContacts.append(udContact)
+            }
         }
-        return nil
+        return udContacts
     }
     
+    func getUDContactForPhoneNumber(number:String!) -> UDContact!{
+        var userId =  self.getUserIdFromPhoneNumber(number)
+        return self.getUDContactForUserId(userId)
+    }
     
-    func convertPhoneNumberToUserId(phoneNumber:String!) -> String {
-        var userId =  self.numberUserIdMap[phoneNumber]
+    func getUDContactForUserId(username:String!) -> UDContact!{
+        var udContact = UDContact(userId: username,imageCache:self.imageCache)
+        if let userPublic = self.registeredUserIds[username] as? UserPublic{
+            udContact.userPublic = userPublic
+        }
+        if let apContact = self.userIdAPContactMap[username] as? APContact{
+            udContact.apContact = apContact
+        }
+        return udContact
+    }
+    
+    func isUserRegistered(userId:String!) -> Bool{
+        if let user = self.registeredUserIds[userId] as? UserPublic{
+            return true
+        }else if self.userIdAPContactMap[userId] == nil {
+            // not in our contact list, cant decide
+            return true
+        }
+        return false
+    }
+    
+    func loadContacts(contactsLoaded:(() -> Void)?){
+        if self.isListenerRegistered {
+            contactsLoaded?()
+            return
+        }
+        self.loadContactsFromAddressBook{ (success:Bool, error:NSError!) -> Void in
+            if success {
+                self.addressBook.startObserveChangesWithCallback { () -> Void in
+                    self.loadContactsFromAddressBook({ (success:Bool, error:NSError!) -> Void in
+                        if success {
+                            NSNotificationCenter.defaultCenter().postNotificationName(kContactsChangedNotification, object: nil)
+                        }
+                    })
+                }
+                self.isListenerRegistered = true
+            }
+            contactsLoaded?()
+            return
+        }
+    }
+    
+    func refreshAppUsers(appUsersLoaded:(() -> Void)? ){
+        self.getAppUsers({ () -> Void in
+            appUsersLoaded?()
+            return
+        })
+    }
+    
+    func getUserIdFromPhoneNumber(phoneNumber:String!) -> String! {
+        var userId =  self.numberUserIdCache[phoneNumber] as? String
         if userId != nil {
             return userId!
         }
@@ -203,80 +249,26 @@ class ContactsManager{
         }else{
             userId = phoneNumber
         }
-        self.numberUserIdMap[phoneNumber] = userId
         return userId!
     }
     
-    
-    func getContactNumberForUserId(userId:String!) -> ContactNumber{
-        if userId == PFUser.currentUser().username {
-            var me = Contact()
-            me.name = PFUser.currentUser()["name"] as? String
-            var number = ContactNumber()
-            number.contact = me
-            number.userId = userId
-            return number
-        }
-        var number = self.contactsMap[userId]
-        if number != nil {
-            return number!
-        }
-        var unknownContact = Contact()
-        if userId == "0" {
-            unknownContact.name = "u.do"
-            unknownContact.image = UIImage(named: "udoAvatar")
-        }
-        var unknownNumber = ContactNumber()
-        unknownNumber.contact = unknownContact
-        unknownNumber.userId = userId
-        unknownNumber.original = userId
-        return unknownNumber
-    }
-    
-    func isNumberRegistered(number:ContactNumber) -> Bool{
-        var user = self.registeredNumbers[number.userId]
-        if user == nil{
-            return false
-        }
-        return true
-    }
-    
-    func refreshContactsAndAppUsers(contactsLoaded:(() -> Void)? ,appUsersLoaded:(() -> Void)? ){
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),{ () -> Void in
-            self.reloadContacts()
-            dispatch_async(dispatch_get_main_queue(),{ () -> Void in
-                contactsLoaded?()
-                return
-            })
-            self.getAppUsers({ () -> Void in
-                dispatch_async(dispatch_get_main_queue(),{ () -> Void in
-                    appUsersLoaded?()
-                    return
-                })
-            })
-        })
-    }
-    
     private func getAppUsers( finished: (()-> Void)? ){
-        var numbers:[String] = []
-        for contact in self.contacts{
-            for number in contact.numbers{
-                if let userId = number.userId{
-                    numbers.append(userId)
-                }
+        var query = UserPublic.query()
+        var myContactNumbers = NSMutableArray(array: self.numberUserIdCache.allValues)
+        myContactNumbers.addObject(PFUser.currentUser().username) // add myself
+        myContactNumbers.addObject("0") // add udo
+        query.whereKey("username", containedIn: myContactNumbers)
+        //query.cachePolicy = kPFCachePolicyCacheThenNetwork
+        query.findObjectsInBackgroundWithBlock { (users:[AnyObject]!, error:NSError!) -> Void in
+            if error != nil {
+                println("e:getAppUsers:\(error.localizedDescription)")
+                return
             }
-        }
-        var params = Dictionary<String,AnyObject>()
-        params["numbers"] = numbers
-        PFCloud.callFunctionInBackground("appUsers", withParameters:params) {
-            (result: AnyObject!, error: NSError!) -> Void in
-            if error == nil {
-                for user in result as [String] {
-                    self.registeredNumbers[user] = ""
-                }
-                self.userDefaults.setObject(self.registeredNumbers, forKey: "registeredNumbers")
-                self.userDefaults.synchronize()
+            var registeredUsers = NSMutableDictionary()
+            for user in users as [UserPublic] {
+                registeredUsers.setValue(user, forKey: user.username)
             }
+            self.registeredUserIds = registeredUsers.copy() as NSDictionary
             finished?()
         }
     }
@@ -296,5 +288,5 @@ class ContactsManager{
         invitation["from"] = PFUser.currentUser().username
         invitation.saveEventually()
     }
-
+    
 }

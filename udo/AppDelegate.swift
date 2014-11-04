@@ -13,13 +13,12 @@ var kUserLoggedOutNotification = "UserLoggedOutNotification"
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-                            
+    
     var window: UIWindow?
-    
+    var nc = NSNotificationCenter.defaultCenter()
     var reminderManager:ReminderManager!
+    var notesManager:NotesManager!
     
-    var remindersMainViewController:RemindersMainViewController!
-
     func application(application: UIApplication!, didFinishLaunchingWithOptions launchOptions: NSDictionary!) -> Bool {
         Parse.setApplicationId("ZfTTFTJ49Sb3mJK2Xbi5lw1nhcNsUnO4ayEXP565", clientKey: "nHWUQHYcfkSG1mZNLZqSc35nNpgQ9taEdz46EoE2")
         PFAnalytics.trackAppOpenedWithLaunchOptions(launchOptions)
@@ -31,7 +30,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         self.window?.tintColor = AppTheme.tintColor
         
         var nc = self.window?.rootViewController as UINavigationController
-        self.remindersMainViewController = nc.viewControllers[0] as RemindersMainViewController
+        TSMessage.setDefaultViewController(nc)
         
         if (application.applicationState != UIApplicationState.Background) {
             // Track an app open here if we launch with a push, unless
@@ -50,12 +49,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }
         }
         
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "userLoggedIn:", name: kUserLoggedInNotification, object: nil)
+        self.nc.addObserver(self, selector: "userLoggedIn:", name: kUserLoggedInNotification, object: nil)
         
         if PFUser.currentUser() != nil {
             self.registerToPushNotifications()
         }
-        
+        self.notesManager = NotesManager.sharedInstance
         self.reminderManager = ReminderManager.sharedInstance
         self.reminderManager.applicationDidFinishLaunchingNotification()
         
@@ -72,76 +71,96 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func application(application: UIApplication, didReceiveLocalNotification notification: UILocalNotification) {
-        if application.applicationState == UIApplicationState.Active {
-              UIAlertView(title: "Alert", message: notification.alertBody, delegate: nil, cancelButtonTitle: "Ok").show()
-        }
+        self.reminderManager.localNotificationRecevied(application, notification: notification)
     }
     
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject : AnyObject]?) -> Bool {
         if let userInfo =  launchOptions?[UIApplicationLaunchOptionsLocalNotificationKey] as? NSDictionary {
             if let  reminderId = userInfo["reminderId"] as? NSString{
-                self.remindersMainViewController.showReminder(reminderId)
+                NSNotificationCenter.defaultCenter().postNotificationName(kReminderShowNotification, object: reminderId)
             }
         }
         return true
     }
     
     func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject]) {
-        println("helloo")
     }
-
+    
     
     func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject], fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void) {
-        PFPush.handlePush(userInfo)
-        self.reminderManager.remoteNotificationReceived(application.applicationState, userInfo: userInfo, completionHandler: completionHandler)
+        var cmd:PushCommand
+        if let c = userInfo["c"] as? String {
+            if let cmd = PushCommand(rawValue: c) {
+                switch cmd {
+                case PushCommand.Delivery, PushCommand.New, PushCommand.Undone, PushCommand.Done, PushCommand.Update:
+                    self.reminderManager.remoteNotificationReceived(cmd, applicationState: application.applicationState, userInfo: userInfo, completionHandler: completionHandler)
+                case PushCommand.Note:
+                    self.notesManager.remoteNotificationReceived(cmd, application: application, userInfo: userInfo, completionHandler: completionHandler)
+                default:
+                    println("noting to do")
+                }
+            }else{
+                println("unkown push notification received \(c)")
+            }
+        }
         if (application.applicationState == UIApplicationState.Inactive) {
             PFAnalytics.trackAppOpenedWithRemoteNotificationPayload(userInfo)
-            if let reminderId = userInfo["r"] as? NSString{
-                self.remindersMainViewController.showReminder(reminderId)
+            // opened from notification
+            if let reminderId = userInfo["r"] as? String {
+                self.nc.postNotificationName(kReminderShowNotification, object: reminderId)
+            }
+        }else if application.applicationState == UIApplicationState.Active {
+            if let alert = userInfo["alert"] as? String {
+                TSMessage.showNotificationWithTitle(alert, type: TSMessageNotificationType.Message)
             }
         }
     }
-
-
+    
+    
     func applicationWillResignActive(application: UIApplication!) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
     }
-
+    
     func applicationDidEnterBackground(application: UIApplication!) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
         
         //force cache refresh
+        /*
+        if PFUser.currentUser() != nil {
         var bgTask:UIBackgroundTaskIdentifier!
         bgTask = application.beginBackgroundTaskWithExpirationHandler({ () -> Void in
-            PFQuery.clearAllCachedResults()
-            application.endBackgroundTask(bgTask)
-            bgTask = UIBackgroundTaskInvalid
+        PFQuery.clearAllCachedResults()
+        application.endBackgroundTask(bgTask)
+        bgTask = UIBackgroundTaskInvalid
         })
         self.clearBadge()
         self.reminderManager.refresh { (_, _) -> Void in
-            application.endBackgroundTask(bgTask)
-            bgTask = UIBackgroundTaskInvalid
+        application.endBackgroundTask(bgTask)
+        bgTask = UIBackgroundTaskInvalid
         }
+        }*/
+        NSUserDefaults.standardUserDefaults().synchronize()
+        self.clearBadge()
     }
-
+    
     func applicationWillEnterForeground(application: UIApplication!) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
-         self.reminderManager.applicationWillEnterForegroundNotification()
+        self.reminderManager.applicationWillEnterForeground()
+        self.notesManager.applicationWillEnterForeground()
     }
-
+    
     func applicationDidBecomeActive(application: UIApplication!) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
         if PFUser.currentUser() != nil {
-            EventStoreManager.sharedInstance.reset()
             self.clearBadge()
         }
     }
-
+    
     func applicationWillTerminate(application: UIApplication!) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-        PFQuery.clearAllCachedResults()
+        NSUserDefaults.standardUserDefaults().synchronize()
     }
     
     func clearBadge(){
@@ -169,8 +188,30 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             application.registerForRemoteNotificationTypes(UIRemoteNotificationType.Alert | UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound)
         }
     }
-
-
-
+    func isNotificationsEnabled() -> Bool {
+        if UIDevice.currentDevice().model == "iPhone Simulator" {
+            return true
+        }
+        let application = UIApplication.sharedApplication()
+        var types:UIRemoteNotificationType!
+        if application.respondsToSelector("isRegisteredForRemoteNotifications") {
+            return application.isRegisteredForRemoteNotifications()
+        } else {
+            types = UIApplication.sharedApplication().enabledRemoteNotificationTypes()
+            return types != UIRemoteNotificationType.None
+            
+        }
+    }
 }
+
+
+enum PushCommand : String {
+    case New = "n"
+    case Update = "u"
+    case Done = "d"
+    case Undone = "o"
+    case Delivery = "e"
+    case Note = "t"
+}
+
 

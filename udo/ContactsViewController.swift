@@ -13,10 +13,12 @@ import AddressBookUI
 class ContactTableViewCell:UITableViewCell{
     @IBOutlet weak var name: UILabel!
     
-    
-    
-    func initWithContact(contact:Contact) {
-        self.name.text = contact.name
+    func initWithContact(contact:APContact) {
+        if let name = contact.compositeName {
+            self.name.text = name
+        }else{
+            self.name.text = ""
+        }
     }
     
 }
@@ -31,27 +33,56 @@ class ContactPhoneNumberTableViewCell:UITableViewCell{
 
 class ContactDetailsViewController:UITableViewController{
     @IBOutlet weak var name: UILabel!
-    @IBOutlet weak var image: UIImageView!
+    @IBOutlet weak var image: PFImageView!
     
-    var contact:Contact!
+    var contact:APContact!
+    var udContact:UDContact!
     var contactsManager = ContactsManager.sharedInstance
     
     override func viewDidLoad() {
-        name.text = contact.name
-        image.layer.cornerRadius = image.frame.size.height/2
-        image.layer.masksToBounds = true
-        image.layer.borderWidth = 0
-        if let img = contact.image{
-            image.image = img
+        if let name = self.contact.compositeName {
+            self.name.text = name
+        }else {
+            self.name.text = ""
+        }
+        self.image.layer.cornerRadius = image.frame.size.height/2
+        self.image.layer.masksToBounds = true
+        self.image.layer.borderWidth = 0
+        
+        if let image = self.contact.thumbnail {
+            self.image.image = image
+        }
+        self.udContact = self.contactsManager.getUDContactsForAPcontact(self.contact).first
+        if self.udContact != nil {
+            if let userPublic = udContact.userPublic {
+                if let imageFile = userPublic.image {
+                    self.image.file = imageFile
+                    self.image.loadInBackground()
+                }
+            }
+        }
+    }
+    
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == "ShowProfileImageView" {
+            let profileImageVC = segue.destinationViewController as ProfileImageViewController
+            profileImageVC.udContact = self.udContact
         }
     }
    
+    @IBAction func imageViewPressed(sender: AnyObject) {
+        if self.udContact != nil {
+            self.performSegueWithIdentifier("ShowProfileImageView", sender: nil)
+        }
+    }
+    
     override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let contactDetailsCell = tableView.dequeueReusableCellWithIdentifier("ContactDetails", forIndexPath: indexPath) as ContactPhoneNumberTableViewCell
-        let number = contact.numbers[indexPath.row]
-        contactDetailsCell.number.text = number.original
+        var number = self.contact.phones[indexPath.row] as String
+        var contact = self.contactsManager.getUDContactForPhoneNumber(number)
+        contactDetailsCell.number.text = number
         contactDetailsCell.inviteButton.addTarget(self, action: "inviteButtonPreseed:", forControlEvents: UIControlEvents.TouchUpInside)
-        if contactsManager.isNumberRegistered(number) {
+        if self.contactsManager.isUserRegistered(contact.userId) {
             contactDetailsCell.isRegisteredImageView.hidden = false
             contactDetailsCell.inviteButton.hidden = true
         }else{
@@ -63,7 +94,7 @@ class ContactDetailsViewController:UITableViewController{
     }
     
     override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return contact.numbers.count
+        return self.contact.phones.count
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
@@ -87,7 +118,7 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
     var searchHeaders:[String]! = []
     var searchSections:Dictionary<String,NSMutableArray>! = Dictionary<String,NSMutableArray>()
     
-    var contacts:[Contact]!
+    var contacts:[APContact]!
     var previousSearchResultSet = NSSet()
     
     override func viewDidLoad() {
@@ -96,11 +127,23 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
         (self.sectionHeaders,self.sectionContacts)  = self.divideContactsToSection(self.contacts)
     }
     
-    func divideContactsToSection( contacts:[Contact] ) -> ([String]!,Dictionary<String,NSMutableArray>!) {
+    func divideContactsToSection( contacts:[APContact] ) -> ([String]!,Dictionary<String,NSMutableArray>!) {
         var sections = Dictionary<String,NSMutableArray>()
-        for contact in contacts{
+        for contact in contacts {
             var section:NSMutableArray!
-            let sectionChar = contact.name!.substringToIndex(contact.name!.startIndex.successor()).uppercaseString
+            var sectionChar:String!
+            if let name = contact.firstName as NSString?{
+                if name.length > 0 {
+                    sectionChar = name.substringToIndex(1)
+                }
+            }else {
+                if let name = contact.compositeName as NSString?{
+                    sectionChar = name.substringToIndex(1)
+                }
+            }
+            if sectionChar == nil {
+                sectionChar = ""
+            }
             if let s = sections[sectionChar] as NSMutableArray?{
                 section = s
             }else{
@@ -160,53 +203,58 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             if (contactCell == nil) {
                 contactCell = UITableViewCell(style: UITableViewCellStyle.Default, reuseIdentifier: "Cell")
             }
-            let section = self.searchSections[self.searchHeaders[indexPath.section]]
-            let contact = section?.objectAtIndex(indexPath.row) as Contact
-            contactCell.textLabel?.text = contact.name
-            contactCell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+            if let section = self.searchSections[self.searchHeaders[indexPath.section]] {
+                let contact = section.objectAtIndex(indexPath.row) as APContact
+                if let name = contact.compositeName {
+                    contactCell.textLabel.text = name
+                }else{
+                    contactCell.textLabel.text = ""
+                }
+                contactCell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
+            }
             return contactCell
         }else{
             var contactCell = tableView.dequeueReusableCellWithIdentifier("ContactCell", forIndexPath: indexPath) as ContactTableViewCell
-            let section = sectionContacts[sectionHeaders[indexPath.section]]
-            let contact = section?.objectAtIndex(indexPath.row) as Contact
-            contactCell.initWithContact(contact)
+            if let section = sectionContacts[sectionHeaders[indexPath.section]] {
+                let contact = section.objectAtIndex(indexPath.row) as APContact
+                contactCell.initWithContact(contact)
+            }
             return contactCell
             
         }
     }
     
     override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
-        var selectedContact:Contact
+        var selectedContact:APContact!
         if tableView != self.tableView{
             //search
-            let section = self.searchSections[self.searchHeaders[indexPath.section]]
-            selectedContact = section?.objectAtIndex(indexPath.row) as Contact
+            if let section = self.searchSections[self.searchHeaders[indexPath.section]]{
+                selectedContact = section.objectAtIndex(indexPath.row) as APContact
+            }
         }else{
-            let section = sectionContacts[sectionHeaders[indexPath.section]]
-            selectedContact = section?.objectAtIndex(indexPath.row) as Contact
+            if let section  = sectionContacts[sectionHeaders[indexPath.section]]{
+                selectedContact = section.objectAtIndex(indexPath.row) as APContact
+            }
+        }
+        if selectedContact == nil {
+            return
         }
         performSegueWithIdentifier("ShowContactDetail", sender: selectedContact)
     }
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == "ShowContactDetail"{
-            let contact = sender as Contact
+            let contact = sender as APContact
             let contactDetailsVC = segue.destinationViewController as ContactDetailsViewController
             contactDetailsVC.contact = contact
         }
     }
     
+     var predicate = NSPredicate(format: "(firstName BEGINSWITH[cd] $searchString) OR (lastName BEGINSWITH[cd] $searchString) OR (compositeName BEGINSWITH[cd] $searchString)")!
+    
     func searchDisplayController(controller: UISearchDisplayController, shouldReloadTableForSearchString searchString: String) -> Bool {
-        var newSearchResults:[Contact] = []
-        var lowercaseSearchString = searchString.lowercaseString
-        for contact in self.contacts {
-            for token in contact.tokens {
-                if token.hasPrefix(lowercaseSearchString) {
-                    newSearchResults.append(contact)
-                    break
-                }
-            }
-        }
+        var nsContacts = self.contacts as NSArray
+        var newSearchResults = nsContacts.filteredArrayUsingPredicate(predicate.predicateWithSubstitutionVariables(["searchString": searchString])!) as [APContact]
         let newResultSet:NSSet = NSSet(array: newSearchResults)
         if self.previousSearchResultSet.isEqualToSet(newResultSet){
             return false

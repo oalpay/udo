@@ -11,12 +11,18 @@ import Foundation
 let itemDoneImage = UIImage(named: "checkmark")
 let itemPendingImage = UIImage(named: "checkmark_empty")
 
+var RightArrowImage = UIImage(named: "right")?.imageTintedWithColor(AppTheme.iconMaskColor)
+var LeftArrowImage = UIImage(named: "left")?.imageTintedWithColor(AppTheme.iconMaskColor)
 
-var RightArrowImage = UIImage(named: "right").imageTintedWithColor(AppTheme.iconMaskColor)
-var LeftArrowImage = UIImage(named: "left").imageTintedWithColor(AppTheme.iconMaskColor)
+var CalendarActiveImage = UIImage(named: "calendar")?.imageTintedWithColor(AppTheme.iconMaskColor)
+var CalendarPassiveImage = UIImage(named: "calendar")?.imageTintedWithColor(AppTheme.iconPassiveMaskColor)
 
-var CalendarImage = UIImage(named: "calendar").imageTintedWithColor(AppTheme.iconMaskColor)
-var NotificationImage = UIImage(named: "notifications").imageTintedWithColor(AppTheme.iconMaskColor)
+var AlarmActiveImage = UIImage(named: "notifications")?.imageTintedWithColor(AppTheme.iconMaskColor)
+var AlarmPassiveImage = UIImage(named: "notifications")?.imageTintedWithColor(AppTheme.iconPassiveMaskColor)
+
+var RetryImage = UIImage(named: "redo")?.imageTintedWithColor(AppTheme.tintColor)
+
+var RepeatImage = UIImage(named: "redo")?.imageTintedWithColor( UIColor.grayColor())
 
 
 class ReminderItemTableViewCell: UITableViewCell {
@@ -29,19 +35,20 @@ class ReminderItemTableViewCell: UITableViewCell {
     @IBOutlet weak var calendarIconView: UIImageView!
     @IBOutlet weak var alarmIconView: UIImageView!
     @IBOutlet weak var directionImageView: UIImageView!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+    @IBOutlet weak var retryImageView: UIImageView!
+    @IBOutlet weak var dueDateRepeatIconImage: UIImageView!
     
     private let dateFormatter = NSDateFormatter()
     
     private var contactsManager = ContactsManager.sharedInstance
     private var reminderManager = ReminderManager.sharedInstance
-    private var eventStoreManager = EventStoreManager.sharedInstance
     
     private var statusPresedGesture:UITapGestureRecognizer!
     private var statusLayer:CAShapeLayer!
     private var statusRatioLayer:CAShapeLayer!
     private var doneLayer:CAShapeLayer!
     
-    private var activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.Gray)
     
     var reminderKey:String!
     private var reminder:Reminder!
@@ -49,8 +56,11 @@ class ReminderItemTableViewCell: UITableViewCell {
     private var ratio = 0.0
     
     override func awakeFromNib() {
-        self.calendarIconView.image = CalendarImage
-        self.alarmIconView.image = NotificationImage
+        self.contentView.backgroundColor = AppTheme.reminderCellNormalColor
+        self.calendarIconView.image = CalendarPassiveImage
+        
+        self.alarmIconView.image = AlarmPassiveImage
+        self.alarmDateLabel.textColor = AppTheme.dateTimeColor
         
         self.statusPresedGesture = UITapGestureRecognizer(target: self, action: "statusPressed:")
         self.statusView.addGestureRecognizer(statusPresedGesture)
@@ -63,6 +73,10 @@ class ReminderItemTableViewCell: UITableViewCell {
         self.doneLayer.hidden = true
         self.statusView.layer.addSublayer(self.doneLayer)
         
+        self.retryImageView.image = RetryImage
+        
+        self.dueDateRepeatIconImage.image = RepeatImage
+        
         self.statusRatioLayer = self.statusLayer( inner: false, strokeColor: AppTheme.doneRingForegroundColor.CGColor)
         self.statusRatioLayer.strokeEnd = 0.0
         self.statusView.layer.addSublayer(self.statusRatioLayer)
@@ -71,15 +85,14 @@ class ReminderItemTableViewCell: UITableViewCell {
         self.dateFormatter.timeStyle = NSDateFormatterStyle.MediumStyle
         
         self.activityIndicator.hidesWhenStopped = true
-        self.activityIndicator.center = self.statusView.center
-        statusView.addSubview(self.activityIndicator)
         
         self.titleLabel.textColor = AppTheme.reminderTitleColor
         self.reminderNameLabel.textColor = AppTheme.reminderHeaderColor
     }
     
     override func prepareForReuse() {
-        self.hideActivity()
+        self.activityIndicator.stopAnimating()
+        self.retryImageView.hidden = true
         self.errorMsgLabel.text = ""
         self.dueDateLabel.hidden = false
         self.calendarIconView.hidden = false
@@ -87,52 +100,19 @@ class ReminderItemTableViewCell: UITableViewCell {
         self.alarmIconView.hidden = false
         self.doneLayer.hidden = true
         self.reminder = nil
-        self.ratio = 0
+        self.setDoneRatio(0, animated: false)
     }
     
     func statusPressed(sender: AnyObject){
-        if self.reminderManager.isReminderLoadingWithKey(self.reminder.key()) {
+        if ( self.reminderManager.isReminderLoadingWithKey(self.reminderKey)) {
             return
         }
-        // save status before save
-        var isUserDone = self.reminder.isCurrentUserDone()
-        if !reminder.isDirty() {
-            if isUserDone {
-                self.reminder.setUserUnDone()
-            } else {
-                self.reminder.setUserDone()
-            }
-            self.reminderManager.saveReminder(self.reminder, resultBlock: nil)
-        }
-    }
-    
-    func updateActivity(){
-        if self.reminderManager.isReminderLoadingWithKey(self.reminder.key()){
-           self.showActivity()
+        if self.reminderManager.isThereErrorForKey(self.reminder.key()){
+            //retry
+            self.reminderManager.retrySaving(self.reminder.key())
         }else{
-          self.hideActivity()
-        }
-    }
-    
-    func showActivity(){
-        self.doneLayer.hidden = true
-        self.activityIndicator.startAnimating()
-    }
-    
-    func hideActivity(){
-        self.activityIndicator.stopAnimating()
-        if reminder.isUserDone(PFUser.currentUser().username) {
-            self.doneLayer.hidden = false
-        }else{
-            self.doneLayer.hidden = true
-        }
-    }
-    
-    func updateErrorMsg(){
-        if self.reminderManager.isThereErrorForKey(self.reminder.key()) {
-             self.errorMsgLabel.text = "Failed to save!"
-        }else {
-            self.errorMsgLabel.text = ""
+            var isUserDone = self.reminder.isCurrentUserDone()
+            self.reminderManager.changeReminderStatusForCurrentUser(self.reminderKey, done: !isUserDone, resultBlock: nil)
         }
     }
     
@@ -147,48 +127,60 @@ class ReminderItemTableViewCell: UITableViewCell {
             if title != "" {
                 title += ", "
             }
-            var number = self.contactsManager.getContactNumberForUserId(collaborator)
-            if let name = number.contact.name {
-                title += name
-            }else{
-                 title += number.userId
+            if let udContact = self.contactsManager.getUDContactForUserId(collaborator){
+                title += udContact.name()
             }
-            
         }
         self.reminderNameLabel.text = title
     }
     
-    func updateStatus(){
-        if reminder.isUserDone(PFUser.currentUser().username) {
-            self.doneLayer.hidden = false
+    func updateStatusView(){
+        let isLoading = self.reminderManager.isReminderLoadingWithKey(self.reminderKey)
+        if isLoading {
+            self.activityIndicator.startAnimating()
         }else{
-            self.doneLayer.hidden = true
+            self.activityIndicator.stopAnimating()
         }
-        self.changeDoneRatio(self.reminder.doneRatio())
+        self.setDoneRatio(self.reminder.doneRatio(),animated:true)
+        if isLoading || self.reminder.failedToSave || !self.reminder.isCurrentUserDone(){
+            self.doneLayer.hidden = true
+        }else {
+            self.doneLayer.hidden = false
+        }
+        if self.reminder.failedToSave {
+            self.errorMsgLabel.text = "Failed to save!"
+            self.retryImageView.hidden = false
+        }else{
+            self.retryImageView.hidden = true
+            self.errorMsgLabel.text = ""
+        }
     }
+    
     
     func updateAlaramLabels(){
         var now = NSDate()
-        if let alarmDate = self.eventStoreManager.getAlarmDateForKey(reminder.key()){
+        if let alarmDate = self.reminder.alarmDate {
             var  prettyDate = MHPrettyDate.prettyDateFromDate(alarmDate, withFormat: MHPrettyDateFormatWithTime)
             self.alarmDateLabel.text = prettyDate
             self.alarmDateLabel.hidden = false
             self.alarmIconView.hidden = false
-            if alarmDate.laterDate(now) == alarmDate || self.reminder.isCurrentUserDone() {
-                self.alarmDateLabel.textColor = AppTheme.dateTimeColor
+            if alarmDate.laterDate(now) == alarmDate {
+                self.alarmIconView.image = AlarmActiveImage
             }else{
-                self.alarmDateLabel.textColor = AppTheme.dateTimeWarningColor
+                self.alarmIconView.image = AlarmPassiveImage
             }
         }else{
             self.alarmDateLabel.hidden = true
             self.alarmIconView.hidden = true
         }
-
+        
     }
     
     func updateCalendarLabels(){
         var now = NSDate()
+        self.dueDateRepeatIconImage.hidden = true
         if let dueDate = reminder.dueDate {
+            //var prettyDate = MHPrettyDate.prettyDateFromDate(dueDate, withFormat: MHPrettyDateFormatWithTime, withDateStyle: NSDateFormatterStyle.FullStyle, withTimeStyle: NSDateFormatterStyle.FullStyle)
             var  prettyDate = MHPrettyDate.prettyDateFromDate(dueDate, withFormat: MHPrettyDateFormatWithTime)
             self.dueDateLabel.text = prettyDate
             self.dueDateLabel.hidden = false
@@ -198,12 +190,50 @@ class ReminderItemTableViewCell: UITableViewCell {
             }else{
                 self.dueDateLabel.textColor = AppTheme.dateTimeWarningColor
             }
+            if self.reminder.dueDateInterval != nil {
+                self.dueDateRepeatIconImage.hidden = false
+            }
+            if self.reminder.isCurrentUserDone() {
+                self.calendarIconView.image = CalendarPassiveImage
+            }else {
+                self.calendarIconView.image = CalendarActiveImage
+            }
         }else{
             self.dueDateLabel.hidden = true
             self.calendarIconView.hidden = true
         }
-        
     }
+    
+    
+    
+    func setAccessoryColorForState(state:ReminderState){
+        switch state {
+        case .ReceivedNew:
+            self.backgroundColor = AppTheme.doneColor
+            self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: UIColor.whiteColor())
+        case .Seen:
+            if let dueDate = reminder.dueDate {
+                if dueDate.earlierDate(NSDate()) == dueDate {
+                    if !reminder.isCurrentUserDone() {
+                        self.backgroundColor = AppTheme.reminderCellOverdueColor
+                        self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: UIColor.whiteColor())
+                        break
+                    }
+                }
+            }
+            self.backgroundColor = AppTheme.reminderCellNormalColor
+            self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: AppTheme.doneRingBackgroudColor)
+
+        case .ReceivedUpdated:
+            self.backgroundColor = AppTheme.reminderCellUnSeenColor
+            self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: UIColor.whiteColor())
+        default:
+            self.backgroundColor = AppTheme.reminderCellNormalColor
+            self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: AppTheme.doneRingBackgroudColor)
+        }
+        self.accessoryView?.frame.size.width = 18
+    }
+
     
     func updateAll(){
         self.reminder = self.reminderManager.getReminder(self.reminderKey)
@@ -211,23 +241,24 @@ class ReminderItemTableViewCell: UITableViewCell {
         self.updateAlaramLabels()
         self.updateCalendarLabels()
         self.updateTitle()
-        self.updateErrorMsg()
-        self.updateStatus()
+        self.updateStatusView()
     }
-    
     
     func statusLayer(#inner:Bool, strokeColor:CGColor) -> CAShapeLayer {
         // Set up the shape of the circle
         var circle = CAShapeLayer()
+        var size = self.statusView.frame.size
         var radius:CGFloat!
+        var margin:CGFloat!
         if inner {
-            radius = 8
+            margin = 16.0
+            radius = size.width - margin*2
         }else{
-            radius = 16
+            margin = 8.0
+            radius = size.width - margin*2
         }
-        var center = self.statusView.center
-        var rect = CGRect(x: center.x - radius , y: center.y - radius, width: 2.0 * radius, height: 2.0 * radius)
-        var path = UIBezierPath(roundedRect: rect, cornerRadius: radius)
+        var rect = CGRect(x: margin, y: margin, width: radius, height: radius )
+        var path = UIBezierPath(roundedRect: rect, cornerRadius: radius / 2)
         // Make a circular shape
         circle.path = path.CGPath
         
@@ -242,10 +273,17 @@ class ReminderItemTableViewCell: UITableViewCell {
         return circle
     }
     
-    func changeDoneRatio(ratio:Double){
+    func setDoneRatio(ratio:Double,animated:Bool){
+        if ratio == self.ratio {
+            return
+        }
         self.statusRatioLayer.strokeEnd = CGFloat(ratio)
         var animation = CABasicAnimation(keyPath: "strokeEnd")
-        animation.duration = 1.0
+        if animated {
+            animation.duration = 1.0}
+        else{
+            animation.duration = 0
+        }
         animation.fromValue = self.ratio
         animation.toValue = ratio
         animation.removedOnCompletion = true

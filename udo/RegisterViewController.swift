@@ -18,7 +18,7 @@ class ActionButton:UIButton{
     var textField:UITextField!
     
     override func awakeFromNib() {
-        self.activityIndicator = UIActivityIndicatorView(frame: CGRect(x: self.bounds.width - 30, y: 2.5 , width: 25, height: 25))
+        self.activityIndicator = UIActivityIndicatorView(frame: CGRect(x: self.bounds.width - 30, y: (self.bounds.height - 25)/2 , width: 25, height: 25))
         self.activityIndicator.hidesWhenStopped = true
         self.addSubview(self.activityIndicator)
         
@@ -148,10 +148,14 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
         params["password"] = self.devId()
         PFCloud.callFunctionInBackground("resetPassword", withParameters:params) {
             (result: AnyObject!, error: NSError!) -> Void in
+            button.hideActivity()
             if error != nil {
-                button.hideActivity()
-                println("e:resetPassword:\(error.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+                var userMsg:String!
+                userMsg = error.userInfo?["error"] as String
+                if userMsg == nil {
+                    userMsg = error.localizedDescription
+                }
+                UIAlertView(title: "Error", message: userMsg, delegate: nil, cancelButtonTitle: "Ok").show()
             }else{
                 PFUser.logInWithUsernameInBackground(self.username, password: self.devId(), block: { (_, error:NSError!) -> Void in
                     button.hideActivity()
@@ -159,7 +163,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
                         println("e:resetPassword:\(error.description)")
                         UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
                     }else{
-                        self.performSegueWithIdentifier("Loggedin", sender: self)
+                        self.userLoggedIn()
                     }
                 })
             }
@@ -174,12 +178,15 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
             (result: AnyObject!, error: NSError!) -> Void in
             button.hideActivity()
             if error != nil {
-                println("e:setPasscodeWithSuccess:\(error.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
-            }else{
-                self.askPasscode()
-                self.loginButton.setAction(self.createAndSendPasscode, withTitle: "Resend SMS Code",textField: self.phoneNumberTextField)
+                var userMsg:String!
+                userMsg = error.userInfo?["error"] as String
+                if userMsg == nil {
+                    userMsg = error.localizedDescription
+                }
+                UIAlertView(title: "Error", message: userMsg, delegate: nil, cancelButtonTitle: "Ok").show()
             }
+            self.askPasscode()
+            self.loginButton.setAction(self.createAndSendPasscode, withTitle: "Resend SMS Code",textField: self.phoneNumberTextField)
         }
     }
     
@@ -191,7 +198,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
             button.hideActivity()
             if error != nil && error.code != kPFErrorObjectNotFound{
                 println("e:queryUser:\(error.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+                UIAlertView(title: "Error", message: error.localizedDescription , delegate: nil, cancelButtonTitle: "Ok").show()
             }else if userObject == nil {
                 //new user
                 self.askName()
@@ -204,7 +211,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
                             self.askResetPasswordForUser(user.username)
                         }else{
                             println("e:queryUser:\(error.description)")
-                            UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+                            UIAlertView(title: "Error", message: error.localizedDescription , delegate: nil, cancelButtonTitle: "Ok").show()
                         }
                     }else{
                         self.userLoggedIn()
@@ -229,16 +236,23 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
         params["passcode"] = self.passcodeTextField.text
         PFCloud.callFunctionInBackground("signUpUser", withParameters:params) {
             (result: AnyObject!, error: NSError!) -> Void in
+            button.hideActivity()
             if error != nil {
-                button.hideActivity()
                 println("createUserAndGoBackToMain:\(error.userInfo?.description)")
-                UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+                if error != nil {
+                    var userMsg:String!
+                    userMsg = error.userInfo?["error"] as String
+                    if userMsg == nil {
+                        userMsg = error.localizedDescription
+                    }
+                    UIAlertView(title: "Error", message: userMsg, delegate: nil, cancelButtonTitle: "Ok").show()
+                }
             }else{
                 PFUser.becomeInBackground(result["sessionToken"] as String , block: { (_, error:NSError!) -> Void in
                     button.hideActivity()
                     if error != nil {
                         println("createUserAndGoBackToMain:\(error.userInfo?.description)")
-                        UIAlertView(title: "Error", message: error.userInfo?.description , delegate: nil, cancelButtonTitle: "Ok").show()
+                        UIAlertView(title: "Error", message: error.localizedDescription , delegate: nil, cancelButtonTitle: "Ok").show()
                     }else{
                        self.userLoggedIn()
                     }
@@ -291,5 +305,14 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
         }
         return true
     }
+    
+    override func preferredInterfaceOrientationForPresentation() -> UIInterfaceOrientation {
+        return UIInterfaceOrientation.Portrait
+    }
+    
+    override func supportedInterfaceOrientations() -> Int {
+        return Int(UIInterfaceOrientationMask.Portrait.rawValue)
+    }
+
     
 }

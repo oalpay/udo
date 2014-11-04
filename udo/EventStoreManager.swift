@@ -16,14 +16,8 @@ import EventKit
 protocol EventStoreManagerDelegate{
     func itemChangedInStore(key:String!)
 }
-
+var kStoreIds = "StoreIds"
 class EventStoreManager : NSObject{
-    class var sharedInstance : EventStoreManager {
-    struct Static {
-        static let instance : EventStoreManager = EventStoreManager()
-        }
-        return Static.instance
-    }
     
     var delegate:EventStoreManagerDelegate?
     
@@ -33,54 +27,41 @@ class EventStoreManager : NSObject{
     
     var userDefaults = NSUserDefaults.standardUserDefaults()
     
-    var reminderManager = ReminderManager.sharedInstance
-    
     var ekReminderCache = Dictionary<String,EKReminder>()
     
-    var storeIds:Dictionary<String,String>!
+    var storeIds:NSMutableDictionary!
     
     override init(){
         super.init()
-        if let storeIds = userDefaults.dictionaryForKey("reminders") as? Dictionary<String,String>{
-            self.storeIds = storeIds
+        var userStoreIds = userDefaults.dictionaryForKey(kStoreIds)
+        if userStoreIds != nil {
+            self.storeIds = NSMutableDictionary(dictionary: userStoreIds!)
         }else{
-            self.storeIds = Dictionary<String,String>()
+            self.storeIds = NSMutableDictionary()
         }
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
+    }
+    
+    func removeAll(){
+        for storeId in self.storeIds.allValues as [String]{
+            if let ekReminder = self.eventStore.calendarItemWithIdentifier(storeId)  as? EKReminder {
+                var error:NSError?
+                self.eventStore.removeReminder(ekReminder, commit: true, error: &error)
+            }
+        }
     }
     
     func reset(){
         self.ekReminderCache.removeAll(keepCapacity: true)
         self.eventStore.reset()
     }
-
-    func remindersChangedNotification(notification:NSNotification) {
-        var changed = notification.object as RemindersChanged!
-        var upserts = NSMutableArray()
-        upserts.addObjectsFromArray(changed.inserts)
-        upserts.addObjectsFromArray(changed.updates)
-        for key in upserts {
-            var sKey = key as String
-            if self.isStored(sKey) {
-                var reminder = self.reminderManager.getReminder(sKey)
-                self.updateTitle(reminder.title , forKey: sKey)
-            }
-        }
-        for key in changed.deletes {
-            if self.isStored(key) {
-                self.remove(key)
-            }
-        }
+    
+    private func getStoreIdForKey( key:NSString! ) -> String? {
+        return storeIds[key] as? NSString
     }
     
-    private func getStoreIdForKey( key:String! ) -> String? {
-        return storeIds[key]
-    }
-    
-    private func deleteStoreIdForKey( key:String! ){
-        storeIds.removeValueForKey(key)
-        userDefaults.setObject(storeIds, forKey: "reminders")
-        userDefaults.synchronize()
+    private func deleteStoreIdForKey( key:NSString! ){
+        self.storeIds.removeObjectForKey(key)
+        self.userDefaults.setObject(storeIds, forKey: kStoreIds)
     }
     
     private func getEKReminderForKey( key:String! ) -> EKReminder? {
@@ -99,20 +80,12 @@ class EventStoreManager : NSObject{
     }
     
     private func saveStoreId( calendarId:String, forKey:String!){
-        var newSettings:Dictionary<String,String>!
-        let settings = userDefaults.dictionaryForKey("reminders") as? Dictionary<String,String>
-        if let s = settings {
-            newSettings = s as Dictionary<String,String>
-        } else {
-            newSettings = Dictionary<String,String>()
-        }
-        newSettings[forKey] = calendarId
-        userDefaults.setObject(newSettings, forKey: "reminders")
-        userDefaults.synchronize()
+        self.storeIds[forKey] = calendarId
+        self.userDefaults.setObject(self.storeIds, forKey: kStoreIds)
     }
     
     
-    func requestAccess(callerCompletion: EKEventStoreRequestAccessCompletionHandler!) {
+    func requestAccess(callerCompletion: ((Bool,NSError!)->Void)!) {
         self.eventStore.requestAccessToEntityType(EKEntityTypeReminder, completion: { (granted:Bool, error:NSError!) -> Void in
             self.accessGranted = granted
             callerCompletion(granted,error)
@@ -194,7 +167,8 @@ class EventStoreManager : NSObject{
         return false
     }
     
-    private func setEKReminder(ekReminder:EKReminder!, withTitle:String!, andAlarmDate:NSDate!) -> Bool{
+    // TODO andRepeatInterval
+    private func setEKReminder(ekReminder:EKReminder!, withTitle:String!, andAlarmDate:NSDate!,andRepeatInterval:NSCalendarUnit!) -> Bool{
         var isChanged = false
         if ekReminder.title != withTitle{
             ekReminder.title = withTitle
@@ -233,15 +207,15 @@ class EventStoreManager : NSObject{
         }
     }
     
-    func upsertWithTitle(title:String!, andAlarmDate:NSDate!, forKey:String!){
+    func upsertWithTitle(title:String!, andAlarmDate:NSDate!,andRepeatInterval:NSCalendarUnit!, forKey:String!){
         if let ekReminder = self.getEKReminderForKey(forKey) {
-            if self.setEKReminder(ekReminder, withTitle: title, andAlarmDate: andAlarmDate){
+            if self.setEKReminder(ekReminder, withTitle: title, andAlarmDate: andAlarmDate, andRepeatInterval:andRepeatInterval){
                 self.saveEKReminder(ekReminder,commit: true)
                 self.delegate?.itemChangedInStore(forKey)
             }
         }else{
             var ekReminder = self.createEKReminder()
-            self.setEKReminder(ekReminder, withTitle: title, andAlarmDate: andAlarmDate)
+            self.setEKReminder(ekReminder, withTitle: title, andAlarmDate: andAlarmDate,andRepeatInterval:andRepeatInterval)
             self.saveEKReminder(ekReminder,commit: true)
             self.saveStoreId(ekReminder.calendarItemIdentifier, forKey: forKey)
             self.delegate?.itemChangedInStore(forKey)

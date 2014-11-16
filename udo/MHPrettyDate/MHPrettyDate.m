@@ -234,7 +234,7 @@
 {
     NSString*        dateString;
     NSDateFormatter* formatter   = [[NSDateFormatter alloc] init];
-    
+
     if ([MHPrettyDate willMakePretty:date])
     {
         if ([MHPrettyDate isTomorrow:date])
@@ -251,39 +251,16 @@
         }
         else
         {
-            dateString = @"EEEE";
+            dateString = @"E";
         }
+        NSDateFormatter* timeFormat   = [[NSDateFormatter alloc] init];
+        [timeFormat setDateStyle:NSDateFormatterNoStyle];
+        [timeFormat setTimeStyle:NSDateFormatterShortStyle];
+        NSString* timeString = [@" " stringByAppendingString:[timeFormat stringFromDate:date]];
         
-        // special case for MHPrettyDateFormatWithTime
-        if (dateFormat == MHPrettyDateFormatWithTime)
-        {
-            // today show only time
-            /*
-            if ([MHPrettyDate isToday:date])
-            {
-               dateString = @"HH:mm";
-            }
-            else
-            {
-               // otherwise show date string and time
-               dateString = [NSString stringWithFormat:@"%@ HH:mm", dateString];
-            }
-            */
-            dateString = [NSString stringWithFormat:@"%@ HH:mm", dateString];
-        }
-        
-        // special case for MHPrettyDateFormatTodayTimeOnly
-        if (dateFormat == MHPrettyDateFormatTodayTimeOnly)
-        {
-            // today show only time
-            if ([MHPrettyDate isToday:date])
-            {
-                dateString = @"HH:mm";
-            }
-        }
-
         [formatter setDateFormat: dateString];
-        return [formatter stringFromDate:date];
+        NSString* dateString = [formatter stringFromDate:date];
+        return [dateString stringByAppendingString:timeString];
     }
     else if (dateFormat == MHPrettyDateFormatWithTime)
     {

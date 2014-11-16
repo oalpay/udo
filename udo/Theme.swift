@@ -20,7 +20,10 @@ func UIColorFromRGB(rgbValue: UInt) -> UIColor {
 var LighColor = UIColorFromRGB(0xcfd8dc)
 //var DarkColor = UIColorFromRGB(0x8bc34a)
 var GreenColor = UIColorFromRGB(0x689f38)
+var IndigoColor = UIColorFromRGB(0x3F51B5)
+var BlueColor = UIColorFromRGB(0x2196F3)
 var YellorColor = UIColorFromRGB(0xcddc39)
+var AmberColor = UIColorFromRGB(0xFFC107)
 var DarkColor2 = UIColorFromRGB(0x795548)
 var InternationalOrange = UIColorFromRGB(0xFF4F00)
 //var InternationalOrange = UIColorFromRGB(0xff5722)
@@ -28,13 +31,16 @@ var InternationalOrange = UIColorFromRGB(0xFF4F00)
 var GoldenGateColor = UIColorFromRGB(0xC0362C)
 var DarkGoldenGateColor = UIColorFromRGB(0xAB1715)
 
+var LogoColor = UIColorFromRGB(0x607d8b)
+
 class Theme {
     var wtfColor = UIColor.blackColor()
     var tintColor = InternationalOrange
-    var logoColor = UIColorFromRGB(0x607d8b)
+    var logoColor = LogoColor
+    var bagdeColor = BlueColor
     var notReceivedColor = UIColor.clearColor()
     var doneColor = GreenColor
-    var receivedColor = YellorColor
+    var receivedColor = AmberColor
     var doneRingBackgroudColor = LighColor
     var doneRingForegroundColor = GreenColor
     var unRegisteredUserColor = UIColorFromRGB(0xe51c23)
@@ -43,10 +49,10 @@ class Theme {
     var reminderTitleColor = UIColor.darkTextColor()
     var reminderHeaderColor = UIColor.darkGrayColor()
     var dateTimeColor = UIColor.darkGrayColor()
-    var dateTimeWarningColor = UIColor.redColor()
+    var dateTimeWarningColor = InternationalOrange
     var reminderCellNormalColor = UIColor.whiteColor()
-    var reminderCellUnSeenColor = YellorColor
-    var reminderCellNewColor = GreenColor
+    var reminderCellUnSeenColor = AmberColor
+    var reminderCellNewColor = BlueColor
     var reminderCellOverdueColor = InternationalOrange
 }
 

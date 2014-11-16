@@ -39,7 +39,7 @@ class Reminder : PFObject, PFSubclassing{
     @NSManaged var dueDateInterval:NSNumber!
     @NSManaged var received:[String]!
     
-    
+    var isPlaceHolder = false
     var alarmDate:NSDate!
     var isOnReminders = false
     
@@ -149,7 +149,7 @@ enum DeliveryStatus: Int{
     case Error = 2
 }
 
-class ReminderNote : PFObject, PFSubclassing, JSQMessageData{
+class Note : PFObject, PFSubclassing, JSQMessageData{
     @NSManaged var reminderId:String!
     @NSManaged var sender:String!
     @NSManaged var text:String!
@@ -165,6 +165,10 @@ class ReminderNote : PFObject, PFSubclassing, JSQMessageData{
     }
     class func parseClassName() -> String! {
         return "Note"
+    }
+    
+    func id() -> String {
+        return self.objectId
     }
     
     func senderId() -> String! {
@@ -192,5 +196,4 @@ class ReminderNote : PFObject, PFSubclassing, JSQMessageData{
         }
         return self.sentAt
     }
-
 }

@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6244"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
@@ -14,16 +15,16 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="07/16/1984" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="d4n-qu-2C4" userLabel="Reminder Date">
-                        <rect key="frame" x="68" y="49" width="66.5" height="15.5"/>
+                        <rect key="frame" x="67" y="49" width="66.5" height="15.5"/>
                         <constraints>
-                            <constraint firstAttribute="width" relation="lessThanOrEqual" constant="115" id="Rbh-jA-iKP"/>
+                            <constraint firstAttribute="width" relation="lessThanOrEqual" constant="120" id="Rbh-jA-iKP"/>
                         </constraints>
                         <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="13"/>
                         <color key="textColor" red="1" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Bahar Yilmaz" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4hP-t7-FCk" userLabel="Reminder Name">
-                        <rect key="frame" x="62" y="7" width="147" height="15.5"/>
+                        <rect key="frame" x="62" y="7" width="143" height="15.5"/>
                         <fontDescription key="fontDescription" name="HelveticaNeue" family="Helvetica Neue" pointSize="13"/>
                         <color key="textColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
                         <nil key="highlightedColor"/>
@@ -53,14 +54,14 @@
                         </constraints>
                     </view>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="calendar.png" translatesAutoresizingMaskIntoConstraints="NO" id="rTk-Ov-hYx" userLabel="CalendarIcon">
-                        <rect key="frame" x="52" y="49" width="14" height="14"/>
+                        <rect key="frame" x="51" y="49" width="14" height="14"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="14" id="KHh-OS-MNV"/>
                             <constraint firstAttribute="width" constant="14" id="r2n-sA-uG5"/>
                         </constraints>
                     </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="07/16/1984" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="erN-Nz-CVv" userLabel="Reminder Date">
-                        <rect key="frame" x="220" y="49" width="66.5" height="15.5"/>
+                        <rect key="frame" x="216" y="49" width="66.5" height="15.5"/>
                         <constraints>
                             <constraint firstAttribute="width" relation="lessThanOrEqual" constant="115" id="oaR-EL-dbW"/>
                         </constraints>
@@ -69,7 +70,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="1000" verticalHuggingPriority="251" text="Failed to save!" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2qv-bT-Ngo" userLabel="Error Msg Label">
-                        <rect key="frame" x="209" y="8" width="78" height="14"/>
+                        <rect key="frame" x="205" y="8" width="78" height="14"/>
                         <constraints>
                             <constraint firstAttribute="width" relation="lessThanOrEqual" constant="120" id="icY-mI-vzb"/>
                         </constraints>
@@ -78,12 +79,12 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Gelirken patates neyin al da gel" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vq3-4i-jQG" userLabel="Title">
-                        <rect key="frame" x="50" y="24" width="237" height="21"/>
+                        <rect key="frame" x="50" y="24" width="240.5" height="21"/>
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="notifications.png" translatesAutoresizingMaskIntoConstraints="NO" id="rC9-4P-jP9" userLabel="AlarmIcon">
-                        <rect key="frame" x="208" y="50" width="14" height="14"/>
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="notifications.png" translatesAutoresizingMaskIntoConstraints="NO" id="rC9-4P-jP9" userLabel="AlarmIcon">
+                        <rect key="frame" x="202" y="50" width="14" height="14"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="14" id="g6h-9a-ADQ"/>
                             <constraint firstAttribute="width" constant="14" id="pLu-kq-k1e"/>
@@ -97,14 +98,21 @@
                         </constraints>
                     </imageView>
                     <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="redo.png" translatesAutoresizingMaskIntoConstraints="NO" id="IiG-3v-sXD">
-                        <rect key="frame" x="136" y="51" width="14" height="12"/>
+                        <rect key="frame" x="135" y="51" width="14" height="12"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="14" id="FO4-PC-iic"/>
                             <constraint firstAttribute="height" constant="12" id="lOc-Ag-WgU"/>
                         </constraints>
                     </imageView>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="3" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" preferredMaxLayoutWidth="20" translatesAutoresizingMaskIntoConstraints="NO" id="7gR-Jz-CpW" userLabel="Badge" customClass="UDBadgeLabel" customModule="udo" customModuleProvider="target">
+                        <rect key="frame" x="259" y="24" width="20" height="20.5"/>
+                        <color key="backgroundColor" red="1" green="0.5" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
+                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                        <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <nil key="highlightedColor"/>
+                    </label>
                 </subviews>
-                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                 <constraints>
                     <constraint firstItem="4hP-t7-FCk" firstAttribute="leading" secondItem="Ffn-Yb-F03" secondAttribute="trailing" id="18p-tT-hxt"/>
                     <constraint firstAttribute="bottom" secondItem="Vq3-4i-jQG" secondAttribute="bottom" constant="24.5" id="2g8-Jh-KTq"/>
@@ -112,18 +120,21 @@
                     <constraint firstAttribute="centerY" secondItem="HUu-dG-ZmT" secondAttribute="centerY" id="8PG-lq-aVk"/>
                     <constraint firstAttribute="bottom" secondItem="erN-Nz-CVv" secondAttribute="bottom" constant="5" id="AQ3-v3-Xb9"/>
                     <constraint firstItem="Vq3-4i-jQG" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="24" id="BGR-E0-YCZ"/>
-                    <constraint firstItem="rTk-Ov-hYx" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="52" id="EcC-xF-MAI"/>
+                    <constraint firstItem="rTk-Ov-hYx" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="51" id="EcC-xF-MAI"/>
                     <constraint firstItem="rTk-Ov-hYx" firstAttribute="centerY" secondItem="d4n-qu-2C4" secondAttribute="centerY" id="Gko-70-2rf"/>
-                    <constraint firstItem="d4n-qu-2C4" firstAttribute="centerY" secondItem="IiG-3v-sXD" secondAttribute="centerY" constant="-0.25" id="MBX-yn-O51"/>
+                    <constraint firstItem="d4n-qu-2C4" firstAttribute="centerY" secondItem="IiG-3v-sXD" secondAttribute="centerY" id="MBX-yn-O51"/>
                     <constraint firstItem="erN-Nz-CVv" firstAttribute="leading" secondItem="rC9-4P-jP9" secondAttribute="trailing" id="OXS-E1-ptf"/>
-                    <constraint firstAttribute="trailing" secondItem="erN-Nz-CVv" secondAttribute="trailing" id="OXz-tR-bIP"/>
+                    <constraint firstAttribute="trailing" secondItem="erN-Nz-CVv" secondAttribute="trailing" constant="4" id="OXz-tR-bIP"/>
                     <constraint firstAttribute="bottom" secondItem="d4n-qu-2C4" secondAttribute="bottom" constant="5" id="ROo-TF-yhy"/>
+                    <constraint firstAttribute="centerY" secondItem="7gR-Jz-CpW" secondAttribute="centerY" id="T6R-np-737"/>
+                    <constraint firstItem="rC9-4P-jP9" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="IiG-3v-sXD" secondAttribute="trailing" id="Vh8-wK-Y2g"/>
                     <constraint firstItem="HUu-dG-ZmT" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" id="cmA-WG-Ura"/>
                     <constraint firstItem="Ffn-Yb-F03" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="9" id="e35-5F-mFu"/>
                     <constraint firstItem="IiG-3v-sXD" firstAttribute="leading" secondItem="d4n-qu-2C4" secondAttribute="trailing" constant="1.5" id="eSH-rb-7YQ"/>
-                    <constraint firstAttribute="trailing" secondItem="Vq3-4i-jQG" secondAttribute="trailing" id="eg1-VY-fRy"/>
-                    <constraint firstAttribute="trailing" secondItem="2qv-bT-Ngo" secondAttribute="trailing" id="gXB-cf-lxd"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Vq3-4i-jQG" secondAttribute="trailing" priority="750" id="eg1-VY-fRy"/>
+                    <constraint firstAttribute="trailing" secondItem="2qv-bT-Ngo" secondAttribute="trailing" constant="4" id="gXB-cf-lxd"/>
                     <constraint firstItem="2qv-bT-Ngo" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="8" id="ie8-Py-rJS"/>
+                    <constraint firstAttribute="trailingMargin" secondItem="7gR-Jz-CpW" secondAttribute="trailing" id="jbl-T4-Tuz"/>
                     <constraint firstItem="Ffn-Yb-F03" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" constant="50" id="mzE-UK-UCa"/>
                     <constraint firstItem="2qv-bT-Ngo" firstAttribute="leading" secondItem="4hP-t7-FCk" secondAttribute="trailing" id="oG8-1a-ath"/>
                     <constraint firstItem="d4n-qu-2C4" firstAttribute="leading" secondItem="rTk-Ov-hYx" secondAttribute="trailing" constant="2" id="sfK-Vs-fc8"/>
@@ -137,6 +148,7 @@
                 <outlet property="activityIndicator" destination="MWN-QZ-cGR" id="Ase-FY-MTR"/>
                 <outlet property="alarmDateLabel" destination="erN-Nz-CVv" id="2sy-IK-eE6"/>
                 <outlet property="alarmIconView" destination="rC9-4P-jP9" id="5Ve-VE-SzF"/>
+                <outlet property="badgeView" destination="7gR-Jz-CpW" id="3ZQ-HO-S6n"/>
                 <outlet property="calendarIconView" destination="rTk-Ov-hYx" id="TcR-jr-Zfx"/>
                 <outlet property="directionImageView" destination="Ffn-Yb-F03" id="jW0-6D-tjh"/>
                 <outlet property="dueDateLabel" destination="d4n-qu-2C4" id="Dmm-ym-ivI"/>

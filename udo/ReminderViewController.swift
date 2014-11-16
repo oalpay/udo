@@ -19,10 +19,10 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     @IBOutlet weak var addNewNoteLabel: UILabel!
     @IBOutlet weak var notesLoadingIndicator: UIActivityIndicatorView!
-    @IBOutlet weak var notesImageView: PFImageView!
+    @IBOutlet weak var notesImageView: UDContactImageView!
     @IBOutlet weak var notesLabel: UILabel!
     @IBOutlet weak var notesDateLabel: UILabel!
-    var notesBadgeView: JSBadgeView!
+    @IBOutlet weak var badgeLabel: UDBadgeLabel!
     @IBOutlet weak var notesCell: UITableViewCell!
     
     @IBOutlet weak var dueDateSwitch: UISwitch!
@@ -46,10 +46,11 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     @IBOutlet weak var remindMeRepeatLabel: UILabel!
     @IBOutlet weak var remindMeRepeatCell: UITableViewCell!
     
+    private var createdAtLabel:UILabel!
+    
     private let dateFormatter = NSDateFormatter()
     private let contactsManager = ContactsManager.sharedInstance
     private let reminderManager = ReminderManager.sharedInstance
-    private let notesManager = NotesManager.sharedInstance
     var reminderKey:String!
     private var reminder: Reminder!
     private var collaborators:[String] = []
@@ -98,12 +99,14 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         
         self.notesImageView.layer.cornerRadius = self.notesImageView.frame.size.height / 2
         self.notesImageView.layer.masksToBounds = true
+
+        self.badgeLabel.text = "0"
         
-        self.notesBadgeView = JSBadgeView(parentView: self.notesCell.contentView, alignment: JSBadgeViewAlignment.CenterRight)
-        self.notesBadgeView.badgeTextFont = UIFont.systemFontOfSize(17)
-        self.notesBadgeView.badgeBackgroundColor = AppTheme.tintColor
-        self.notesBadgeView.badgePositionAdjustment.x =  self.notesBadgeView.badgePositionAdjustment.x - 5
-        self.notesBadgeView.badgeText = "0"
+        self.createdAtLabel = UILabel(frame: CGRect(x: 15, y: -20, width: 300, height: 20))
+        self.tableView.addSubview(createdAtLabel)
+        self.createdAtLabel.font = UIFont.systemFontOfSize(17)
+        self.createdAtLabel.textColor = UIColor.darkGrayColor()
+        self.createdAtLabel.text = ""
         
         self.addListeners()
         
@@ -117,17 +120,19 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     }
     
     func addListeners(){
-        nc.addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
-        nc.addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
-        nc.addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
-        nc.addObserver(self, selector: "reminderCreatedNotification:", name: kReminderCreatedNotification, object: nil)
-        nc.addObserver(self, selector: "contactsChanged:", name: kContactsChangedNotification, object: nil)
+        self.nc.addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderCreatedNotification:", name: kReminderCreatedNotification, object: nil)
+        self.nc.addObserver(self, selector: "contactsChanged:", name: kContactsChangedNotification, object: nil)
         
-        nc.addObserver(self, selector: "noteUpdatesAvailable:", name: kReminderNoteUpdatesAvailableNotification, object: nil)
-        nc.addObserver(self, selector: "noteLoading:", name: kReminderNoteLoadingNotification, object: nil)
-        nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
-        nc.addObserver(self, selector: "noteSaveFinished:", name: kReminderNoteSaveFinishedNotification, object: nil)
+        self.nc.addObserver(self, selector: "noteLoading:", name: kReminderNoteLoadingNotification, object: nil)
+        self.nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
+        self.nc.addObserver(self, selector: "noteSaveFinished:", name: kReminderNoteSaveFinishedNotification, object: nil)
         
+        self.nc.addObserver(self, selector: "userSyncStarted:", name: kUserSyncStarted, object: nil)
+        self.nc.addObserver(self, selector: "userSyncEnded:", name: kUserSyncEnded, object: nil)
+
         
     }
     
@@ -143,6 +148,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     override func viewWillAppear(animated: Bool) {
         self.updateNavigationItemButtons()
+        self.updateNotes()
     }
     
     override func viewDidAppear(animated: Bool) {
@@ -177,6 +183,15 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         }
     }
     
+    func userSyncStarted(notification:NSNotification){
+        self.updateActivity()
+    }
+    
+    func userSyncEnded(notification:NSNotification){
+        self.updateActivity()
+        self.updateNotes()
+    }
+    
     func reminderLoadingNotification(notification:NSNotification){
         var key = notification.object as String
         if self.reminder.key() == key {
@@ -196,77 +211,64 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         var change = notification.object as RemindersChanged!
         if change.hasKeyInUpdateSet(self.reminderKey) {
             self.prepareReminder()
-            self.updateDueDateFields()
-            self.updateCollaborators()
-            self.updateTitle()
-        }
-    }
-    
-    func noteUpdatesAvailable(notification:NSNotification){
-        if self.reminderKey == notification.object as String {
-            if self.notesManager.loadNotesForReminderId(self.reminderKey) {
-                self.showNoteLoading()
+            if change.isLocalChange {
+                self.updateRemindMeFields()
+            }else {
+                self.updateDueDateFields()
+                self.updateCollaborators()
+                self.updateTitle()
             }
+            self.reloadDataAnimated(true)
         }
     }
+
     func showNoteLoading(){
         self.notesLoadingIndicator.startAnimating()
         self.addNewNoteLabel.hidden = true
         self.notesImageView.hidden = true
         self.notesLabel.hidden = true
-        self.notesBadgeView.hidden = true
+        self.badgeLabel.hidden = true
         self.notesDateLabel.hidden = true
     }
+    
     func noteLoading(notification:NSNotification){
         if self.reminderKey == notification.object as String {
-            self.showNoteLoading()
+           // self.showNoteLoading()
         }
     }
     
     func updateLastNote(){
-        self.notesLoadingIndicator.stopAnimating()
         var isNotesEmpty = true
-        if let notes =  self.notesManager.getNotesForReminder(self.reminderKey){
-            if let lastNote = notes.lastObject as? ReminderNote {
+        if let reminderNotes =  self.reminderManager.getReminderNotes(self.reminderKey){
+            if let lastNote = reminderNotes.getLastNote() {
                 var contact = self.contactsManager.getUDContactForUserId(lastNote.sender)
-                self.notesImageView.image = contact.image()
-                if let userPublic = contact.userPublic {
-                    if let imageFile = userPublic.image {
-                        self.notesImageView.file = imageFile
-                        self.notesImageView.loadInBackground()
-                    }
-                }
+                self.notesImageView.loadWithContact(contact, showIndicator: false)
                 self.notesLabel.text = "\(contact.name()): \(lastNote.text)"
                 self.notesDateLabel.text = JSQMessagesTimestampFormatter.sharedFormatter().timestampForDate(lastNote.date())
-                if self.navigationController?.topViewController is NotesViewController {
-                    self.notesBadgeView.badgeText = "0"
-                }else{
-                    var count = self.notesManager.getUnreadMessageCount(self.reminderKey)
-                    self.notesBadgeView.badgeText = "\(count)"
-                }
+                var count = reminderNotes.getUnreadMessageCount()
+                self.badgeLabel.text = "\(count)"
                 isNotesEmpty = false
             }
         }
-        if isNotesEmpty {
-            self.addNewNoteLabel.hidden = false
-        }else{
-            self.addNewNoteLabel.hidden = true
-            self.notesImageView.hidden = false
-            self.notesLabel.hidden = false
-            if self.notesBadgeView.badgeText != "0" {
-                self.notesBadgeView.hidden = false
-            }
-            self.notesDateLabel.hidden = false
+        self.addNewNoteLabel.hidden = !isNotesEmpty
+        self.notesImageView.hidden = isNotesEmpty
+        self.notesLabel.hidden = isNotesEmpty
+        self.notesDateLabel.hidden = isNotesEmpty
+        self.badgeLabel.hidden = isNotesEmpty
+        if self.badgeLabel.text == "0" {
+            self.badgeLabel.hidden = true
         }
     }
     
     func noteLoadingFinished(notification:NSNotification){
         if self.reminderKey == notification.object as String {
+            self.notesLoadingIndicator.stopAnimating()
             self.updateLastNote()
         }
     }
     func noteSaveFinished(notification:NSNotification){
         if self.reminderKey == notification.object as String {
+            self.notesLoadingIndicator.stopAnimating()
             self.updateLastNote()
         }
     }
@@ -307,7 +309,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     func isAlarmDateDirty() -> Bool {
         if self.remindMeOnADaySwitch.on {
-            if (self.reminder.alarmDate == nil || ( self.reminder.alarmDate != nil && !self.reminder.alarmDate.isEqualToDate(self.selectedAlarmDate))) {
+            if (self.reminder.alarmDate == nil || ( self.reminder.alarmDate != nil && self.selectedAlarmDate != nil && !self.reminder.alarmDate.isEqualToDate(self.selectedAlarmDate))) {
                 return true
             }
         }else if reminder.alarmDate != nil {
@@ -322,7 +324,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     func updateNavigationItemButtons(){
         let taskText = self.taskTextView.text.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
-        if taskText != "" &&  (self.isDirty() || self.reminder.isDirty()){
+        if ( taskText != "" &&  !self.reminder.isPlaceHolder && (self.isDirty() || self.reminder.isDirty())){
             self.navigationItem.rightBarButtonItem?.enabled = true
             self.navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Cancel", style: UIBarButtonItemStyle.Plain, target: self, action: "cancelButtonPresses:")
         }else {
@@ -333,7 +335,8 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     
     func isDirty() -> Bool {
-        return self.isCollaboratorsDirty() || self.isTitleDirty() || self.isDueDateDirty() || self.isDueDateIntervalDirty() || self.isAddToMyRemindersDirty() || self.isAlarmDateDirty()
+        let dirty =  self.isCollaboratorsDirty() || self.isTitleDirty() || self.isDueDateDirty() || self.isDueDateIntervalDirty() || self.isAddToMyRemindersDirty() || self.isAlarmDateDirty()
+        return dirty
     }
     
     func prepareReminder(){
@@ -349,9 +352,9 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     }
     
     func updateAllWithoutDatePickersFields(){
-        self.updateActivity()
         self.updateCollaborators()
         self.updateTitle()
+        self.updateActivity()
         self.reloadDataAnimated(false)
     }
     
@@ -363,7 +366,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     }
     
     func updateActivity(){
-        if self.reminderManager.isReminderLoadingWithKey(self.reminderKey) {
+        if self.reminderManager.isReminderLoadingWithKey(self.reminderKey) || self.reminderManager.isSyncing {
             self.showActivity()
         }else{
             self.hideActivity()
@@ -421,6 +424,10 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         } else {
             self.taskTextView.text = self.reminder.title
         }
+        if self.reminder.createdAt != nil {
+            let prettyDate = MHPrettyDate.prettyDateFromDate(self.reminder.createdAt, withFormat: MHPrettyDateFormatWithTime)
+            self.createdAtLabel.text = "Created: \(prettyDate)"
+        }
         self.taskTextView.editable = self.reminder.isCurrentUserAdmin()
     }
     
@@ -430,11 +437,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
             self.cell(self.notesCell, setHidden: true)
         }else{
             self.cell(self.notesCell,setHidden: false)
-            self.notesImageView.image = DefaultAvatarImage
-            self.notesLabel.text = ""
-            if self.notesManager.loadNotesForReminderId(self.reminder.key()) {
-                self.showNoteLoading()
-            }
+            self.updateLastNote()
         }
     }
     
@@ -600,9 +603,13 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         if collaborator == PFUser.currentUser().username {
             actionSheet.title = "Me (\(collaborator))"
         } else if contact.apContact != nil {
-            actionSheet.title = "\(contact.name()) (\(contact.userId))"
+            actionSheet.title = "\(contact.contactName()) (\(contact.userId))"
         }else{
-            actionSheet.title = "\(contact.name())"
+            if let userPublic = contact.userPublic {
+                actionSheet.title = "\(contact.name()) (\(contact.userId))"
+            } else {
+                actionSheet.title = "\(contact.userId)"
+            }
         }
         var state = self.reminder.stateForUser(collaborator)
         if state == 1 {
@@ -630,6 +637,10 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
             self.actionSheetOpertaion[profileIndex] = { () -> Void in
                 self.performSegueWithIdentifier("ShowProfileImageView", sender: contact)
             }
+        }
+        let copyPhoneNumber = actionSheet.addButtonWithTitle("Copy number")
+        self.actionSheetOpertaion[copyPhoneNumber] = { () -> Void in
+            UIPasteboard.generalPasteboard().string = contact.userId
         }
         var cancelIndex = actionSheet.addButtonWithTitle("Cancel")
         actionSheet.cancelButtonIndex = cancelIndex
@@ -908,16 +919,11 @@ class CollabaratorView:UIScrollView {
         cButton.layer.backgroundColor = UIColor.clearColor().CGColor
         cButton.layer.cornerRadius = CGFloat(imgSize/2)
         cButton.layer.masksToBounds = true
-        var pfImageView = PFImageView(image: DefaultAvatarImage)
-        pfImageView.frame = CGRect(x: 0, y: 0, width: self.imgSize, height: self.imgSize)
-        cButton.addSubview(pfImageView)
+        var udImageView = UDContactImageView(image: DefaultAvatarImage)
+        udImageView.frame = CGRect(x: 0, y: 0, width: self.imgSize, height: self.imgSize)
+        cButton.addSubview(udImageView)
         var contact = self.contactsManager.getUDContactForUserId(userId)
-        if let userPublic = contact.userPublic {
-            if let imageFile = userPublic.image {
-                pfImageView.file = imageFile
-                pfImageView.loadInBackground()
-            }
-        }
+        udImageView.loadWithContact(contact, showIndicator: false)
         cButton.layer.borderWidth = 5
         if state == 2 {
             cButton.layer.borderColor = AppTheme.doneColor.CGColor

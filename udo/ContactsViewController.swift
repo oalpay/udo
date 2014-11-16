@@ -25,15 +25,14 @@ class ContactTableViewCell:UITableViewCell{
 
 class ContactPhoneNumberTableViewCell:UITableViewCell{
     @IBOutlet weak var number: UILabel!
-    @IBOutlet weak var isRegisteredImageView: UIImageView!
-    @IBOutlet weak var inviteButton: UIButton!
+    @IBOutlet weak var actionButton: UIButton!
     
 }
 
 
 class ContactDetailsViewController:UITableViewController{
     @IBOutlet weak var name: UILabel!
-    @IBOutlet weak var image: PFImageView!
+    @IBOutlet weak var image: UDContactImageView!
     
     var contact:APContact!
     var udContact:UDContact!
@@ -53,14 +52,7 @@ class ContactDetailsViewController:UITableViewController{
             self.image.image = image
         }
         self.udContact = self.contactsManager.getUDContactsForAPcontact(self.contact).first
-        if self.udContact != nil {
-            if let userPublic = udContact.userPublic {
-                if let imageFile = userPublic.image {
-                    self.image.file = imageFile
-                    self.image.loadInBackground()
-                }
-            }
-        }
+        self.image.loadWithContact(self.udContact, showIndicator: false)
     }
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
@@ -81,14 +73,13 @@ class ContactDetailsViewController:UITableViewController{
         var number = self.contact.phones[indexPath.row] as String
         var contact = self.contactsManager.getUDContactForPhoneNumber(number)
         contactDetailsCell.number.text = number
-        contactDetailsCell.inviteButton.addTarget(self, action: "inviteButtonPreseed:", forControlEvents: UIControlEvents.TouchUpInside)
+        contactDetailsCell.actionButton.addTarget(self, action: "inviteButtonPreseed:", forControlEvents: UIControlEvents.TouchUpInside)
         if self.contactsManager.isUserRegistered(contact.userId) {
-            contactDetailsCell.isRegisteredImageView.hidden = false
-            contactDetailsCell.inviteButton.hidden = true
+            contactDetailsCell.actionButton.setTitle("do", forState: UIControlState.Normal)
+            contactDetailsCell.actionButton.setTitle("do", forState: UIControlState.Highlighted)
         }else{
-            contactDetailsCell.isRegisteredImageView.hidden = true
-            contactDetailsCell.inviteButton.hidden = false
-            
+            contactDetailsCell.actionButton.setTitle("invite", forState: UIControlState.Normal)
+            contactDetailsCell.actionButton.setTitle("invite", forState: UIControlState.Highlighted)
         }
         return contactDetailsCell
     }

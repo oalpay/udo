@@ -39,6 +39,8 @@ class ReminderItemTableViewCell: UITableViewCell {
     @IBOutlet weak var retryImageView: UIImageView!
     @IBOutlet weak var dueDateRepeatIconImage: UIImageView!
     
+    @IBOutlet weak var badgeView: UDBadgeLabel!
+    
     private let dateFormatter = NSDateFormatter()
     
     private var contactsManager = ContactsManager.sharedInstance
@@ -46,8 +48,8 @@ class ReminderItemTableViewCell: UITableViewCell {
     
     private var statusPresedGesture:UITapGestureRecognizer!
     private var statusLayer:CAShapeLayer!
-    private var statusRatioLayer:CAShapeLayer!
-    private var doneLayer:CAShapeLayer!
+    var statusRatioLayer:CAShapeLayer!
+    var doneLayer:CAShapeLayer!
     
     
     var reminderKey:String!
@@ -55,12 +57,20 @@ class ReminderItemTableViewCell: UITableViewCell {
     
     private var ratio = 0.0
     
+    let defaultSeparatorColor = UIColor(red: 200, green: 199, blue: 204, alpha: 1)
+    
     override func awakeFromNib() {
         self.contentView.backgroundColor = AppTheme.reminderCellNormalColor
         self.calendarIconView.image = CalendarPassiveImage
         
         self.alarmIconView.image = AlarmPassiveImage
         self.alarmDateLabel.textColor = AppTheme.dateTimeColor
+        
+        // for fixing the background color leak before the separator
+        let whitePatchLayer = CALayer()
+        whitePatchLayer.frame = CGRect(x: 0, y: 0, width: 50, height: 70)
+        whitePatchLayer.backgroundColor = UIColor.whiteColor().CGColor
+        self.contentView.layer.insertSublayer(whitePatchLayer, below:  self.statusView.layer)
         
         self.statusPresedGesture = UITapGestureRecognizer(target: self, action: "statusPressed:")
         self.statusView.addGestureRecognizer(statusPresedGesture)
@@ -88,6 +98,8 @@ class ReminderItemTableViewCell: UITableViewCell {
         
         self.titleLabel.textColor = AppTheme.reminderTitleColor
         self.reminderNameLabel.textColor = AppTheme.reminderHeaderColor
+        
+        self.badgeView.text = "0"
     }
     
     override func prepareForReuse() {
@@ -204,32 +216,41 @@ class ReminderItemTableViewCell: UITableViewCell {
         }
     }
     
+    func updateNotesBadge(){
+       let unreadCount = self.reminderManager.getReminderNotes(self.reminderKey).getUnreadMessageCount()
+        if unreadCount > 0 {
+            self.badgeView.hidden = false
+            self.badgeView.text = "\(unreadCount)"
+        }else {
+            self.badgeView.hidden = true
+        }
+    }
     
     
     func setAccessoryColorForState(state:ReminderState){
         switch state {
         case .ReceivedNew:
-            self.backgroundColor = AppTheme.doneColor
             self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: UIColor.whiteColor())
+            self.backgroundColor = AppTheme.reminderCellNewColor
         case .Seen:
             if let dueDate = reminder.dueDate {
                 if dueDate.earlierDate(NSDate()) == dueDate {
                     if !reminder.isCurrentUserDone() {
-                        self.backgroundColor = AppTheme.reminderCellOverdueColor
                         self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: UIColor.whiteColor())
+                         self.backgroundColor = AppTheme.reminderCellOverdueColor
                         break
                     }
                 }
             }
-            self.backgroundColor = AppTheme.reminderCellNormalColor
             self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: AppTheme.doneRingBackgroudColor)
+            self.backgroundColor = AppTheme.reminderCellNormalColor
 
         case .ReceivedUpdated:
-            self.backgroundColor = AppTheme.reminderCellUnSeenColor
             self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: UIColor.whiteColor())
+            self.backgroundColor = AppTheme.reminderCellUnSeenColor
         default:
-            self.backgroundColor = AppTheme.reminderCellNormalColor
             self.accessoryView = MSCellAccessory(type: FLAT_DISCLOSURE_INDICATOR, color: AppTheme.doneRingBackgroudColor)
+            self.backgroundColor = AppTheme.reminderCellNormalColor
         }
         self.accessoryView?.frame.size.width = 18
     }
@@ -242,6 +263,7 @@ class ReminderItemTableViewCell: UITableViewCell {
         self.updateCalendarLabels()
         self.updateTitle()
         self.updateStatusView()
+        self.updateNotesBadge()
     }
     
     func statusLayer(#inner:Bool, strokeColor:CGColor) -> CAShapeLayer {
@@ -290,6 +312,5 @@ class ReminderItemTableViewCell: UITableViewCell {
         self.statusRatioLayer.addAnimation(animation, forKey: "ratio")
         self.ratio = ratio
     }
-    
 }
 

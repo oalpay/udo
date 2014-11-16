@@ -9,13 +9,12 @@
 import Foundation
 import EventKit
 
-var kReminderLastUpdate = "ReminderLastUpdate"
+let kSkipTutorial = "kShowTutorial"
+let kReminderLastUpdate = "ReminderLastUpdate"
 
-class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,UISearchBarDelegate{
+class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,UISearchBarDelegate,CMPopTipViewDelegate{
     @IBOutlet weak var newReminderButton: UIBarButtonItem!
     @IBOutlet weak var settingsButton: UIBarButtonItem!
-    
-    var searchBar:UISearchBar!
     
     var contactsManager = ContactsManager.sharedInstance
     
@@ -25,8 +24,6 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     
     var reminderManager = ReminderManager.sharedInstance
     
-    var notesManager = NotesManager.sharedInstance
-    
     let reminderItemCellNib = UINib(nibName: "ReminderItemCell", bundle: nil)
     
     var navSearchDisplayController:UISearchDisplayController!
@@ -34,6 +31,8 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     var oldTitleView:UIView!
     
     var activityIndicator = UIActivityIndicatorView(activityIndicatorStyle: UIActivityIndicatorViewStyle.Gray)
+    
+    var userSettings = NSUserDefaults.standardUserDefaults()
     
     private var nc = NSNotificationCenter.defaultCenter()
     
@@ -55,9 +54,9 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         
         self.registerNotifications()
         
-        UINavigationBar.appearance().titleTextAttributes = [NSForegroundColorAttributeName: AppTheme.logoColor, NSFontAttributeName: UIFont(name: "HelveticaNeue", size: 24)!]
+        self.searchDisplayController?.searchBar.barTintColor = AppTheme.doneRingBackgroudColor
         
-        //self.navigationController?.navigationBar.titleTextAttributes =  [NSForegroundColorAttributeName: AppTheme.logoColor, NSFontAttributeName: UIFont(name: "HelveticaNeue", size: 24)!]
+        UINavigationBar.appearance().titleTextAttributes = [NSForegroundColorAttributeName: AppTheme.logoColor, NSFontAttributeName: UIFont(name: "HelveticaNeue", size: 24)!]
         
         if PFUser.currentUser() != nil {
             self.checkContactsAuthThenRefreshData()
@@ -69,7 +68,6 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     }
     
     func registerNotifications(){
-        self.nc.addObserver(self, selector: "noteUpdatesAvailable:", name: kReminderNoteUpdatesAvailableNotification, object: nil)
         self.nc.addObserver(self, selector: "reminderShowNotification:", name: kReminderShowNotification, object: nil)
         self.nc.addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
         self.nc.addObserver(self, selector: "reminderCreatedNotification:", name: kReminderCreatedNotification, object: nil)
@@ -78,14 +76,17 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         self.nc.addObserver(self, selector: "applicationWillEnterForegroundNotification:", name: UIApplicationWillEnterForegroundNotification, object: nil)
         self.nc.addObserver(self, selector: "userLoggedOut:", name: kUserLoggedOutNotification, object: nil)
         self.nc.addObserver(self, selector: "contactsChanged:", name: kContactsChangedNotification, object: nil)
+        
+        self.nc.addObserver(self, selector: "userSyncStarted:", name: kUserSyncStarted, object: nil)
+        self.nc.addObserver(self, selector: "userSyncEnded:", name: kUserSyncEnded, object: nil)
+        
+        self.nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
+        
     }
     
     override func viewWillAppear(animated: Bool) {
-        if let indexPath = self.tableView.indexPathForSelectedRow() {
-            if let cell = self.tableView.cellForRowAtIndexPath(indexPath) as? ReminderItemTableViewCell {
-                self.markCell(cell)
-            }
-        }
+        self.updateVisibleCells()
+        self.startTutorialIfNeeded()
     }
     
     override func viewDidAppear(animated: Bool) {
@@ -118,11 +119,6 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
             }
         }
         return false
-    }
-    
-    func noteUpdatesAvailable(notification:NSNotification){
-        let reminderId = notification.object as String
-        self.markReminder(reminderId)
     }
     
     func contactsChanged(notification:NSNotification) {
@@ -186,7 +182,22 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         return self.reminderKeys as NSArray
     }
     
+    func refreshContactsAndAppUsers() {
+        self.showActivity()
+        self.contactsManager.loadContacts { () -> Void in
+            self.contactsManager.refreshAppUsers({ () -> Void in
+                self.updateVisibleCells()
+                self.hideActivity()
+            })
+        }
+    }
+    
     // notifications
+    
+    func noteLoadingFinished(notification:NSNotification){
+        self.updateVisibleCells()
+    }
+    
     func reminderCreatedNotification(notification:NSNotification){
         let keyInfo = notification.object as NSDictionary
         let oldKey = keyInfo["oldKey"] as String
@@ -215,6 +226,18 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     func remindersChangedNotification(notification:NSNotification){
         var change = notification.object as RemindersChanged!
         self.mergeReminders(change)
+    }
+    
+    func refreshActivated(sender:UIRefreshControl){
+        self.reminderManager.loadReminders(nil)
+    }
+    
+    func userSyncStarted(notification:NSNotification) {
+        self.refreshControl?.beginRefreshing()
+    }
+    func userSyncEnded(notification:NSNotification) {
+        self.refreshControl?.endRefreshing()
+        self.updateVisibleCells()
     }
     // notifications end
     
@@ -278,11 +301,11 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
                     let moveToIndex = change.inserts.count + index
                     mergedKeys.insertObject(change.updates[index], atIndex: moveToIndex)
                 }
-                for (var index = change.inserts.count; index < mergedKeys.count; index++){
-                    let key = mergedKeys.objectAtIndex(index) as String
+                for (var newIndex = change.inserts.count; newIndex < mergedKeys.count; newIndex++){
+                    let key = mergedKeys.objectAtIndex(newIndex) as String
                     let oldIndex = keysBeforeMove.indexOfObject(key)
-                    if oldIndex != index{
-                        self.tableView.moveRowAtIndexPath(NSIndexPath(forRow: oldIndex, inSection: 0), toIndexPath: NSIndexPath(forRow: index, inSection: 0))
+                    if oldIndex != newIndex{
+                        self.tableView.moveRowAtIndexPath(NSIndexPath(forRow: oldIndex, inSection: 0), toIndexPath: NSIndexPath(forRow: newIndex, inSection: 0))
                     }
                 }
             }
@@ -299,6 +322,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
                 self.markCell(cell)
             }
         }
+        self.startTutorialIfNeeded()
         //self.notifyUndoneOverdueReminders((change.inserts as NSArray).arrayByAddingObjectsFromArray(change.updates))
     }
     
@@ -308,35 +332,15 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         for cell in cells {
             cell.updateTitle()
             cell.updateAlaramLabels()
+            cell.updateNotesBadge()
             self.markCell(cell)
         }
     }
     
     
-    func refreshContactsAndAppUsers() {
-        self.showActivity()
-        self.contactsManager.loadContacts { () -> Void in
-            self.contactsManager.refreshAppUsers({ () -> Void in
-                self.updateVisibleCells()
-                self.hideActivity()
-            })
-        }
-    }
-    
-    @IBAction func refreshActivated(refreshControl: UIRefreshControl) {
-        refreshControl.beginRefreshing()
-        self.reminderManager.refresh { (_, _) -> Void in
-            refreshControl.endRefreshing()
-        }
-    }
-    
-    
-    
     @IBAction func newReminderCardButtonPressed(sender: AnyObject) {
         self.performSegueWithIdentifier("ShowReminder", sender: nil)
     }
-    
-    
     
     @IBAction func unwindToMain(unwindSegue:UIStoryboardSegue){
         if unwindSegue.identifier == "ContactsAccessGranted"{
@@ -474,6 +478,98 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         return false
     }
     
+    
+    var tutorialStep = 0
+    var tutorialIsOn = false
+    func startTutorialIfNeeded(){
+        if self.userSettings.boolForKey(kSkipTutorial) ||  self.tableView.visibleCells().first == nil || self.tutorialIsOn{
+            return
+        }
+        self.tutorialIsOn = true
+        let welcomeTip = UDPopTipView(title: "Welcome aboard!", message: "Lets have a quick look at what we got here, press here to continue.")
+        welcomeTip.delegate = self
+        welcomeTip.presentPointingAtView(self.searchDisplayController?.searchBar, inView: self.tableView, animated: true)
+    }
+    
+    func endTutorial(){
+        self.userSettings.setBool(true, forKey: kSkipTutorial)
+        self.tutorialIsOn = false
+        self.tutorialStep = 0
+    }
+    
+    func tutorialNext(){
+        let cell = self.tableView.visibleCells().first as? ReminderItemTableViewCell
+        if cell == nil {
+            self.endTutorial()
+            return
+        }
+        var message:String!
+        var pointingAtView:UIView!
+        switch tutorialStep {
+        case 0:
+            message = "This is the description of your reminder."
+            pointingAtView = cell?.titleLabel
+        case 1:
+            if cell!.directionImageView.image == RightArrowImage {
+                message = "The right arrow indicates that you assigned this reminder to the person next to it."
+            }else {
+                message = "The left arrow indicates that this reminder is assigned to you by the person next to it."
+            }
+            pointingAtView = cell?.directionImageView
+        case 2:
+            if cell?.dueDateLabel.hidden == true {
+                self.tutorialStep++
+                self.tutorialNext()
+                return
+            }
+            message = "Due date! If you haven't done the reminder you will receive a notification at this date."
+            pointingAtView = cell?.dueDateLabel
+        case 3:
+            if cell?.dueDateRepeatIconImage.hidden == true {
+                self.tutorialStep++
+                self.tutorialNext()
+                return
+            }
+            message = "This icon means that the reminder has a repeating due date."
+            pointingAtView = cell?.dueDateRepeatIconImage
+        case 4:
+            if cell?.alarmIconView.hidden == true {
+                self.tutorialStep++
+                self.tutorialNext()
+                return
+            }
+            message = "This icon means you have set an alarm for this reminder."
+            pointingAtView = cell?.alarmIconView
+        case 5:
+            message = "When you are done with the reminder just tab here to complete it, tab again to revert."
+            pointingAtView = cell?.statusView
+        case 6:
+            message = "The outer ring represents completion percentage of the reminder, when everyone is done it will become a full ring."
+            pointingAtView = cell?.statusView
+        case 7:
+            message = "This area will turn Blue when the reminder is new, Orange when there is an update and Red when the reminder is overdue!"
+            pointingAtView = cell?.accessoryView
+        case 8:
+            message = "Ok you are ready! Now tab here to send your first reminder to a friend."
+            let barButtonTip = UDPopTipView(message: message)
+            barButtonTip.delegate = self
+            barButtonTip.presentPointingAtBarButtonItem(self.navigationItem.rightBarButtonItem, animated: true)
+            self.tutorialStep++
+            return
+        default:
+            // finished
+            self.endTutorial()
+            return
+        }
+        self.tutorialStep++
+        let tooltip = UDPopTipView(message: message)
+        tooltip.delegate = self
+        tooltip.presentPointingAtView(pointingAtView, inView: self.tableView, animated: true)
+    }
+    
+    func popTipViewWasDismissedByUser(popTipView: CMPopTipView!) {
+        self.tutorialNext()
+    }
 }
 
 class ContactsAccessWarningViewController:UIViewController{

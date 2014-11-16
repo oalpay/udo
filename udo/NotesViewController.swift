@@ -15,7 +15,9 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     var incomingBubbleImageData:JSQMessagesBubbleImage!
     
     var contactsManager = ContactsManager.sharedInstance
-    var notesManager = NotesManager.sharedInstance
+    var reminderManager = ReminderManager.sharedInstance
+    
+    var nc = NSNotificationCenter.defaultCenter()
     
     let calendar = NSCalendar.currentCalendar()
     let unitFlags = NSCalendarUnit.YearCalendarUnit | NSCalendarUnit.MonthCalendarUnit | NSCalendarUnit.DayCalendarUnit | NSCalendarUnit.HourCalendarUnit | NSCalendarUnit.MinuteCalendarUnit
@@ -40,107 +42,115 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
         self.outgoingBubbleImageData = bubbleFactory.outgoingMessagesBubbleImageWithColor(UIColor.jsq_messageBubbleLightGrayColor())
         self.incomingBubbleImageData = bubbleFactory.incomingMessagesBubbleImageWithColor(UIColor.jsq_messageBubbleGreenColor())
         
-        //self.collectionView.backgroundColor = UIColor(patternImage: UIImage(named: "giftly")!)
-        
-        self.notes = NSArray()
+        var reminderNotes = self.reminderManager.getReminderNotes(self.reminderId)
+        self.notes = reminderNotes.getNotes()
+        if reminderNotes.canHaveEarlierNotes() {
+            self.showLoadEarlierMessagesHeader = true
+        }else {
+            self.showLoadEarlierMessagesHeader = false
+        }
     }
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        var nc = NSNotificationCenter.defaultCenter()
-        nc.addObserver(self, selector: "noteLoadingEarlier:", name: kReminderNoteLoadingEarlierNotification, object: nil)
-        nc.addObserver(self, selector: "noteLoadingEarlierFinished:", name: kReminderNoteLoadingEarlierFinishedNotification, object: nil)
-        nc.addObserver(self, selector: "noteUpdatesAvailable:", name: kReminderNoteUpdatesAvailableNotification, object: nil)
+       
+        nc.addObserver(self, selector: "noteLoadingEarlier:", name: kNoteLoadingEarlierNotification, object: nil)
+        nc.addObserver(self, selector: "noteLoadingEarlierFinished:", name: kNoteLoadingEarlierFinishedNotification, object: nil)
         nc.addObserver(self, selector: "noteLoading:", name: kReminderNoteLoadingNotification, object: nil)
         nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
         nc.addObserver(self, selector: "noteSaving:", name: kReminderNoteSavingNotification, object: nil)
         nc.addObserver(self, selector: "noteSaveFinished:", name: kReminderNoteSaveFinishedNotification, object: nil)
         
-        if let notes =  self.notesManager.getNotesForReminder(self.reminderId) {
-            self.notes = notes
-            self.collectionView.reloadData()
-        }
-        if self.notesManager.loadNotesForReminderId(self.reminderId) {
-            self.showLoadding()
-        }
+        nc.addObserver(self, selector: "userSyncStarted:", name: kUserSyncStarted, object: nil)
+        nc.addObserver(self, selector: "userSyncEnded:", name: kUserSyncEnded, object: nil)
+        
+        self.updateActivity()
+
     }
-    
-    override func viewDidAppear(animated: Bool) {
-        super.viewDidAppear(animated)
-    }
-    
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
-        NSNotificationCenter.defaultCenter().removeObserver(self)
+        self.nc.removeObserver(self)
+        self.reminderManager.setNotesAsSeenForReminder(self.reminderId)
     }
     
-    func showLoadding(){
+    func updateActivity(){
+        if self.reminderManager.getReminderNotes(self.reminderId).loadingEarlier || self.reminderManager.isSyncing {
+            self.showActivity()
+        }else {
+            self.hideActivity()
+        }
+    }
+    
+    func showActivity(){
         self.activityIndicator.startAnimating()
         self.navigationItem.titleView = activityIndicator
         self.showLoadEarlierMessagesHeader = false
     }
-    func hideLoading(){
+    func hideActivity(){
         self.activityIndicator.stopAnimating()
         self.navigationItem.titleView = nil
     }
     
     func noteLoadingEarlier(notification:NSNotification){
-        if reminderId == notification.object as String {
-            self.showLoadding()
+        if self.reminderId == notification.object as String {
+            self.updateActivity()
         }
     }
     
     func noteLoadingEarlierFinished(notification:NSNotification){
-        if reminderId == notification.object as String {
-            self.hideLoading()
-            self.notes = self.notesManager.getNotesForReminder(reminderId)
-            if self.notes.count > 0 && self.notes.count % 100 == 0 {
-                self.showLoadEarlierMessagesHeader = true
-            }else {
-                self.showLoadEarlierMessagesHeader = false
-            }
+        if self.reminderId == notification.object as String {
+            self.updateActivity()
+            let reminderNotes = self.reminderManager.getReminderNotes(self.reminderId)
+            self.notes = reminderNotes.getNotes()
             self.collectionView.reloadData()
+            self.showLoadEarlierMessagesHeader = reminderNotes.canHaveEarlierNotes()
         }
     }
     
-    func noteUpdatesAvailable(notification:NSNotification){
-        if reminderId == notification.object as String {
+    func userSyncStarted(notification:NSNotification){
+        self.showActivity()
+    }
+    
+    func userSyncEnded(notification:NSNotification){
+        self.hideActivity()
+        self.refreshFromNotesManager()
+    }
+    
+    func noteLoading(notification:NSNotification){
+        if self.reminderId == notification.object as String {
             self.showTypingIndicator = true
-            if self.notesManager.loadNotesForReminderId(self.reminderId) {
-                self.showLoadding()
-            }
         }
     }
-    func noteLoading(notification:NSNotification){
-        if reminderId == notification.object as String {
-            self.showLoadding()
+    
+    func refreshFromNotesManager(){
+        var oldCount = self.notes.count
+        let reminderNotes = self.reminderManager.getReminderNotes(self.reminderId)
+        self.notes = reminderNotes.getNotes()
+        self.finishReceivingMessage()
+        if oldCount < self.notes.count {
+            JSQSystemSoundPlayer.jsq_playMessageReceivedSound()
         }
+        if reminderNotes.canHaveEarlierNotes() {
+            self.showLoadEarlierMessagesHeader = true
+        }else {
+            self.showLoadEarlierMessagesHeader = false
+        }
+
     }
     
     func noteLoadingFinished(notification:NSNotification){
-        if reminderId == notification.object as String {
-            self.hideLoading()
-            var oldCount = self.notes.count
-            self.notes = self.notesManager.getNotesForReminder(reminderId)
-            self.finishReceivingMessage()
-            if self.notes.count > 0 && self.notes.count % 100 == 0 {
-                self.showLoadEarlierMessagesHeader = true
-            }else {
-                self.showLoadEarlierMessagesHeader = false
-            }
-            if oldCount < self.notes.count {
-                JSQSystemSoundPlayer.jsq_playMessageReceivedSound()
-            }
-            self.notesManager.setReminderNotesAsSeen(reminderId)
+        if self.reminderId == notification.object as String {
+            self.refreshFromNotesManager()
         }
     }
+    
     func noteSaving(notification:NSNotification){
         if reminderId == notification.object as String {
-            self.notes = self.notesManager.getNotesForReminder(reminderId)
-            self.collectionView.reloadData()
-            self.scrollToBottomAnimated(true)
+            self.notes = self.reminderManager.getReminderNotes(self.reminderId).getNotes()
+            self.finishSendingMessage()
         }
     }
+    
     func noteSaveFinished(notification:NSNotification){
         if reminderId == notification.object as String {
             JSQSystemSoundPlayer.jsq_playMessageSentSound()
@@ -150,8 +160,7 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     
     
     override func didPressSendButton(button: UIButton!, withMessageText text: String!, senderId: String!, senderDisplayName: String!, date: NSDate!) {
-        self.notesManager.addNote(text, forReminderId: self.reminderId)
-        self.finishSendingMessage()
+        self.reminderManager.sendNoteText(text, forReminderId: self.reminderId)
     }
     
     
@@ -161,7 +170,7 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, messageBubbleImageDataForItemAtIndexPath indexPath: NSIndexPath!) -> JSQMessageBubbleImageDataSource! {
-        var note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        var note = self.notes.objectAtIndex(indexPath.item) as Note
         if note.sender == PFUser.currentUser().username {
             return self.outgoingBubbleImageData
         }
@@ -169,19 +178,19 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     }
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, avatarImageDataForItemAtIndexPath indexPath: NSIndexPath!) -> JSQMessageAvatarImageDataSource! {
-        let note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        let note = self.notes.objectAtIndex(indexPath.item) as Note
         let contact =  self.contactsManager.getUDContactForUserId(note.sender)
         return UDAvatarImageDataSource(contact: contact)
     }
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, attributedTextForCellTopLabelAtIndexPath indexPath: NSIndexPath!) -> NSAttributedString! {
-        let currentNote = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        let currentNote = self.notes.objectAtIndex(indexPath.item) as Note
         if  indexPath.item % 10 == 0 {
             return JSQMessagesTimestampFormatter.sharedFormatter().attributedTimestampForDate(currentNote.date())
         }
         var previousNoteIndex = indexPath.item - 1
         if previousNoteIndex >= 0 {
-            let pNote = self.notes.objectAtIndex(previousNoteIndex) as ReminderNote
+            let pNote = self.notes.objectAtIndex(previousNoteIndex) as Note
             var pDate = pNote.date()
             var pComponents = calendar.components(unitFlags, fromDate: pDate)
             
@@ -195,14 +204,14 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     }
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, attributedTextForMessageBubbleTopLabelAtIndexPath indexPath: NSIndexPath!) -> NSAttributedString! {
-        var note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        var note = self.notes.objectAtIndex(indexPath.item) as Note
         
         if note.sender == PFUser.currentUser().username {
             return nil
         }
         
         if indexPath.item - 1 > 0 {
-            var previousNote = self.notes.objectAtIndex(indexPath.item - 1) as ReminderNote
+            var previousNote = self.notes.objectAtIndex(indexPath.item - 1) as Note
             if (previousNote.sender == note.sender) {
                 return nil
             }
@@ -228,7 +237,7 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
         cell.messageBubbleTopLabel.textColor = UIColor.darkGrayColor()
         
         
-        var note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        var note = self.notes.objectAtIndex(indexPath.item) as Note
         if (note.sender == PFUser.currentUser().username ) {
             cell.textView.textColor = UIColor.blackColor()
         }
@@ -252,13 +261,13 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
         /**
         *  iOS7-style sender name labels
         */
-        var note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        var note = self.notes.objectAtIndex(indexPath.item) as Note
         if note.sender == PFUser.currentUser().username {
             return 0.0
         }
         
         if (indexPath.item - 1 > 0) {
-            var previousNote = self.notes.objectAtIndex(indexPath.item - 1) as ReminderNote
+            var previousNote = self.notes.objectAtIndex(indexPath.item - 1) as Note
             if (previousNote.sender == note.sender) {
                 return 0.0
             }
@@ -272,7 +281,7 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     }
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, attributedTextForCellBottomLabelAtIndexPath indexPath: NSIndexPath!) -> NSAttributedString! {
-        let note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        let note = self.notes.objectAtIndex(indexPath.item) as Note
         if let status = note.deliveryStatus {
             if status == DeliveryStatus.Error {
                 return NSAttributedString(string:"Send failed")
@@ -285,8 +294,8 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     
     func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
         if buttonIndex == 0 {
-            let note = self.notes.objectAtIndex(self.actionSheetForIndexPath.item) as ReminderNote
-            self.notesManager.trySendingAgain(note)
+            let note = self.notes.objectAtIndex(self.actionSheetForIndexPath.item) as Note
+            self.reminderManager.trySendingNoteAgain(note)
         }
     }
     
@@ -296,22 +305,21 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
         
     }
     override func collectionView(collectionView: JSQMessagesCollectionView!, didTapMessageBubbleAtIndexPath indexPath: NSIndexPath!) {
-        let note = self.notes.objectAtIndex(indexPath.item) as ReminderNote
+        let note = self.notes.objectAtIndex(indexPath.item) as Note
         if let status = note.deliveryStatus {
-            if status != DeliveryStatus.Error {
-                return
+            if status == DeliveryStatus.Error {
+                let actionSheet = UIActionSheet()
+                actionSheet.delegate = self
+                actionSheet.addButtonWithTitle("Send again")
+                actionSheet.cancelButtonIndex =  actionSheet.addButtonWithTitle("Cancel")
+                actionSheet.showInView(self.collectionView)
+                self.actionSheetForIndexPath = indexPath
             }
         }
-        let actionSheet = UIActionSheet()
-        actionSheet.delegate = self
-        actionSheet.addButtonWithTitle("Send again")
-        actionSheet.cancelButtonIndex =  actionSheet.addButtonWithTitle("Cancel")
-        actionSheet.showInView(self.collectionView)
-        self.actionSheetForIndexPath = indexPath
     }
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, header headerView: JSQMessagesLoadEarlierHeaderView!, didTapLoadEarlierMessagesButton sender: UIButton!) {
-        self.notesManager.loadEarlierNotesForReminderId(self.reminderId)
+        self.reminderManager.loadEarlierNotesForReminder(self.reminderId)
     }
 }
 
@@ -325,14 +333,23 @@ class UDAvatarImageDataSource :NSObject, JSQMessageAvatarImageDataSource{
     }
     
     func avatarImage() -> UIImage! {
-        return contact.image()
+        if let image = self.contact.cachedPublicImage(){
+            return image
+        }
+        return contact.contactImage()
     }
     
     func avatarHighlightedImage() -> UIImage! {
-        return contact.image()
+        if let image = self.contact.cachedPublicImage(){
+            return image
+        }
+        return contact.contactImage()
     }
     
     func avatarPlaceholderImage() -> UIImage! {
-        return contact.image()
+        if let image = self.contact.cachedPublicImage(){
+            return image
+        }
+        return contact.contactImage()
     }
 }

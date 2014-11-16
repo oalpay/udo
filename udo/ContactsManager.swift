@@ -19,7 +19,6 @@ class  UDContact {
     var userPublic:UserPublic?
     var userId:String!
     var apContact:APContact?
-    private var thumbnail:UIImage!
     func name() -> String {
         if let up = userPublic {
             return up.name
@@ -30,34 +29,46 @@ class  UDContact {
         }
         return userId
     }
-    func image() -> UIImage!{
-        if let up = userPublic {
-            if let imageFile = up.image {
-                if let cachedImage = self.imageCache.objectForKey(self.userId) as? UIImage{
-                    return cachedImage
-                }else {
-                    imageFile.getDataInBackgroundWithBlock({ (data:NSData!, error:NSError!) -> Void in
-                        if error == nil {
-                            if let profileImage = UIImage(data: data!) {
-                                self.imageCache.setObject(profileImage, forKey: self.userId)
-                            }
-                        }
-                    })
-                }
+    func contactName() -> String {
+        if let apc = apContact{
+            if let apName = apc.compositeName {
+                return apName
             }
         }
-        if thumbnail != nil {
-            return thumbnail!
+        return userId
+    }
+    
+    func cachePublicImage(image:UIImage!){
+        if image != nil {
+            self.imageCache.setObject(image, forKey: self.userId)
+        }else {
+            self.imageCache.removeObjectForKey(self.userId)
         }
+    }
+    
+    func hasProfileImage() -> Bool {
+        return self.publicImageFile() != nil
+    }
+    
+    func publicImageFile() -> PFFile? {
+        if let up = self.userPublic {
+            return up.image
+        }
+        return nil
+    }
+    
+    func cachedPublicImage() -> UIImage? {
+        return self.imageCache.objectForKey(self.userId) as? UIImage
+    }
+    
+    func contactImage() -> UIImage!{
         if let apImage = apContact?.thumbnail {
             return apImage
         }
         return DefaultAvatarImage
     }
+    
     func hasImage() -> Bool {
-        if self.thumbnail != nil {
-            return true
-        }
         if apContact?.thumbnail != nil {
             return true
         }
@@ -69,6 +80,7 @@ class  UDContact {
 var kContactsAccessGrantedNotification = "ContactsAccessGrantedNotification"
 var kContactsAccessDenieddNotification = "ContactsAccessDenieddNotification"
 var kContactsChangedNotification = "ContactsChangedNotification"
+var kAppUsersRefreshedNotification = "AppUsersRefreshedNotification"
 
 var DefaultAvatarImage = UIImage(named: "default-avatar")
 
@@ -92,6 +104,10 @@ class ContactsManager{
     
     private var isListenerRegistered = false
     
+    private var me:UDContact!
+    
+    private let nc = NSNotificationCenter.defaultCenter()
+    
     init() {
         var savedNumberUserIdMap =  userDefaults.dictionaryForKey("numberUserIdCache") as NSDictionary?
         if savedNumberUserIdMap == nil {
@@ -99,7 +115,7 @@ class ContactsManager{
         }else {
             self.numberUserIdCache = savedNumberUserIdMap
         }
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "applicationWillEnterForegroundNotification:", name: UIApplicationWillEnterForegroundNotification, object: nil)
+       self.nc.addObserver(self, selector: "applicationWillEnterForegroundNotification:", name: UIApplicationWillEnterForegroundNotification, object: nil)
     }
     
     private func reset(){
@@ -269,6 +285,7 @@ class ContactsManager{
                 registeredUsers.setValue(user, forKey: user.username)
             }
             self.registeredUserIds = registeredUsers.copy() as NSDictionary
+            self.nc.postNotificationName(kAppUsersRefreshedNotification, object: nil)
             finished?()
         }
     }

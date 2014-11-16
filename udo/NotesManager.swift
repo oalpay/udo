@@ -8,59 +8,160 @@
 
 import Foundation
 
-var kReminderNoteUpdatesAvailableNotification = "kReminderNoteUpdatesAvailableNotification"
+var kNoteLoadingEarlierNotification = "kNoteLoadingEarlierNotification"
+var kNoteLoadingEarlierFinishedNotification = "kNoteLoadingEarlierFinishedNotification"
+
 var kReminderNoteLoadingNotification = "kReminderNoteLoadingNotification"
 var kReminderNoteLoadingFinishedNotification = "kReminderNoteLoadingFinishedNotification"
 var kReminderNoteSaveFinishedNotification = "kReminderSaveFinishedNotification"
 var kReminderNoteSavingNotification = "kReminderNoteSavingNotification"
 
-var kReminderNoteLoadingEarlierNotification = "kReminderNoteLoadingEarlierNotification"
-var kReminderNoteLoadingEarlierFinishedNotification = "kReminderNoteLoadingEarlierFinishedNotification"
-
 var kNotesLastRead = "NotesLastRead"
 
-class ReminderNoteSetting {
+class ReminderNotes {
     var reminderId:String!
-    var loadQuery:PFQuery!
-    var receiveNotesQuery:PFQuery!
-    var lastNoteCreatedAt:NSDate!
+    private var pendingNoteIds:NSMutableSet!
     private var notesArray:NSMutableArray!
     private var notesSet:NSMutableSet!
+    private var lastLoaded:NSDate!
+    var limit = 100
     
-    let loadLimit = 100
-    var loadSkip = 0
+    var loadingEarlier = false
+    var loading = false
+    private var error = false
+    private var haveEarlierNotes = true
+    private var lastSeen:NSDate!
     
     init(reminderId:String) {
         self.reminderId = reminderId
-        self.lastNoteCreatedAt = NSDate(timeIntervalSince1970: 0)
         self.notesArray = NSMutableArray()
         self.notesSet = NSMutableSet()
-        self.loadQuery = ReminderNote.query()
-        self.loadQuery.whereKey("reminderId",equalTo:reminderId)
-        self.loadQuery.limit = loadLimit
-        self.loadQuery.orderByDescending("createdAt")
-        
-        // do not receive my own messages after first load
-        self.receiveNotesQuery = ReminderNote.query()
-        self.receiveNotesQuery.whereKey("reminderId",equalTo:reminderId)
-        self.receiveNotesQuery.whereKey("sender", notEqualTo: PFUser.currentUser().username)
-        self.receiveNotesQuery.orderByDescending("createdAt")
+        self.pendingNoteIds  = NSMutableSet()
     }
     
-    func addNotes(notes:NSArray,sort:Bool){
-        self.notesArray.addObjectsFromArray(notes)
-        for note in notes as [ReminderNote]{
-            if note.objectId != nil {
-                self.notesSet.addObject(note.objectId)
+    func resetWithNotes(notesDescending notes:NSArray){
+        self.notesArray.removeAllObjects()
+        self.notesSet.removeAllObjects()
+        self.appendNotes(notesDescending: notes)
+    }
+    
+    func setCanHaveEarlierNotes(haveEarlierNotes:Bool){
+        self.haveEarlierNotes = haveEarlierNotes
+    }
+    
+    func canHaveEarlierNotes() -> Bool {
+        return self.haveEarlierNotes
+    }
+    
+    func setError(error:Bool){
+        self.error = error
+    }
+    
+    func hasError() -> Bool {
+        return self.error
+    }
+    
+    func addPendingNote(noteId:String){
+        if !self.notesSet.containsObject(noteId){
+            self.pendingNoteIds.addObject(noteId)
+        }
+    }
+    
+    func removePendingNote(noteId:String){
+        self.pendingNoteIds.removeObject(noteId)
+    }
+    
+    func hasPendingNotes() -> Bool {
+        return self.pendingNoteIds.count != 0
+    }
+    
+    func removeAllPendingNotes() {
+        self.pendingNoteIds.removeAllObjects()
+    }
+    
+    func appendNotes(notesDescending notes:NSArray){
+        for (var index = notes.count - 1; index >= 0; index--){
+            self.appendNote(notes.objectAtIndex(index) as Note)
+        }
+    }
+    
+    func prependNote(note:Note){
+        if self.notesSet.containsObject(note.objectId){
+            return
+        }
+        self.pendingNoteIds.removeObject(note.objectId)
+        self.notesSet.addObject(note.objectId)
+        self.notesArray.insertObject(note, atIndex: 0)
+    }
+    
+    func appendNote(note:Note){
+        if self.notesSet.containsObject(note.objectId){
+            return
+        }
+        self.notesSet.addObject(note.objectId)
+        self.notesArray.addObject(note)
+        self.pendingNoteIds.removeObject(note.objectId)
+        
+    }
+    
+    func appendMyNote(note:Note){
+        self.notesArray.addObject(note)
+    }
+    
+    func prependNotes(notesDescending notes:NSArray){
+        for note in notes as [Note] {
+            self.prependNote(note)
+        }
+    }
+    
+    func loadQuery() -> PFQuery {
+        var query = Note.query()
+        query.whereKey("reminderId",equalTo:self.reminderId)
+        query.limit = limit
+        query.orderByDescending("createdAt")
+        query.whereKey("sender", notEqualTo: PFUser.currentUser().username)
+        if let lastReceivedNoteDate = self.getLastReceivedNoteDate() {
+            query.whereKey("createdAt", greaterThan: lastReceivedNoteDate)
+        }
+        return query
+    }
+    
+    func loadEarlierQuery() -> PFQuery {
+        var query = Note.query()
+        query.whereKey("reminderId",equalTo:reminderId)
+        query.limit = self.limit
+        query.orderByDescending("createdAt")
+        if let oldestNoteDate = self.getOldestReceivedNoteDate() {
+            query.whereKey("createdAt", lessThan: oldestNoteDate)
+        }
+        return query
+    }
+    
+    func getOldestReceivedNoteDate() -> NSDate? {
+        for oldestNote in self.notesArray.copy() as [Note] {
+            if oldestNote.createdAt != nil {
+                return oldestNote.createdAt
             }
         }
-        if sort{
-            self.notesArray.sortUsingDescriptors([NSSortDescriptor(key: "createdAt", ascending: true)])
-        }
+        return nil
     }
     
-    func getLastNote() -> ReminderNote? {
-        return self.notesArray.lastObject as? ReminderNote
+    func getLastNote() -> Note? {
+        return self.notesArray.lastObject as? Note
+    }
+    
+    func getLastReceivedNote() -> Note? {
+        for (var index = self.notesArray.count - 1; index >= 0; index--) {
+            let note = self.notesArray.objectAtIndex(index) as Note
+            if note.createdAt != nil {
+                return note
+            }
+        }
+        return nil
+    }
+    
+    func getLastReceivedNoteDate() -> NSDate? {
+        return (self.getLastReceivedNote())?.createdAt
     }
     
     func getNotes() -> NSArray{
@@ -71,23 +172,38 @@ class ReminderNoteSetting {
         return self.notesSet.containsObject(noteId)
     }
     
+    func setLastSeen(lastSeen:NSDate!){
+        self.lastSeen = lastSeen
+    }
+    
+    func getUnreadMessageCount() -> Int {
+        var count = 0
+        if self.lastSeen == nil {
+            count = self.notesArray.count
+        }else {
+            let range = NSMakeRange(0, self.notesArray.count)
+            var index = self.notesArray.indexOfObject(self.lastSeen, inSortedRange: range, options: NSBinarySearchingOptions.LastEqual, usingComparator: { (o, d) -> NSComparisonResult in
+                let note = o as Note
+                return note.date().compare(d as NSDate)
+            })
+            if index != NSNotFound {
+                 // dont count the notes sent by me
+                var me = PFUser.currentUser().username
+                for ( index++; index < self.notesArray.count; index++){
+                    let note = self.notesArray.objectAtIndex(index) as Note
+                    if note.sender != me{
+                        count += 1
+                    }
+                }
+            }
+        }
+        return count + self.pendingNoteIds.count
+    }
 }
 
 class NotesManager {
-    class var sharedInstance : NotesManager {
-        struct Static {
-            static let instance : NotesManager = NotesManager()
-        }
-        return Static.instance
-    }
-    
-    private var noteSettings = NSMutableDictionary()
-    private var notificationPending = NSMutableDictionary()
-    private var firstRequestAfterGoingBackground = NSMutableSet()
-    private var loadingSet = NSMutableSet()
+    private var reminderNotes = NSMutableDictionary()
     private var nc = NSNotificationCenter.defaultCenter()
-    
-    private var numberOfConsecutiveLoadCalls = 0
     
     private var userDefaults = NSUserDefaults.standardUserDefaults()
     private var notesLastRead:NSMutableDictionary!
@@ -99,100 +215,31 @@ class NotesManager {
         }else {
             self.notesLastRead = NSMutableDictionary()
         }
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
     }
     
-    @objc func remindersChangedNotification(notification:NSNotification){
-        var change = notification.object as RemindersChanged
-        for key in change.deletes{
-            self.notesLastRead.removeObjectForKey(key)
+    func reminderDeleted(reminderId:String){
+        self.notesLastRead.removeObjectForKey(reminderId)
+        self.userDefaults.setObject(self.notesLastRead, forKey: kNotesLastRead)
+        self.reminderNotes.removeObjectForKey(reminderId)
+    }
+    
+    func setReminderNotesAsSeen(reminderId:String){
+        let reminderNotes = self.getReminderNotes(reminderId)
+        if let  date = reminderNotes.getLastReceivedNoteDate(){
+            reminderNotes.setLastSeen(date)
+            self.notesLastRead.setObject(date, forKey: reminderId)
             self.userDefaults.setObject(self.notesLastRead, forKey: kNotesLastRead)
         }
     }
     
-    func setReminderNotesAsSeen(reminderId:String){
-        if let noteSettings = self.getSettingsForReminderId(reminderId) {
-            if let lastNote = noteSettings.getLastNote() {
-                self.notesLastRead.setValue(lastNote.date(), forKey: reminderId)
-                self.userDefaults.setObject(self.notesLastRead, forKey: kNotesLastRead)
-            }
+    func getReminderNotes(reminderId:String) -> ReminderNotes {
+        if let reminderNotes = self.reminderNotes.objectForKey(reminderId) as? ReminderNotes{
+            return reminderNotes
         }
-    }
-    
-    func getUnreadMessageCount(reminderId:String) -> Int{
-        if let noteSettings = self.getSettingsForReminderId(reminderId) {
-            let notes = noteSettings.getNotes()
-            if let lastRead = self.notesLastRead.objectForKey(reminderId) as? NSDate {
-                let range = NSMakeRange(0, notes.count)
-                var index = notes.indexOfObject(lastRead, inSortedRange: range, options: NSBinarySearchingOptions.LastEqual, usingComparator: { (o, d) -> NSComparisonResult in
-                    let note = o as ReminderNote
-                    return note.date().compare(d as NSDate)
-                })
-                if index == NSNotFound {
-                    return 0
-                }
-                // dont count the notes sent by me
-                var unread = 0
-                var me = PFUser.currentUser().username
-                for ( index++; index < notes.count; index++){
-                    let note = notes.objectAtIndex(index) as ReminderNote
-                    if note.sender != me{
-                        unread++
-                    }
-                }
-                return unread
-            }else{
-                return notes.count
-            }
-        }else{
-            return 0
-        }
-        
-    }
-    
-    private func getSettingsForReminderId(reminderId:String) -> ReminderNoteSetting? {
-        return self.noteSettings.objectForKey(reminderId) as? ReminderNoteSetting
-    }
-    
-    private func findResultBlock(noteSetting:ReminderNoteSetting,notificationToPostAfter:String)(notes:[AnyObject]!, error:NSError!) -> Void {
-        var shouldHaveMoreUpdates = false
-        if error != nil {
-            TSMessage.showNotificationWithTitle("Connection problem", type: TSMessageNotificationType.Error)
-        }else {
-            noteSetting.addNotes(notes,sort:true)
-            
-            if let lastNote = noteSetting.getLastNote() {
-                noteSetting.lastNoteCreatedAt =  lastNote.createdAt
-            }
-            if notificationToPostAfter == kReminderNoteLoadingEarlierFinishedNotification {
-                // find a better way to do this
-                noteSetting.loadSkip = noteSetting.loadSkip + noteSetting.loadLimit
-            }
-            self.noteSettings.setObject(noteSetting, forKey: noteSetting.reminderId)
-            if let reminderPendingNotifications = self.notificationPending.objectForKey(noteSetting.reminderId) as? NSMutableSet{
-                for note in notes {
-                    reminderPendingNotifications.removeObject(note.objectId)
-                }
-                if reminderPendingNotifications.count > 0{
-                    //we still have updates
-                    if numberOfConsecutiveLoadCalls > 3 {
-                        //note is missing dont try anymore
-                        reminderPendingNotifications.removeAllObjects()
-                        numberOfConsecutiveLoadCalls = 0
-                    }else{
-                        shouldHaveMoreUpdates = true
-                        numberOfConsecutiveLoadCalls++
-                    }
-                }else{
-                    numberOfConsecutiveLoadCalls = 0
-                }
-            }
-        }
-        self.loadingSet.removeObject(noteSetting.reminderId)
-        self.nc.postNotificationName(notificationToPostAfter, object: noteSetting.reminderId)
-        if shouldHaveMoreUpdates {
-            self.nc.postNotificationName(kReminderNoteUpdatesAvailableNotification, object: noteSetting.reminderId)
-        }
+        let reminderNotes = ReminderNotes(reminderId: reminderId)
+        reminderNotes.setLastSeen(self.notesLastRead.objectForKey(reminderId) as? NSDate)
+        self.reminderNotes.setObject(reminderNotes, forKey: reminderId)
+        return reminderNotes
     }
     
     private func notifyLoadingForReminderId(reminderId:String){
@@ -201,58 +248,100 @@ class NotesManager {
     private func notifyLoadingFinishedForReminderId(reminderId:String){
         nc.postNotificationName(kReminderNoteLoadingFinishedNotification, object: reminderId)
     }
-    private func notifyNoteUpdatesAvailableForReminderId(reminderId:String){
-        nc.postNotificationName(kReminderNoteUpdatesAvailableNotification, object: reminderId)
+    private func notifyLoadingEarliarForReminderId(reminderId:String){
+        nc.postNotificationName(kNoteLoadingEarlierNotification, object: reminderId)
+    }
+    private func notifyLoadingEarliarFinishedForReminderId(reminderId:String){
+        nc.postNotificationName(kNoteLoadingEarlierFinishedNotification, object: reminderId)
     }
     
-    func getNotesForReminder(reminderId:String) -> NSArray?{
-        if let noteSetting = self.getSettingsForReminderId(reminderId) {
-            return noteSetting.getNotes()
-        }
-        return nil
+    func remoteReminderNoteNotificationReceived(pushInfo:PushNotificationUserInfo) {
+        self.getReminderNotes(pushInfo.reminderId).addPendingNote(pushInfo.noteId)
     }
     
-    func loadEarlierNotesForReminderId(reminderId:String) -> Bool{
-        if self.loadingSet.containsObject(reminderId) {
-            return true
+    func getLastNoteCreatedAtForReminders() -> NSDictionary {
+        var dates = NSMutableDictionary()
+        for reminderNote in self.reminderNotes.allValues as [ReminderNotes] {
+            if let lastReceivedDate =  reminderNote.getLastReceivedNoteDate() {
+                dates.setObject(lastReceivedDate, forKey: reminderNote.reminderId)
+            }
         }
-        if let noteSetting = self.getSettingsForReminderId(reminderId) {
-            self.loadingSet.addObject(reminderId)
-            self.nc.postNotificationName(kReminderNoteLoadingEarlierNotification, object: reminderId)
-            noteSetting.loadQuery.skip = noteSetting.loadSkip + noteSetting.loadLimit
-            noteSetting.loadQuery.findObjectsInBackgroundWithBlock(self.findResultBlock(noteSetting,notificationToPostAfter:kReminderNoteLoadingEarlierFinishedNotification))
-        }
-        return false
+        return dates
     }
     
-    func loadNotesForReminderId(reminderId:String) -> Bool{
-        if self.loadingSet.containsObject(reminderId) {
-            return true
+    func syncUserWith(response:NSDictionary) -> NSMutableSet {
+        var changedNotesSet = NSMutableSet()
+        for reminderId in response.allKeys as [String]{
+            let updates = response.objectForKey(reminderId) as NSDictionary
+            let notes = updates.objectForKey("n") as NSArray
+            let isSliced = updates.objectForKey("s") as Bool
+            var reminderNotes = self.getReminderNotes(reminderId)
+            reminderNotes.setCanHaveEarlierNotes(isSliced)
+            if isSliced {
+                reminderNotes.resetWithNotes(notesDescending: notes)
+            }else{
+                reminderNotes.appendNotes(notesDescending: notes)
+            }
+            if reminderNotes.hasPendingNotes(){
+                self.loadNotes(reminderNotes.reminderId, tryCount: 0)
+            }
+            if notes.count > 0 {
+                changedNotesSet.addObject(reminderId)
+            }
+        }
+        return changedNotesSet
+    }
+    
+    func loadNotes(reminderId:String,tryCount:Int) {
+        var noteSetting = self.getReminderNotes(reminderId)
+        if noteSetting.loading || tryCount > 3 {
+            return
         }
         self.notifyLoadingForReminderId(reminderId)
-        if let noteSetting = self.getSettingsForReminderId(reminderId) {
-            if self.hasPendingUpdates(reminderId) || !self.firstRequestAfterGoingBackground.containsObject(reminderId){
-                self.loadingSet.addObject(reminderId)
-                self.firstRequestAfterGoingBackground.addObject(reminderId)
-                noteSetting.receiveNotesQuery.whereKey("createdAt", greaterThan: noteSetting.lastNoteCreatedAt)
-                noteSetting.receiveNotesQuery.findObjectsInBackgroundWithBlock(self.findResultBlock(noteSetting,notificationToPostAfter:kReminderNoteLoadingFinishedNotification))
-            }else{
-                self.notifyLoadingFinishedForReminderId(noteSetting.reminderId)
+        noteSetting.loading = true
+        noteSetting.loadQuery().findObjectsInBackgroundWithBlock({ (notes:[AnyObject]!, error:NSError!) -> Void in
+            if error != nil {
+                noteSetting.setError(true)
+                TSMessage.showNotificationWithTitle("Connection problem", type: TSMessageNotificationType.Error)
+            }else {
+                noteSetting.appendNotes(notesDescending: notes)
+                if notes.count >= noteSetting.limit {
+                    noteSetting.setCanHaveEarlierNotes(true)
+                }
             }
-        }else {
-            self.loadingSet.addObject(reminderId)
-            self.firstRequestAfterGoingBackground.addObject(reminderId)
-            var noteSetting = ReminderNoteSetting(reminderId: reminderId)
-            noteSetting.loadQuery.findObjectsInBackgroundWithBlock(self.findResultBlock(noteSetting,notificationToPostAfter:kReminderNoteLoadingFinishedNotification))
+            noteSetting.loading = false
+            self.notifyLoadingFinishedForReminderId(noteSetting.reminderId)
+            if noteSetting.hasPendingNotes() {
+                self.loadNotes(reminderId,tryCount: tryCount + 1)
+            }
+        })
+    }
+    
+    func loadEarlierNotesForReminderId(reminderId:String){
+        var noteSetting = self.getReminderNotes(reminderId)
+        if noteSetting.loadingEarlier {
+            return
         }
-        return false
+        self.notifyLoadingEarliarForReminderId(reminderId)
+        noteSetting.loadingEarlier = true
+        noteSetting.loadEarlierQuery().findObjectsInBackgroundWithBlock({ (notes:[AnyObject]!, error:NSError!) -> Void in
+            if error != nil {
+                noteSetting.setError(true)
+                TSMessage.showNotificationWithTitle("Connection problem", type: TSMessageNotificationType.Error)
+            }else {
+                noteSetting.prependNotes(notesDescending: notes)
+                if notes.count >= noteSetting.limit {
+                    noteSetting.setCanHaveEarlierNotes(true)
+                }else {
+                    noteSetting.setCanHaveEarlierNotes(false)
+                }
+            }
+            noteSetting.loadingEarlier = false
+            self.notifyLoadingEarliarFinishedForReminderId(reminderId)
+        })
     }
     
-    func isReminderLoading(reminderId:String) -> Bool {
-        return self.loadingSet.containsObject(reminderId)
-    }
-    
-    func trySendingAgain(note:ReminderNote){
+    func trySendingAgain(note:Note){
         note.deliveryStatus = DeliveryStatus.Sending
         nc.postNotificationName(kReminderNoteSavingNotification, object: note.reminderId)
         note.saveInBackgroundWithBlock { (success:Bool, error:NSError!) -> Void in
@@ -266,14 +355,14 @@ class NotesManager {
     }
     
     func addNote(text:String,forReminderId reminderId:String){
-        var reminderNote = ReminderNote()
+        var reminderNote = Note()
         reminderNote.sender = PFUser.currentUser().username
         reminderNote.text = text
         reminderNote.reminderId = reminderId
         reminderNote.deliveryStatus = DeliveryStatus.Sending
         reminderNote.sentAt = NSDate()
-        var noteSetting = self.getSettingsForReminderId(reminderId)
-        noteSetting?.addNotes([reminderNote], sort: false)
+        var noteSetting = self.getReminderNotes(reminderId)
+        noteSetting.appendMyNote(reminderNote)
         self.nc.postNotificationName(kReminderNoteSavingNotification, object: reminderId)
         reminderNote.saveInBackgroundWithBlock { (success:Bool, error:NSError!) -> Void in
             if success {
@@ -285,55 +374,26 @@ class NotesManager {
         }
     }
     
-    func hasPendingUpdates(reminderId:String) -> Bool{
-        if let reminderPendingNotifications = self.notificationPending.valueForKey(reminderId) as? NSMutableSet {
-            return reminderPendingNotifications.count > 0
-        }
-        return false
-    }
     
-    func remoteNotificationReceived(command:PushCommand!, application:UIApplication, userInfo:NSDictionary!,completionHandler:(UIBackgroundFetchResult) -> Void ){
-        if let reminderId = userInfo["r"] as? String {
-            if let noteId = userInfo["n"] as? String {
-                var isExistingNote = false
-                if let noteSettings = self.getSettingsForReminderId(reminderId){
-                    isExistingNote = noteSettings.isExistingNote(noteId)
-                }
-                if !isExistingNote {
-                    if let reminderPendingNotifications = self.notificationPending.valueForKey(reminderId) as? NSMutableSet {
-                        reminderPendingNotifications.addObject(noteId)
-                    }else {
-                        self.notificationPending.setObject(NSMutableSet(object: noteId), forKey: reminderId)
-                    }
-                }
-                self.notifyNoteUpdatesAvailableForReminderId(reminderId)
-                if application.applicationState == UIApplicationState.Active {
-                    let rootNVC = application.keyWindow?.rootViewController as UINavigationController
-                    let topVC = rootNVC.topViewController
-                    if topVC is NotesViewController {
-                        let nVC = topVC as NotesViewController
-                        if nVC.reminderId == reminderId {
-                            //already looking at it
-                            completionHandler(UIBackgroundFetchResult.NoData)
-                            return
-                        }
-                    }
-                    if let username = userInfo["u"] as? String{
-                        if let text = userInfo["t"] as? String {
-                            var contact = ContactsManager.sharedInstance.getUDContactForUserId(username)
-                            JSQSystemSoundPlayer.jsq_playMessageReceivedSound()
-                            TSMessage.showNotificationWithTitle("\(contact.name()): \(text)", type: TSMessageNotificationType.Message, duration: 0, callback: { () -> Void in
-                                self.nc.postNotificationName(kReminderShowNotification, object: reminderId)
-                            })
-                        }
-                    }
-                }
+    func showAlertForPushNotification(pushInfo:PushNotificationUserInfo) {
+        let rootNVC = UIApplication.sharedApplication().keyWindow?.rootViewController as UINavigationController
+        let topVC = rootNVC.topViewController
+        if topVC is NotesViewController {
+            let nVC = topVC as NotesViewController
+            if nVC.reminderId == pushInfo.reminderId {
+                //already looking at it
+                return
             }
         }
-        completionHandler(UIBackgroundFetchResult.NoData)
+        var senderName = ContactsManager.sharedInstance.getUDContactForUserId(pushInfo.senderId).name()
+        JSQSystemSoundPlayer.jsq_playMessageReceivedSound()
+        TSMessage.showNotificationWithTitle("\(senderName): \(pushInfo.noteTitle)", type: TSMessageNotificationType.Message, duration: 0, callback: { () -> Void in
+            self.nc.postNotificationName(kReminderShowNotification, object:  pushInfo.reminderId)
+        })
     }
     
+    
     func applicationWillEnterForeground() {
-        self.firstRequestAfterGoingBackground.removeAllObjects()
+        
     }
 }

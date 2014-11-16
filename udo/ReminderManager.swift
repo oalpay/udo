@@ -8,6 +8,9 @@
 
 import Foundation
 
+var kUserSyncStarted = "kUserSyncStarted"
+var kUserSyncEnded = "kUserSyncEnded"
+
 var kReminderCreatedNotification = "kReminderCreatedNotification"
 var kRemindersChangedNotification = "kRemindersChangedNotification"
 var kReminderLoadingNotification = "kReminderLoadingNotification"
@@ -53,8 +56,9 @@ enum ReminderState : Int {
 }
 
 class ReminderManager : EventStoreManagerDelegate{
-    private var reminderMap = Dictionary<String,Reminder>()
+    private var reminderMap = NSMutableDictionary()
     private var lastUpdated = NSDate(timeIntervalSince1970: 0)
+    private var lastNotificationReceivedWithDate = NSDate(timeIntervalSince1970: 0)
     private var remoteNotificationSet = NSMutableSet()
     private var loadSet = NSMutableSet()
     private var loadErrorSet = NSMutableSet()
@@ -63,6 +67,7 @@ class ReminderManager : EventStoreManagerDelegate{
     
     private var localNotificationManager = LocalNotificationsManager()
     private var eventStoreManager = EventStoreManager()
+    private var notesManager = NotesManager()
     
     private var userDefaults = NSUserDefaults.standardUserDefaults()
     
@@ -74,6 +79,8 @@ class ReminderManager : EventStoreManagerDelegate{
         }
         return Static.instance
     }
+    
+    var isSyncing = false
     
     
     init() {
@@ -91,16 +98,26 @@ class ReminderManager : EventStoreManagerDelegate{
     
     func applicationDidFinishLaunchingNotification() {
         if PFUser.currentUser() != nil {
-            self.fetchNewData(kPFCachePolicyNetworkOnly, resultBlock: { (_, _) -> Void in
-            })
+            self.syncUser(nil)
         }
     }
     
     func applicationWillEnterForeground() {
+        self.notesManager.applicationWillEnterForeground()
         if PFUser.currentUser() != nil {
-            self.fetchNewData(kPFCachePolicyNetworkOnly, resultBlock: { (_, _) -> Void in
-            })
+            self.syncUser(nil)
             self.eventStoreManager.reset()
+            var updates = [String]()
+            for reminder in self.reminderMap.allValues as [Reminder] {
+                if self.setAlarmDataToReminder(reminder) {
+                    updates.append(reminder.key())
+                }
+            }
+            if updates.count > 0 {
+                var change = RemindersChanged(updates: updates, inserts: nil, deletes: nil)
+                change.isLocalChange = true
+                self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+            }
         }
     }
     
@@ -113,12 +130,12 @@ class ReminderManager : EventStoreManagerDelegate{
     }
     
     @objc func userLoggedIn(notification:NSNotification){
-        self.fetchNewData(kPFCachePolicyNetworkOnly, resultBlock: nil)
+        self.syncUser(nil)
     }
     
     @objc func userLoggedOut(notification:NSNotification){
         PFQuery.clearAllCachedResults()
-        self.reminderMap.removeAll(keepCapacity: true)
+        self.reminderMap.removeAllObjects()
         self.loadErrorSet.removeAllObjects()
         self.loadSet.removeAllObjects()
         self.remoteNotificationSet.removeAllObjects()
@@ -142,32 +159,41 @@ class ReminderManager : EventStoreManagerDelegate{
         self.nc.postNotificationName(kRemindersChangedNotification, object: change)
     }
     
-    private func mergeCurrentRemindersWithReminders(reminders:NSArray){
+    private func mergeCurrentRemindersWithReminders(reminders:NSArray) -> RemindersChanged{
         var updates = [String]()
         var inserts = [String]()
-        for r in reminders {
-            let reminder = r as Reminder
+        for reminder in reminders as [Reminder]{
             var reminderId = reminder.key()
-            if let reminder = self.reminderMap[reminderId]{
+            if let reminder = self.getReminder(reminderId){
                 if reminder.updatedAt != nil && reminder.updatedAt.laterDate(reminder.updatedAt) == reminder.updatedAt {
                     updates.append(reminderId)
                 }
             } else {
                 inserts.append(reminderId)
             }
-            self.reminderMap[reminderId] = reminder
+            self.setLocalNotification(reminder.key(), title: reminder.title, fireDate: reminder.dueDate,repeatInterval: reminder.dueDateInterval)
+            self.setAlarmDataToReminder(reminder)
+            self.reminderMap.setObject(reminder, forKey: reminderId)
         }
-        if updates.count > 0 || inserts.count > 0 {
-            var change = RemindersChanged(updates: updates, inserts: inserts, deletes: nil)
-            self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+        if let lastReminder = reminders.firstObject as? Reminder {
+            self.lastUpdated = lastReminder.updatedAt
         }
+        return RemindersChanged(updates: updates, inserts: inserts, deletes: nil)
     }
     
-    func setAlarmDataToReminder(reminder:Reminder){
-        reminder.isOnReminders = self.eventStoreManager.isStored(reminder.key())
+    func setAlarmDataToReminder(reminder:Reminder) -> Bool {
+        var isChanged = false
+        let isOnReminders = self.eventStoreManager.isStored(reminder.key())
+        isChanged = reminder.isOnReminders != isOnReminders
+        reminder.isOnReminders = isOnReminders
         if reminder.isOnReminders {
-            reminder.alarmDate = self.eventStoreManager.getAlarmDateForKey(reminder.key())
+            let eAlarmDate = self.eventStoreManager.getAlarmDateForKey(reminder.key())
+            isChanged = isChanged || (eAlarmDate != reminder.alarmDate)
+            reminder.alarmDate = eAlarmDate
+        }else {
+            reminder.alarmDate = nil
         }
+        return isChanged
     }
     
     func deleteReminderSeen(reminderId:String){
@@ -203,54 +229,78 @@ class ReminderManager : EventStoreManagerDelegate{
         return ReminderState.ReceivedNew
     }
     
+    func syncUserCheck(){
+        PFCloud.callFunctionInBackground("userReceivedLastUpdate", withParameters:NSDictionary(object: self.lastUpdated, forKey: "time")) {
+            (result: AnyObject!, error: NSError!) -> Void in
+            if error != nil {
+                println("e:syncUserCheck:\(error.localizedDescription)")
+            }
+        }
+    }
     
-    private func fetchNewData(cachePolicy:PFCachePolicy, resultBlock:PFArrayResultBlock?){
-        let remindersQuery = Reminder.query()
-        remindersQuery.whereKey(kReminderCollaborators,equalTo:PFUser.currentUser().username)
-        remindersQuery.whereKey("updatedAt", greaterThan: self.lastUpdated)
-        remindersQuery.orderByDescending("updatedAt")
-        remindersQuery.cachePolicy = cachePolicy
-        remindersQuery.findObjectsInBackgroundWithBlock({
-            (resultData:[AnyObject]!, error: NSError!) -> Void in
-            if error == nil{
-                var newReminders = NSMutableArray()
-                for reminder in resultData as [Reminder]{
-                    if let existingReminder = self.getReminder(reminder.key()){
-                        if let updatedAt = existingReminder.updatedAt {
-                            if existingReminder.updatedAt.isEqualToDate(reminder.updatedAt) {
-                                // already have this version
-                                break
-                            }
-                        }
-                    }
-                    newReminders.addObject(reminder)
-                    if self.lastUpdated.compare(reminder.updatedAt) == NSComparisonResult.OrderedAscending {
-                        self.lastUpdated = reminder.updatedAt
-                    }
-                    self.setLocalNotification(reminder.key(), title: reminder.title, fireDate: reminder.dueDate,repeatInterval: reminder.dueDateInterval)
-                    self.setAlarmDataToReminder(reminder)
-                }
-                self.mergeCurrentRemindersWithReminders(newReminders)
-            }else{
-                //handle error
-                println("e:fetchNewData: \(error)")
-                if error.code != kPFErrorCacheMiss {
-                    TSMessage.showNotificationWithTitle("Could not connect to server", type: TSMessageNotificationType.Error)
-                }
+    func showConnectionError(){
+        TSMessage.showNotificationWithTitle("Could not connect to server", type: TSMessageNotificationType.Error)
+    }
+    
+    func loadReminders(callback:PFIdResultBlock?){
+        self.nc.postNotificationName(kUserSyncStarted, object: nil)
+        var query = Reminder.query()
+        query.whereKey("collaborators", equalTo: PFUser.currentUser().username)
+        query.whereKey("updatedAt", greaterThan: self.lastUpdated)
+        query.orderByDescending("updatedAt")
+        query.findObjectsInBackgroundWithBlock { (result:[AnyObject]!, error:NSError!) -> Void in
+            if error != nil{
+                self.showConnectionError()
+            } else if result.count > 0{
+                let change = self.mergeCurrentRemindersWithReminders(result)
+                self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+                self.syncUserCheck()
+                self.notifyLoadForRemoteNotifications()
             }
-            // remove all remote notifications it might been deleted from server
-            self.notifyLoadForRemoteNotifications()
-            if error == nil && resultData.count > 0   {
-                // sync user
-                PFCloud.callFunctionInBackground("syncUserCheck", withParameters:NSDictionary(object: self.lastUpdated, forKey: "time")) {
-                    (result: AnyObject!, error: NSError!) -> Void in
-                    resultBlock?(resultData,error)
-                    return
-                }
+            self.nc.postNotificationName(kUserSyncEnded, object: nil)
+            callback?(result,error)
+        }
+    }
+    
+    
+    private func syncUser(callback:PFIdResultBlock?){
+        self.nc.postNotificationName(kUserSyncStarted, object: nil)
+        var params = NSMutableDictionary()
+        params.setObject(self.notesManager.getLastNoteCreatedAtForReminders(), forKey:"lastNoteCreatedAt" )
+        params.setObject(self.lastUpdated, forKey: "lastReminderUpdatedAt")
+        self.isSyncing = true
+        PFCloud.callFunctionInBackground("syncUser", withParameters:params) {
+            (result: AnyObject!, error: NSError!) -> Void in
+            if error != nil{
+                self.showConnectionError()
             }else {
-                resultBlock?(resultData,error)
+                let responseData = result as NSDictionary
+                // sync notes
+                let reminderNotes = responseData.objectForKey("rn") as NSDictionary
+                let updatedNotesSet = self.notesManager.syncUserWith(reminderNotes)
+                
+                // sync reminders
+                let reminders = responseData.objectForKey("r") as NSArray
+                let change = self.mergeCurrentRemindersWithReminders(reminders)
+                // add updated notes to change set
+                updatedNotesSet.minusSet(NSSet(array: change.inserts))
+                updatedNotesSet.minusSet(NSSet(array: change.updates))
+                for noteId in updatedNotesSet.allObjects as [String]{
+                    change.updates.append(noteId)
+                }
+                self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+                
+                // remove all remote notifications it might been deleted from server
+                self.notifyLoadForRemoteNotifications()
+                if reminders.count > 0   {
+                    self.syncUserCheck()
+                }
             }
-        })
+            self.isSyncing = false
+            self.nc.postNotificationName(kUserSyncEnded, object: nil)
+            callback?(result,error)
+        }
+        
     }
     
     func cancelLocalNotification(key:String){
@@ -265,37 +315,6 @@ class ReminderManager : EventStoreManagerDelegate{
         self.localNotificationManager.cancelLocalNotificationForKey(key)
     }
     
-    func reminderChangedPushNotificationReceived(reminderId:String!,userInfo:NSDictionary!, completionHandler:(UIBackgroundFetchResult) -> Void ){
-        self.remoteNotificationSet.addObject(reminderId)
-        self.loadSet.addObject(reminderId)
-        var dueDate:NSDate?
-        if let dueDateString = userInfo["d"] as? String {
-            dueDate = NSDate(fromISO8601String: dueDateString)
-        }
-        var title = userInfo["t"] as? String
-        var reminder = self.getReminder(reminderId)
-        if reminder == nil {
-            reminder = Reminder() //temp
-            reminder.objectId = reminderId
-            reminder.title = title
-            reminder.dueDate = dueDate
-            reminder.collaborators = []
-            self.reminderMap[reminderId] = reminder
-            var change = RemindersChanged(updates: nil, inserts: [reminder.key()], deletes: nil)
-            self.nc.postNotificationName(kRemindersChangedNotification, object: change)
-        }
-        var repeatInterval = userInfo["i"] as? NSNumber
-        self.setLocalNotification(reminderId, title: title!, fireDate: dueDate,repeatInterval: repeatInterval)
-        nc.postNotificationName(kReminderLoadingNotification, object: reminderId)
-    }
-    
-    func getUsernameFromNotification(userInfo:NSDictionary!) -> String? {
-        if let username = userInfo["u"] as? String{
-            return ContactsManager.sharedInstance.getUDContactForUserId(username).name()
-        }else {
-            return nil
-        }
-    }
     
     func localNotificationRecevied(application:UIApplication,notification: UILocalNotification){
         let reminderId = notification.userInfo?["reminderId"] as? NSString
@@ -314,85 +333,105 @@ class ReminderManager : EventStoreManagerDelegate{
         }
     }
     
-    func remoteNotificationReceived(command:PushCommand,applicationState:UIApplicationState, userInfo:NSDictionary!, completionHandler:(UIBackgroundFetchResult) -> Void ){
-        var reminderId = userInfo["r"] as? String
-        if reminderId == nil {
-            println("e:remoteNotificationReceived:reminderId is empty")
-            return
+    
+    func reminderChangedPushNotificationReceived(pushInfo:PushNotificationUserInfo){
+        self.remoteNotificationSet.addObject(pushInfo.reminderId)
+        self.loadSet.addObject(pushInfo.reminderId)
+        var reminder = self.getReminder(pushInfo.reminderId)
+        if reminder == nil {
+            reminder = Reminder() //temp
+            reminder.isPlaceHolder = true
+            reminder.objectId = pushInfo.reminderId
+            reminder.collaborators = []
+            self.reminderMap.setObject(reminder, forKey: pushInfo.reminderId)
+            var change = RemindersChanged(updates: nil, inserts: [pushInfo.reminderId], deletes: nil)
+            self.nc.postNotificationName(kRemindersChangedNotification, object: change)
         }
+        reminder.title = pushInfo.reminderTitle
+        reminder.dueDate = pushInfo.reminderDueDate
+        reminder.dueDateInterval = pushInfo.reminderDueDateInterval
+        self.setLocalNotification(pushInfo.reminderId, title: reminder.title, fireDate: reminder.dueDate,repeatInterval: reminder.dueDateInterval)
+        nc.postNotificationName(kReminderLoadingNotification, object: pushInfo.reminderId)
+    }
+    
+    func showAlertForPushNotification(pushInfo:PushNotificationUserInfo){
         var alertMsg:String!
-        var alertType:TSMessageNotificationType!
-        var username = self.getUsernameFromNotification(userInfo)!
-        switch command {
-        case PushCommand.New, PushCommand.Update:
-            self.reminderChangedPushNotificationReceived(reminderId, userInfo: userInfo,completionHandler: completionHandler)
-            if command == PushCommand.New {
-                alertMsg = "\(username) send you a new reminder"
-            }else {
-                alertMsg = "\(username) updated a reminder"
-            }
-            alertType = TSMessageNotificationType.Warning
+        var alertType = TSMessageNotificationType.Warning
+        var senderName = ContactsManager.sharedInstance.getUDContactForUserId(pushInfo.senderId).name()
+        switch pushInfo.command! {
+        case PushCommand.New:
+            alertMsg = "\(senderName) send you a new reminder"
+        case  PushCommand.Update:
+            alertMsg = "\(senderName) updated a reminder"
         case PushCommand.Delivery:
             // only admin will see the delivery receipt messages
-            var reminder = self.getReminder(reminderId!)
-            if reminder.isCurrentUserAdmin() {
-                alertMsg = "\(username) received your reminder"
-                alertType = TSMessageNotificationType.Success
+            if let reminder = self.getReminder(pushInfo.reminderId) {
+                if reminder.isCurrentUserAdmin() {
+                    alertMsg = "\(senderName) received your reminder"
+                    alertType = TSMessageNotificationType.Success
+                }
             }
         case PushCommand.Done:
-            alertMsg = "\(username) completed a reminder"
+            alertMsg = "\(senderName) completed a reminder"
             alertType = TSMessageNotificationType.Success
         case PushCommand.Undone:
-            alertMsg = "\(username) uncompleted a reminder"
-            alertType = TSMessageNotificationType.Warning
+            alertMsg = "\(senderName) uncompleted a reminder"
         default:
             println("noting to do")
         }
-        if applicationState == UIApplicationState.Active  {
-            // show message
-            if alertMsg != nil {
-                JSQSystemSoundPlayer.jsq_playMessageReceivedSound()
-                TSMessage.showNotificationWithTitle(alertMsg, type: alertType, duration: 0,  callback: { () -> Void in
-                    if reminderId != nil {
-                        self.nc.postNotificationName(kReminderShowNotification, object: reminderId)
-                    }
-                })
-            }
-            // refresh data
-            self.refresh({ (resultData:[AnyObject]!, error:NSError!) -> Void in
-                if error != nil {
-                    completionHandler(UIBackgroundFetchResult.Failed)
-                }else if resultData.count > 0 {
-                    completionHandler(UIBackgroundFetchResult.NewData)
-                }else{
-                    completionHandler(UIBackgroundFetchResult.NoData)
+        // show message
+        if alertMsg != nil {
+            JSQSystemSoundPlayer.jsq_playMessageReceivedSound()
+            TSMessage.showNotificationWithTitle(alertMsg, type: alertType, duration: 0,  callback: { () -> Void in
+                if pushInfo.reminderId != nil {
+                    self.nc.postNotificationName(kReminderShowNotification, object: pushInfo.reminderId)
                 }
             })
-        }else if applicationState == UIApplicationState.Background {
-            // background
-            if reminderId != nil {
-                // send received
-                var replyReminder = Reminder(withoutDataWithObjectId: reminderId)
-                replyReminder.addUniqueObject(PFUser.currentUser().username, forKey: "received")
-                replyReminder.saveInBackgroundWithBlock({ (_, _) -> Void in
-                    completionHandler(UIBackgroundFetchResult.NewData)
-                })
-            } else {
-                completionHandler(UIBackgroundFetchResult.NoData)
-            }
         }
     }
     
-    func refresh(resultBlock:PFArrayResultBlock?){
-        self.fetchNewData(kPFCachePolicyNetworkOnly, resultBlock: resultBlock)
+    func sendReceivedReceipt(pushInfo:PushNotificationUserInfo!,completionHandler:(UIBackgroundFetchResult) -> Void )  {
+        // send received
+        var replyReminder = Reminder(withoutDataWithObjectId: pushInfo.reminderId)
+        replyReminder.addUniqueObject(PFUser.currentUser().username, forKey: "received")
+        replyReminder.saveInBackgroundWithBlock({ (_, _) -> Void in
+            completionHandler(UIBackgroundFetchResult.NewData)
+        })
+    }
+    
+    func remoteNotificationReceived(pushInfo:PushNotificationUserInfo!,application:UIApplication,fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void){
+        if pushInfo.command == PushCommand.New || pushInfo.command == PushCommand.Update || pushInfo.command == PushCommand.Done || pushInfo.command == PushCommand.Undone{
+            self.reminderChangedPushNotificationReceived(pushInfo)
+            if application.applicationState == UIApplicationState.Active  {
+                self.showAlertForPushNotification(pushInfo)
+                self.loadReminders({ (_, _) -> Void in
+                    completionHandler(UIBackgroundFetchResult.NewData)
+                })
+            }else if application.applicationState == UIApplicationState.Background {
+                self.sendReceivedReceipt(pushInfo, completionHandler: completionHandler)
+            }
+        }else if pushInfo.command == PushCommand.Note {
+            self.notesManager.remoteReminderNoteNotificationReceived(pushInfo)
+            if application.applicationState == UIApplicationState.Active  {
+                self.notesManager.showAlertForPushNotification(pushInfo)
+                self.notesManager.loadNotes(pushInfo.reminderId, tryCount: 0)
+                completionHandler(UIBackgroundFetchResult.NewData)
+            }else {
+                completionHandler(UIBackgroundFetchResult.NoData)
+            }
+        }
+        if application.applicationState == UIApplicationState.Inactive {
+            // opened from notification
+            self.nc.postNotificationName(kReminderShowNotification, object: pushInfo.reminderId)
+        }
     }
     
     func getReminderKeys() -> NSArray! {
-        return self.reminderMap.keys.array
+        return self.reminderMap.allKeys
     }
     
     func getReminder(key:String) -> Reminder! {
-        return self.reminderMap[key]
+        return self.reminderMap.objectForKey(key) as? Reminder
     }
     
     func deleteReminder(key:String) {
@@ -408,9 +447,10 @@ class ReminderManager : EventStoreManagerDelegate{
         self.deleteReminderSeen(key)
         self.eventStoreManager.remove(key)
         self.cancelNotification(key)
-        self.reminderMap.removeValueForKey(key)
+        self.reminderMap.removeObjectForKey(key)
         self.loadSet.removeObject(key)
         self.loadErrorSet.removeObject(key)
+        self.notesManager.reminderDeleted(key)
     }
     
     func updateEventStore(reminder:Reminder,addToMyReminders:Bool,alarmDate:NSDate!,repeatInterval:NSCalendarUnit!){
@@ -488,7 +528,7 @@ class ReminderManager : EventStoreManagerDelegate{
                     self.reminderMap[reminder.key()] = reminder
                     self.setReminderAsSeen(reminder.key())
                     // remove old key
-                    self.reminderMap.removeValueForKey(key)
+                    self.reminderMap.removeObjectForKey(key)
                     // notify listeners
                     self.nc.postNotificationName(kReminderCreatedNotification, object: NSDictionary(objects: [key,reminder.key()], forKeys: ["oldKey","newKey"]))
                     
@@ -525,14 +565,19 @@ class ReminderManager : EventStoreManagerDelegate{
     func unseenComparator(r1:Reminder,r2:Reminder) -> NSComparisonResult? {
         var comparisonResult:NSComparisonResult?
         if self.getReminderState(r1.key()) == ReminderState.Seen {
-            if self.getReminderState(r2.key())  == ReminderState.Seen {
-                // comparisonResult = self.dueDateComparator(r1, r2: r2)
-            }else{
+            if self.getReminderState(r2.key())  != ReminderState.Seen {
                 comparisonResult = NSComparisonResult.OrderedAscending
             }
         }else {
             if self.getReminderState(r2.key()) == ReminderState.Seen{
                 comparisonResult = NSComparisonResult.OrderedDescending
+            }
+        }
+        if comparisonResult == nil {
+            let ur1  = self.notesManager.getReminderNotes(r1.key()).getUnreadMessageCount()
+            let ur2 = self.notesManager.getReminderNotes(r2.key()).getUnreadMessageCount()
+            if ur1 > 0 || ur2 > 0 {
+                comparisonResult = self.updatedAtComparator(r1, r2: r2)
             }
         }
         return comparisonResult
@@ -607,66 +652,22 @@ class ReminderManager : EventStoreManagerDelegate{
     }
     // sorting end
     
+    // notes manager
+    func loadEarlierNotesForReminder(reminderId:String){
+        self.notesManager.loadEarlierNotesForReminderId(reminderId)
+    }
+    func getReminderNotes(reminderId:String) -> ReminderNotes! {
+        return self.notesManager.getReminderNotes(reminderId)
+    }
+    func setNotesAsSeenForReminder(reminderId:String) {
+        self.notesManager.setReminderNotesAsSeen(reminderId)
+    }
+    func sendNoteText(text:String, forReminderId:String){
+        self.notesManager.addNote(text, forReminderId: forReminderId)
+    }
+    func trySendingNoteAgain(note:Note){
+        self.notesManager.trySendingAgain(note)
+    }
+    
 }
 
-class LocalNotificationsManager : NSObject{
-    
-    func removeAll(){
-        UIApplication.sharedApplication().cancelAllLocalNotifications()
-    }
-    
-    func getLocationNotificationForKey(key:String) -> UILocalNotification?{
-        var localNotifications = UIApplication.sharedApplication().scheduledLocalNotifications as [UILocalNotification]
-        for notification in localNotifications {
-            if let userInfo = notification.userInfo as NSDictionary? {
-                if let objectId =  userInfo.objectForKey("reminderId") as? String {
-                    if objectId == key {
-                        return notification
-                    }
-                }
-            }
-        }
-        return nil
-    }
-    
-    func setLocalNotificationForKey(key:String,alertBodyOption:String?,fireDateOption:NSDate?,repeatInterval:NSNumber?){
-        // check if already exists
-        if let notification = self.getLocationNotificationForKey(key){
-            var cancel = false
-            if alertBodyOption == nil  || notification.alertBody != alertBodyOption! {
-                cancel = true
-            }
-            if (notification.fireDate != nil && fireDateOption == nil) || (notification.fireDate == nil && fireDateOption != nil) || !notification.fireDate!.isEqualToDate(fireDateOption!) {
-                cancel = true
-            }
-            if (notification.repeatInterval != nil && repeatInterval == nil) || (notification.repeatInterval == nil && repeatInterval != nil) || notification.repeatInterval.rawValue != repeatInterval{
-                cancel = true
-            }
-            if cancel {
-                UIApplication.sharedApplication().cancelLocalNotification(notification)
-            }else {
-                // not modified
-                return
-            }
-        }
-        var now = NSDate()
-        if fireDateOption == nil || alertBodyOption == nil || fireDateOption!.laterDate(now) == now {
-            return
-        }
-        var  notification = UILocalNotification()
-        notification.alertBody = alertBodyOption!
-        notification.fireDate = fireDateOption!
-        if repeatInterval != nil {
-            notification.repeatInterval = NSCalendarUnit(repeatInterval!.unsignedLongValue)
-        }
-        notification.userInfo =  NSDictionary(object: key, forKey: "reminderId")
-        notification.soundName = UILocalNotificationDefaultSoundName
-        UIApplication.sharedApplication().scheduleLocalNotification(notification)
-    }
-    
-    func cancelLocalNotificationForKey(key:String){
-        if let localNotification = self.getLocationNotificationForKey(key) {
-            UIApplication.sharedApplication().cancelLocalNotification(localNotification)
-        }
-    }
-}

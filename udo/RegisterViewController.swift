@@ -262,6 +262,7 @@ class RegisterViewController: UIViewController,UITextFieldDelegate{
     }
     
     func userLoggedIn(){
+        self.view.userInteractionEnabled = false
         NSNotificationCenter.defaultCenter().postNotificationName(kUserLoggedInNotification, object: nil)
         self.performSegueWithIdentifier("Loggedin", sender: self)
     }

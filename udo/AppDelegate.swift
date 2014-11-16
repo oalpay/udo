@@ -7,6 +7,9 @@
 //
 
 import UIKit
+import Fabric
+import Crashlytics
+
 
 var kUserLoggedInNotification = "UserLoggedInNotification"
 var kUserLoggedOutNotification = "UserLoggedOutNotification"
@@ -17,7 +20,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     var nc = NSNotificationCenter.defaultCenter()
     var reminderManager:ReminderManager!
-    var notesManager:NotesManager!
     
     func application(application: UIApplication!, didFinishLaunchingWithOptions launchOptions: NSDictionary!) -> Bool {
         Parse.setApplicationId("ZfTTFTJ49Sb3mJK2Xbi5lw1nhcNsUnO4ayEXP565", clientKey: "nHWUQHYcfkSG1mZNLZqSc35nNpgQ9taEdz46EoE2")
@@ -27,6 +29,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 println("e:getConfigInBackgroundWithBlock:\(error.localizedDescription)")
             }
         }
+        Fabric.with([Crashlytics()])
+        
         self.window?.tintColor = AppTheme.tintColor
         
         var nc = self.window?.rootViewController as UINavigationController
@@ -54,7 +58,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if PFUser.currentUser() != nil {
             self.registerToPushNotifications()
         }
-        self.notesManager = NotesManager.sharedInstance
         self.reminderManager = ReminderManager.sharedInstance
         self.reminderManager.applicationDidFinishLaunchingNotification()
         
@@ -88,31 +91,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     
     func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject], fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void) {
-        var cmd:PushCommand
-        if let c = userInfo["c"] as? String {
-            if let cmd = PushCommand(rawValue: c) {
-                switch cmd {
-                case PushCommand.Delivery, PushCommand.New, PushCommand.Undone, PushCommand.Done, PushCommand.Update:
-                    self.reminderManager.remoteNotificationReceived(cmd, applicationState: application.applicationState, userInfo: userInfo, completionHandler: completionHandler)
-                case PushCommand.Note:
-                    self.notesManager.remoteNotificationReceived(cmd, application: application, userInfo: userInfo, completionHandler: completionHandler)
-                default:
-                    println("noting to do")
-                }
-            }else{
-                println("unkown push notification received \(c)")
+        let pushInfo = PushNotificationUserInfo(fromUserInfo: userInfo)
+        if pushInfo.command != nil {
+            let pushInfo = PushNotificationUserInfo(fromUserInfo: userInfo)
+            self.reminderManager.remoteNotificationReceived(pushInfo, application: application,fetchCompletionHandler: completionHandler)
+        }else {
+            if pushInfo.alert != nil {
+                TSMessage.showNotificationWithTitle( pushInfo.alert, type: TSMessageNotificationType.Message)
             }
+            completionHandler(UIBackgroundFetchResult.NoData)
         }
         if (application.applicationState == UIApplicationState.Inactive) {
             PFAnalytics.trackAppOpenedWithRemoteNotificationPayload(userInfo)
-            // opened from notification
-            if let reminderId = userInfo["r"] as? String {
-                self.nc.postNotificationName(kReminderShowNotification, object: reminderId)
-            }
-        }else if application.applicationState == UIApplicationState.Active {
-            if let alert = userInfo["alert"] as? String {
-                TSMessage.showNotificationWithTitle(alert, type: TSMessageNotificationType.Message)
-            }
         }
     }
     
@@ -148,7 +138,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillEnterForeground(application: UIApplication!) {
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
         self.reminderManager.applicationWillEnterForeground()
-        self.notesManager.applicationWillEnterForeground()
     }
     
     func applicationDidBecomeActive(application: UIApplication!) {
@@ -213,5 +202,69 @@ enum PushCommand : String {
     case Delivery = "e"
     case Note = "t"
 }
+
+enum PushNotificationConstants : String {
+    case Command = "c"
+    case ReminderId = "r"
+    case NoteId = "n"
+    case Timestamp = "t"
+    case ReminderDueDate = "d"
+    case ReminderDueDateInterval = "i"
+    case ReminderTitle = "l"
+    case Sender = "u"
+    case Alert = "alert"
+    case Aps = "aps"
+}
+
+
+class PushNotificationUserInfo{
+    let command:PushCommand!
+    let noteId:String!
+    let noteCreatedAt:NSDate!
+    let noteTitle:String!
+    let reminderId:String!
+    let reminderUpdatedAt:NSDate!
+    let reminderDueDate:NSDate!
+    let reminderDueDateInterval:NSNumber!
+    let reminderTitle:String!
+    let senderId:String!
+    let alert:String!
+    
+    
+    init(fromUserInfo:NSDictionary){
+        if let commandString = fromUserInfo[PushNotificationConstants.Command.rawValue] as? String {
+            self.command = PushCommand(rawValue: commandString)
+        }
+        self.reminderId = fromUserInfo[PushNotificationConstants.ReminderId.rawValue] as? String
+        self.noteId = fromUserInfo[PushNotificationConstants.NoteId.rawValue] as? String
+        if let timestamp = fromUserInfo[PushNotificationConstants.Timestamp.rawValue] as? NSNumber {
+             self.reminderUpdatedAt = NSDate(timeIntervalSince1970: timestamp.doubleValue / 1000 )
+        }
+        self.noteCreatedAt = NSDate()
+        if let dueDateTimestamp = fromUserInfo[PushNotificationConstants.ReminderDueDate.rawValue] as? NSNumber {
+           self.reminderDueDate = NSDate(timeIntervalSince1970: dueDateTimestamp.doubleValue / 1000 )
+        }
+        self.reminderDueDateInterval = fromUserInfo[PushNotificationConstants.ReminderDueDateInterval.rawValue] as? NSNumber
+        self.reminderTitle = fromUserInfo[PushNotificationConstants.ReminderTitle.rawValue] as? String
+        self.senderId = fromUserInfo[PushNotificationConstants.Sender.rawValue] as? String
+        if let aps = fromUserInfo[PushNotificationConstants.Aps.rawValue] as? NSDictionary{
+            self.alert = aps[PushNotificationConstants.Alert.rawValue] as? String
+        }
+        if self.command == PushCommand.Note {
+            let stringsAfterFirstSemicolon = self.alert.componentsSeparatedByString(":")
+            var noteTitle = ""
+            for var index = 1; index < stringsAfterFirstSemicolon.count; index++ {
+                if index > 1 {
+                    noteTitle += ":"
+                }
+                noteTitle += stringsAfterFirstSemicolon[index]
+            }
+            self.noteTitle =  noteTitle
+        }
+    }
+
+}
+
+
 
 

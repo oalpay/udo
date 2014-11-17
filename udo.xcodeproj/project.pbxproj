@@ -35,6 +35,8 @@
 		AC1B4B9419FEA91A00A8C721 /* NotesViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1B4B9319FEA91A00A8C721 /* NotesViewController.swift */; };
 		AC1B4B9619FEB54700A8C721 /* NotesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC1B4B9519FEB54700A8C721 /* NotesManager.swift */; };
 		AC1C25AD1A02C82B008BD25C /* redo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = AC1C25AC1A02C82B008BD25C /* redo@2x.png */; };
+		AC201B401A1A7D8F00735141 /* TSMessage_UDO.m in Sources */ = {isa = PBXBuildFile; fileRef = AC201B3F1A1A7D8F00735141 /* TSMessage_UDO.m */; };
+		AC201B441A1A802200735141 /* APAddressBook_UDO.m in Sources */ = {isa = PBXBuildFile; fileRef = AC201B431A1A802200735141 /* APAddressBook_UDO.m */; };
 		AC23E2DA1A098EF700643E25 /* LocalNotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC23E2D91A098EF700643E25 /* LocalNotificationsManager.swift */; };
 		AC316A921A08D87300D48915 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC316A901A08D87300D48915 /* Bolts.framework */; };
 		AC316A931A08D87300D48915 /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC316A911A08D87300D48915 /* Parse.framework */; };
@@ -121,6 +123,10 @@
 		AC1B4B9319FEA91A00A8C721 /* NotesViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesViewController.swift; sourceTree = "<group>"; };
 		AC1B4B9519FEB54700A8C721 /* NotesManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NotesManager.swift; sourceTree = "<group>"; };
 		AC1C25AC1A02C82B008BD25C /* redo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "redo@2x.png"; sourceTree = "<group>"; };
+		AC201B3E1A1A7C0F00735141 /* TSMessage_UDO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TSMessage_UDO.h; sourceTree = "<group>"; };
+		AC201B3F1A1A7D8F00735141 /* TSMessage_UDO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSMessage_UDO.m; sourceTree = "<group>"; };
+		AC201B421A1A7FB300735141 /* APAddressBook_UDO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APAddressBook_UDO.h; sourceTree = "<group>"; };
+		AC201B431A1A802200735141 /* APAddressBook_UDO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APAddressBook_UDO.m; sourceTree = "<group>"; };
 		AC23E2D91A098EF700643E25 /* LocalNotificationsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalNotificationsManager.swift; sourceTree = "<group>"; };
 		AC316A901A08D87300D48915 /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bolts.framework; sourceTree = "<group>"; };
 		AC316A911A08D87300D48915 /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Parse.framework; sourceTree = "<group>"; };
@@ -259,6 +265,24 @@
 			path = MHPrettyDate;
 			sourceTree = "<group>";
 		};
+		AC201B3C1A1A7AC600735141 /* TSMessage+UDO */ = {
+			isa = PBXGroup;
+			children = (
+				AC201B3E1A1A7C0F00735141 /* TSMessage_UDO.h */,
+				AC201B3F1A1A7D8F00735141 /* TSMessage_UDO.m */,
+			);
+			name = "TSMessage+UDO";
+			sourceTree = "<group>";
+		};
+		AC201B411A1A7E5300735141 /* APAddressBook+UDO */ = {
+			isa = PBXGroup;
+			children = (
+				AC201B421A1A7FB300735141 /* APAddressBook_UDO.h */,
+				AC201B431A1A802200735141 /* APAddressBook_UDO.m */,
+			);
+			name = "APAddressBook+UDO";
+			sourceTree = "<group>";
+		};
 		AC7C4AD319D6D7A300BE25DC /* NSArray+LongestCommonSubsequence */ = {
 			isa = PBXGroup;
 			children = (
@@ -377,6 +401,8 @@
 				AC743D1819EEFD98004E730F /* Theme.swift */,
 				AC857DB51A140B2F009D2DE5 /* UDContactImageView.swift */,
 				ACAA0F941A17B78700AACCCB /* UDPopTipView.swift */,
+				AC201B411A1A7E5300735141 /* APAddressBook+UDO */,
+				AC201B3C1A1A7AC600735141 /* TSMessage+UDO */,
 				AC96C4061A019FB700231065 /* ISO8601DateFormatter */,
 				ACBB74FE19EC701100D44510 /* UIImage+ */,
 				AC00831219DDD70A002EC27C /* MHPrettyDate */,
@@ -596,6 +622,7 @@
 				ACF9BDEB19CEBE6C00E28504 /* UDOModels.swift in Sources */,
 				AC857DB61A140B2F009D2DE5 /* UDContactImageView.swift in Sources */,
 				AC004E8319AE5F2400970D00 /* ReminderItemCell.swift in Sources */,
+				AC201B441A1A802200735141 /* APAddressBook_UDO.m in Sources */,
 				ACD60B0019C78886002F550A /* AccountViewController.swift in Sources */,
 				ACBB74FD19EC700A00D44510 /* UIImage+Tint.m in Sources */,
 				ACD60B0A19C78886002F550A /* ContactsManager.swift in Sources */,
@@ -604,6 +631,7 @@
 				ACDB1CC419EAB909007D731D /* ReminderManager.swift in Sources */,
 				ACA0DEBA19DC21D00003B893 /* StaticDataTableViewController.m in Sources */,
 				AC23E2DA1A098EF700643E25 /* LocalNotificationsManager.swift in Sources */,
+				AC201B401A1A7D8F00735141 /* TSMessage_UDO.m in Sources */,
 				AC00831A19DDD70A002EC27C /* MHPrettyDate.m in Sources */,
 				AC34440E1A113A83001CF4A3 /* UDBadgeLabel.swift in Sources */,
 				AC0C72AE198E63E100B803B5 /* RegisterViewController.swift in Sources */,

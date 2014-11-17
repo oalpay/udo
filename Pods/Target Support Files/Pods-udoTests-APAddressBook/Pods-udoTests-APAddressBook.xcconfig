@@ -1,0 +1,1 @@
+PODS_UDOTESTS_APADDRESSBOOK_OTHER_LDFLAGS = -framework "AddressBook"

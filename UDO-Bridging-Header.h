@@ -26,8 +26,10 @@
 #import "APContact.h"
 #import "APAddress.h"
 #import "APPhoneWithLabel.h"
+#import "APAddressBook_UDO.h"
 
 #import "TSMessage.h"
+#import "TSMessage_UDO.h"
 #import <JSQMessagesViewController/JSQMessages.h>
 #import "UIImage+Resize.h"
 #import <MSCellAccessory.h>

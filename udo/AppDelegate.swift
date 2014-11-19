@@ -91,6 +91,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     
     func application(application: UIApplication, didReceiveRemoteNotification userInfo: [NSObject : AnyObject], fetchCompletionHandler completionHandler: (UIBackgroundFetchResult) -> Void) {
+        if PFUser.currentUser() == nil {
+            return
+        }
         let pushInfo = PushNotificationUserInfo(fromUserInfo: userInfo)
         if pushInfo.command != nil {
             let pushInfo = PushNotificationUserInfo(fromUserInfo: userInfo)

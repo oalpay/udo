@@ -90,7 +90,6 @@ class EventStoreManager : NSObject{
             self.accessGranted = granted
             callerCompletion(granted,error)
         })
-        self.eventStore.refreshSourcesIfNecessary()
     }
     
     private func createCalendar() -> EKCalendar? {

@@ -215,7 +215,7 @@ class ReminderManager : EventStoreManagerDelegate{
     
     func getReminderState(reminderId:String) -> ReminderState {
         let reminder = self.getReminder(reminderId)
-        if reminder.objectId == nil {
+        if reminder == nil || reminder.objectId == nil {
             //not saved yet
             return ReminderState.Seen
         }

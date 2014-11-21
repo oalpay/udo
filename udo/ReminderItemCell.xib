@@ -79,7 +79,7 @@
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Gelirken patates neyin al da gel" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Vq3-4i-jQG" userLabel="Title">
-                        <rect key="frame" x="50" y="24" width="240.5" height="21"/>
+                        <rect key="frame" x="50" y="24" width="237" height="21"/>
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="highlightedColor"/>
                     </label>
@@ -131,7 +131,7 @@
                     <constraint firstItem="HUu-dG-ZmT" firstAttribute="leading" secondItem="xyS-uc-pnM" secondAttribute="leading" id="cmA-WG-Ura"/>
                     <constraint firstItem="Ffn-Yb-F03" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="9" id="e35-5F-mFu"/>
                     <constraint firstItem="IiG-3v-sXD" firstAttribute="leading" secondItem="d4n-qu-2C4" secondAttribute="trailing" constant="1.5" id="eSH-rb-7YQ"/>
-                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Vq3-4i-jQG" secondAttribute="trailing" priority="750" id="eg1-VY-fRy"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Vq3-4i-jQG" secondAttribute="trailing" id="eg1-VY-fRy"/>
                     <constraint firstAttribute="trailing" secondItem="2qv-bT-Ngo" secondAttribute="trailing" constant="4" id="gXB-cf-lxd"/>
                     <constraint firstItem="2qv-bT-Ngo" firstAttribute="top" secondItem="xyS-uc-pnM" secondAttribute="top" constant="8" id="ie8-Py-rJS"/>
                     <constraint firstAttribute="trailingMargin" secondItem="7gR-Jz-CpW" secondAttribute="trailing" id="jbl-T4-Tuz"/>

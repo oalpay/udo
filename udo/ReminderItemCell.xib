@@ -32,7 +32,7 @@
                     <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="HUu-dG-ZmT" userLabel="StatusView">
                         <rect key="frame" x="0.0" y="10" width="50" height="50"/>
                         <subviews>
-                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eJQ-fI-nRp" userLabel="Redo">
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" image="redo" translatesAutoresizingMaskIntoConstraints="NO" id="eJQ-fI-nRp" userLabel="Redo">
                                 <rect key="frame" x="12" y="15" width="24" height="21"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="21" id="Frg-Yb-FW5"/>
@@ -53,7 +53,7 @@
                             <constraint firstAttribute="centerX" secondItem="MWN-QZ-cGR" secondAttribute="centerX" id="zEj-dE-bhH"/>
                         </constraints>
                     </view>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="calendar.png" translatesAutoresizingMaskIntoConstraints="NO" id="rTk-Ov-hYx" userLabel="CalendarIcon">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="calendar" translatesAutoresizingMaskIntoConstraints="NO" id="rTk-Ov-hYx" userLabel="CalendarIcon">
                         <rect key="frame" x="51" y="49" width="14" height="14"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="14" id="KHh-OS-MNV"/>
@@ -83,21 +83,21 @@
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="notifications.png" translatesAutoresizingMaskIntoConstraints="NO" id="rC9-4P-jP9" userLabel="AlarmIcon">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="notifications" translatesAutoresizingMaskIntoConstraints="NO" id="rC9-4P-jP9" userLabel="AlarmIcon">
                         <rect key="frame" x="202" y="50" width="14" height="14"/>
                         <constraints>
                             <constraint firstAttribute="height" constant="14" id="g6h-9a-ADQ"/>
                             <constraint firstAttribute="width" constant="14" id="pLu-kq-k1e"/>
                         </constraints>
                     </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="right.png" translatesAutoresizingMaskIntoConstraints="NO" id="Ffn-Yb-F03" userLabel="Direction">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="right" translatesAutoresizingMaskIntoConstraints="NO" id="Ffn-Yb-F03" userLabel="Direction">
                         <rect key="frame" x="50" y="9" width="12" height="12"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="12" id="hUe-Er-U0V"/>
                             <constraint firstAttribute="height" constant="12" id="wRp-si-oiO"/>
                         </constraints>
                     </imageView>
-                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="redo.png" translatesAutoresizingMaskIntoConstraints="NO" id="IiG-3v-sXD">
+                    <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="redo" translatesAutoresizingMaskIntoConstraints="NO" id="IiG-3v-sXD">
                         <rect key="frame" x="135" y="51" width="14" height="12"/>
                         <constraints>
                             <constraint firstAttribute="width" constant="14" id="FO4-PC-iic"/>
@@ -163,9 +163,9 @@
         </tableViewCell>
     </objects>
     <resources>
-        <image name="calendar.png" width="14" height="14"/>
-        <image name="notifications.png" width="14" height="14"/>
-        <image name="redo.png" width="30" height="26"/>
-        <image name="right.png" width="12" height="12"/>
+        <image name="calendar" width="14" height="14"/>
+        <image name="notifications" width="14" height="14"/>
+        <image name="redo" width="30" height="26"/>
+        <image name="right" width="12" height="12"/>
     </resources>
 </document>

@@ -85,7 +85,10 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     }
     
     override func viewWillAppear(animated: Bool) {
-        self.updateVisibleCells()
+        if let selectedRow = self.tableView.indexPathForSelectedRow() { // disappearing seperator fix
+            self.tableView.deselectRowAtIndexPath(selectedRow, animated: false)
+        }
+        self.updateVisibleCellsForLocalChanges()
         self.startTutorialIfNeeded()
     }
     
@@ -122,7 +125,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     }
     
     func contactsChanged(notification:NSNotification) {
-        self.updateVisibleCells()
+        self.updateVisibleCellsForLocalChanges()
     }
     
     func userLoggedOut(notification:NSNotification){
@@ -186,7 +189,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         self.showActivity()
         self.contactsManager.loadContacts { () -> Void in
             self.contactsManager.refreshAppUsers({ () -> Void in
-                self.updateVisibleCells()
+                self.updateVisibleCellsForLocalChanges()
                 self.hideActivity()
             })
         }
@@ -195,7 +198,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     // notifications
     
     func noteLoadingFinished(notification:NSNotification){
-        self.updateVisibleCells()
+        self.updateVisibleCellsForLocalChanges()
     }
     
     func reminderCreatedNotification(notification:NSNotification){
@@ -237,7 +240,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     }
     func userSyncEnded(notification:NSNotification) {
         self.refreshControl?.endRefreshing()
-        self.updateVisibleCells()
+        self.updateVisibleCellsForLocalChanges()
     }
     // notifications end
     
@@ -311,7 +314,6 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
             }
         }
         self.reminderKeys = mergedKeys.copy() as NSArray
-        self.tableView.endUpdates()
         
         // update visible cells
         for key in change.updates {
@@ -322,12 +324,14 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
                 self.markCell(cell)
             }
         }
+        self.tableView.endUpdates()
+
         self.startTutorialIfNeeded()
         //self.notifyUndoneOverdueReminders((change.inserts as NSArray).arrayByAddingObjectsFromArray(change.updates))
     }
     
     
-    func updateVisibleCells(){
+    func updateVisibleCellsForLocalChanges(){
         var cells = self.tableView.visibleCells() as [ReminderItemTableViewCell]
         for cell in cells {
             cell.updateTitle()

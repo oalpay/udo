@@ -273,7 +273,7 @@ class ReminderManager : EventStoreManagerDelegate{
             (result: AnyObject!, error: NSError!) -> Void in
             if error != nil{
                 self.showConnectionError()
-            }else {
+            }else if PFUser.currentUser() != nil { // user can logoff right after openning the app
                 let responseData = result as NSDictionary
                 // sync notes
                 let reminderNotes = responseData.objectForKey("rn") as NSDictionary

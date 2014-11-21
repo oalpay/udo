@@ -385,6 +385,11 @@
         [self.tableView reloadData];
         
     } else {
+        // disappearing seperator fix
+        NSIndexPath* selectedRow = [self.tableView indexPathForSelectedRow];
+        if (selectedRow != nil) {
+            [self.tableView deselectRowAtIndexPath:selectedRow animated:NO];
+        }
     
         [self.tableView beginUpdates];
         
@@ -397,7 +402,6 @@
         [self.tableView endUpdates];
         
         //[self.tableView reloadData];
-        
     }
     
 }

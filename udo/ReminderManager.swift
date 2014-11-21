@@ -155,10 +155,11 @@ class ReminderManager : EventStoreManagerDelegate{
     }
     
     func itemChangedInStore(key: String!) {
-        var change = RemindersChanged(updates: [key], inserts: nil, deletes: nil)
-        var reminder = self.getReminder(key)
-        self.setAlarmDataToReminder(reminder)
-        self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+        if let reminder = self.getReminder(key) {
+            var change = RemindersChanged(updates: [key], inserts: nil, deletes: nil)
+            self.setAlarmDataToReminder(reminder)
+            self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+        }
     }
     
     private func mergeCurrentRemindersWithReminders(reminders:NSArray) -> RemindersChanged{
@@ -448,12 +449,13 @@ class ReminderManager : EventStoreManagerDelegate{
         var key = reminder.key()
         nc.postNotificationName(kRemindersChangedNotification, object: RemindersChanged(updates: nil, inserts: nil, deletes: [key]))
         self.deleteReminderSeen(key)
-        self.eventStoreManager.remove(key)
         self.cancelNotification(key)
         self.reminderMap.removeObjectForKey(key)
         self.loadSet.removeObject(key)
         self.loadErrorSet.removeObject(key)
         self.notesManager.reminderDeleted(key)
+        // this should be last
+        self.eventStoreManager.remove(key)
     }
     
     func updateEventStore(reminder:Reminder,addToMyReminders:Bool,alarmDate:NSDate!,repeatInterval:NSCalendarUnit!){

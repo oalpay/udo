@@ -8,6 +8,8 @@
 
 import Foundation
 
+var kVersion = 1.0
+
 var kUserSyncStarted = "kUserSyncStarted"
 var kUserSyncEnded = "kUserSyncEnded"
 
@@ -268,6 +270,7 @@ class ReminderManager : EventStoreManagerDelegate{
         var params = NSMutableDictionary()
         params.setObject(self.notesManager.getLastNoteCreatedAtForReminders(), forKey:"lastNoteCreatedAt" )
         params.setObject(self.lastUpdated, forKey: "lastReminderUpdatedAt")
+        params.setObject(kVersion, forKey: "version")
         self.isSyncing = true
         PFCloud.callFunctionInBackground("syncUser", withParameters:params) {
             (result: AnyObject!, error: NSError!) -> Void in

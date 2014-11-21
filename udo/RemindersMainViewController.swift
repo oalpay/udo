@@ -271,6 +271,11 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     }
     
     func mergeReminders(change:RemindersChanged){
+        
+        if let selectedRow = self.tableView.indexPathForSelectedRow() { // disappearing seperator fix
+            self.tableView.deselectRowAtIndexPath(selectedRow, animated: false)
+        }
+        
         let currentKeys = self.nsReminderKeys()
         self.tableView.beginUpdates()
         var mergedKeys = self.reminderKeys.mutableCopy() as NSMutableArray
@@ -314,6 +319,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
             }
         }
         self.reminderKeys = mergedKeys.copy() as NSArray
+        self.tableView.endUpdates()
         
         // update visible cells
         for key in change.updates {
@@ -324,7 +330,6 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
                 self.markCell(cell)
             }
         }
-        self.tableView.endUpdates()
 
         self.startTutorialIfNeeded()
         //self.notifyUndoneOverdueReminders((change.inserts as NSArray).arrayByAddingObjectsFromArray(change.updates))

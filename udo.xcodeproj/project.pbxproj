@@ -360,6 +360,9 @@
 		ACFB6C27198AB7BB0091E4AB /* udo */ = {
 			isa = PBXGroup;
 			children = (
+				ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */,
+				ACFB6C30198AB7BB0091E4AB /* Main.storyboard */,
+				AC743D1819EEFD98004E730F /* Theme.swift */,
 				AC23E2D91A098EF700643E25 /* LocalNotificationsManager.swift */,
 				AC1B4B9519FEB54700A8C721 /* NotesManager.swift */,
 				ACDB1CC319EAB909007D731D /* ReminderManager.swift */,
@@ -368,17 +371,14 @@
 				ACD60AF119C78886002F550A /* EventStoreManager.swift */,
 				ACD60AF319C78886002F550A /* AccountViewController.swift */,
 				ACDB1CBD19E88AE1007D731D /* SettingsTableViewController.swift */,
-				ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */,
 				AC1B4B9319FEA91A00A8C721 /* NotesViewController.swift */,
 				ACFB6C49198ACE2E0091E4AB /* ContactsViewController.swift */,
 				ACE869211992CB5C00F26D67 /* ReminderViewController.swift */,
 				ACD60AF219C78886002F550A /* RemindersMainViewController.swift */,
 				AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */,
-				ACFB6C30198AB7BB0091E4AB /* Main.storyboard */,
 				AC004E8219AE5F2400970D00 /* ReminderItemCell.swift */,
 				AC004E7E19AD1BED00970D00 /* ReminderItemCell.xib */,
 				AC34440D1A113A83001CF4A3 /* UDBadgeLabel.swift */,
-				AC743D1819EEFD98004E730F /* Theme.swift */,
 				AC857DB51A140B2F009D2DE5 /* UDContactImageView.swift */,
 				ACAA0F941A17B78700AACCCB /* UDPopTipView.swift */,
 				ACB410C11A2A054300F0EAE9 /* RegionViewController.swift */,

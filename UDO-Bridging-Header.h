@@ -35,4 +35,7 @@
 #import <MSCellAccessory.h>
 #import "CMPopTipView.h"
 
+#import "CustomMapOverlay.h"
+#import "WildcardGestureRecognizer.h"
+
 #endif

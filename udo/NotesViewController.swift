@@ -53,16 +53,9 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
     
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-       
-        nc.addObserver(self, selector: "noteLoadingEarlier:", name: kNoteLoadingEarlierNotification, object: nil)
-        nc.addObserver(self, selector: "noteLoadingEarlierFinished:", name: kNoteLoadingEarlierFinishedNotification, object: nil)
-        nc.addObserver(self, selector: "noteLoading:", name: kReminderNoteLoadingNotification, object: nil)
-        nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
-        nc.addObserver(self, selector: "noteSaving:", name: kReminderNoteSavingNotification, object: nil)
-        nc.addObserver(self, selector: "noteSaveFinished:", name: kReminderNoteSaveFinishedNotification, object: nil)
         
-        nc.addObserver(self, selector: "userSyncStarted:", name: kUserSyncStarted, object: nil)
-        nc.addObserver(self, selector: "userSyncEnded:", name: kUserSyncEnded, object: nil)
+        self.nc.addObserver(self, selector: "noteActivityNotification:", name: kNoteActivityNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderManagerActivityNotification:", name: kReminderManagerActivityNotification, object: nil)
         
         self.updateActivity()
 
@@ -91,34 +84,46 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
         self.navigationItem.titleView = nil
     }
     
-    func noteLoadingEarlier(notification:NSNotification){
-        if self.reminderId == notification.object as String {
-            self.updateActivity()
+    func reminderManagerActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? ReminderManagerActivityNotification {
+            switch activity.activity {
+            case .SyncStarted:
+                 self.showActivity()
+            case .SyncEnded:
+                self.hideActivity()
+                self.refreshFromNotesManager()
+            default:
+                break
+            }
         }
     }
     
-    func noteLoadingEarlierFinished(notification:NSNotification){
-        if self.reminderId == notification.object as String {
-            self.updateActivity()
-            let reminderNotes = self.reminderManager.getReminderNotes(self.reminderId)
-            self.notes = reminderNotes.getNotes()
-            self.collectionView.reloadData()
-            self.showLoadEarlierMessagesHeader = reminderNotes.canHaveEarlierNotes()
-        }
-    }
-    
-    func userSyncStarted(notification:NSNotification){
-        self.showActivity()
-    }
-    
-    func userSyncEnded(notification:NSNotification){
-        self.hideActivity()
-        self.refreshFromNotesManager()
-    }
-    
-    func noteLoading(notification:NSNotification){
-        if self.reminderId == notification.object as String {
-            self.showTypingIndicator = true
+    func noteActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? NoteActivityNotification {
+            if self.reminderId == activity.reminderId {
+                switch activity.activity {
+                case .LoadingEarlierStarted:
+                    self.updateActivity()
+                case .LoadingEarlierEnded:
+                    self.updateActivity()
+                    let reminderNotes = self.reminderManager.getReminderNotes(self.reminderId)
+                    self.notes = reminderNotes.getNotes()
+                    self.collectionView.reloadData()
+                    self.showLoadEarlierMessagesHeader = reminderNotes.canHaveEarlierNotes()
+                case .LoadingStarted:
+                    self.showTypingIndicator = true
+                case .LoadingEnded:
+                    self.refreshFromNotesManager()
+                case .Saving:
+                    self.notes = self.reminderManager.getReminderNotes(self.reminderId).getNotes()
+                    self.finishSendingMessage()
+                case .Saved:
+                    JSQSystemSoundPlayer.jsq_playMessageSentSound()
+                    self.collectionView.reloadData()
+                default:
+                    break
+                }
+            }
         }
     }
     
@@ -138,31 +143,9 @@ class NotesViewController:JSQMessagesViewController, UIActionSheetDelegate{
 
     }
     
-    func noteLoadingFinished(notification:NSNotification){
-        if self.reminderId == notification.object as String {
-            self.refreshFromNotesManager()
-        }
-    }
-    
-    func noteSaving(notification:NSNotification){
-        if reminderId == notification.object as String {
-            self.notes = self.reminderManager.getReminderNotes(self.reminderId).getNotes()
-            self.finishSendingMessage()
-        }
-    }
-    
-    func noteSaveFinished(notification:NSNotification){
-        if reminderId == notification.object as String {
-            JSQSystemSoundPlayer.jsq_playMessageSentSound()
-            self.collectionView.reloadData()
-        }
-    }
-    
-    
     override func didPressSendButton(button: UIButton!, withMessageText text: String!, senderId: String!, senderDisplayName: String!, date: NSDate!) {
         self.reminderManager.sendNoteText(text, forReminderId: self.reminderId)
     }
-    
     
     override func collectionView(collectionView: JSQMessagesCollectionView!, messageDataForItemAtIndexPath indexPath: NSIndexPath!) -> JSQMessageData! {
         return notes.objectAtIndex(indexPath.item) as JSQMessageData

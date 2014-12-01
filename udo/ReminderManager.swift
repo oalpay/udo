@@ -10,40 +10,49 @@ import Foundation
 
 var kVersion = 1.0
 
-var kUserSyncStarted = "kUserSyncStarted"
-var kUserSyncEnded = "kUserSyncEnded"
-
-var kReminderCreatedNotification = "kReminderCreatedNotification"
-var kRemindersChangedNotification = "kRemindersChangedNotification"
-var kReminderLoadingNotification = "kReminderLoadingNotification"
-var kReminderLoadingFinishedNotification = "kReminderLoadingFinishedNotification"
 var kReminderShowNotification = "kReminderShowNotification"
 
-class RemindersChanged {
-    var isLocalChange:Bool
-    var updates:[String]!
-    var inserts:[String]!
-    var deletes:[String]!
-    
-    init() {
-        self.updates = []
-        self.inserts = []
-        self.deletes = []
-        self.isLocalChange = false
+let kReminderManagerActivityNotification = "kReminderManagerActivityNotification"
+let kReminderActivityNotification = "kReminderActivityNotification"
+let kRemindersChangedNotification = "kRemindersChangedNotification"
+
+enum ReminderManagerActivity{
+    case SyncStarted
+    case SyncEnded
+    case LoadingReminders
+    case LoadingRemindersEnded
+}
+
+class ReminderManagerActivityNotification {
+    let activity:ReminderManagerActivity
+    init(activity:ReminderManagerActivity) {
+        self.activity = activity
     }
-    
-    convenience init(updates:[String]!,inserts:[String]!,deletes:[String]!){
-        self.init()
-        if updates != nil {
-            self.updates = updates
-        }
-        if inserts != nil {
-            self.inserts = inserts
-        }
-        if deletes != nil {
-            self.deletes = deletes
-        }
+}
+
+enum ReminderActivity {
+    case Saving
+    case Created
+    case Saved
+    case Loading
+    case Loaded
+}
+
+class ReminderActivityNotification{
+    let reminderId:String
+    let activity:ReminderActivity
+    var idAfterCreate:String?
+    init(reminderId:String, activity:ReminderActivity) {
+        self.activity = activity
+        self.reminderId = reminderId
     }
+}
+
+class RemindersChangedNotification{
+    var isLocalChange = false
+    var updates:[String] = []
+    var inserts:[String] = []
+    var deletes:[String] = []
     
     func hasKeyInUpdateSet(key:String) -> Bool {
         var index = (self.updates as NSArray).indexOfObject(key)
@@ -98,6 +107,23 @@ class ReminderManager : EventStoreManagerDelegate{
         }
     }
     
+    private func postRemindersChangedNotification(change:RemindersChangedNotification){
+        self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+    }
+    private func postReminderActivityNotification(activity:ReminderActivity,forReminderId:String){
+        let activityNotification = ReminderActivityNotification(reminderId: forReminderId, activity: activity)
+        self.nc.postNotificationName(kReminderActivityNotification, object: activityNotification)
+    }
+    private func postReminderCreatedNotificationForKey(oldId:String,idAfterCreate:String){
+        let createdNotification = ReminderActivityNotification(reminderId: oldId, activity: ReminderActivity.Created)
+        createdNotification.idAfterCreate = idAfterCreate
+        self.nc.postNotificationName(kReminderActivityNotification, object: createdNotification)
+    }
+    private func postReminderManagerActivityNotification(activity:ReminderManagerActivity){
+        let activityNotification = ReminderManagerActivityNotification(activity: activity)
+        self.nc.postNotificationName(kReminderManagerActivityNotification, object: activityNotification)
+    }
+    
     func applicationDidFinishLaunchingNotification() {
         if PFUser.currentUser() != nil {
             self.syncUser(nil)
@@ -116,9 +142,10 @@ class ReminderManager : EventStoreManagerDelegate{
                 }
             }
             if updates.count > 0 {
-                var change = RemindersChanged(updates: updates, inserts: nil, deletes: nil)
+                var change = RemindersChangedNotification()
+                change.updates =  updates
                 change.isLocalChange = true
-                self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+                self.postRemindersChangedNotification(change)
             }
         }
     }
@@ -127,7 +154,7 @@ class ReminderManager : EventStoreManagerDelegate{
         for key in self.remoteNotificationSet{
             self.loadSet.removeObject(key)
             self.remoteNotificationSet.removeObject(key)
-            self.nc.postNotificationName(kReminderLoadingFinishedNotification, object: key)
+            self.postReminderActivityNotification(ReminderActivity.Loaded, forReminderId: key as String)
         }
     }
     
@@ -156,13 +183,14 @@ class ReminderManager : EventStoreManagerDelegate{
     
     func itemChangedInStore(key: String!) {
         if let reminder = self.getReminder(key) {
-            var change = RemindersChanged(updates: [key], inserts: nil, deletes: nil)
+            var change = RemindersChangedNotification()
+            change.updates.append(key)
             self.setAlarmDataToReminder(reminder)
-            self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+            self.postRemindersChangedNotification(change)
         }
     }
     
-    private func mergeCurrentRemindersWithReminders(reminders:NSArray) -> RemindersChanged{
+    private func mergeCurrentRemindersWithReminders(reminders:NSArray) -> RemindersChangedNotification{
         var updates = [String]()
         var inserts = [String]()
         for reminder in reminders as [Reminder]{
@@ -181,7 +209,10 @@ class ReminderManager : EventStoreManagerDelegate{
         if let lastReminder = reminders.firstObject as? Reminder {
             self.lastUpdated = lastReminder.updatedAt
         }
-        return RemindersChanged(updates: updates, inserts: inserts, deletes: nil)
+        var change = RemindersChangedNotification()
+        change.updates = updates
+        change.inserts = inserts
+        return change
     }
     
     func setAlarmDataToReminder(reminder:Reminder) -> Bool {
@@ -246,7 +277,7 @@ class ReminderManager : EventStoreManagerDelegate{
     }
     
     func loadReminders(callback:PFIdResultBlock?){
-        self.nc.postNotificationName(kUserSyncStarted, object: nil)
+        self.postReminderManagerActivityNotification(ReminderManagerActivity.LoadingReminders)
         var query = Reminder.query()
         query.whereKey("collaborators", equalTo: PFUser.currentUser().username)
         query.whereKey("updatedAt", greaterThan: self.lastUpdated)
@@ -256,18 +287,18 @@ class ReminderManager : EventStoreManagerDelegate{
                 self.showConnectionError()
             } else if result.count > 0{
                 let change = self.mergeCurrentRemindersWithReminders(result)
-                self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+                self.postRemindersChangedNotification(change)
                 self.syncUserCheck()
                 self.notifyLoadForRemoteNotifications()
             }
-            self.nc.postNotificationName(kUserSyncEnded, object: nil)
+            self.postReminderManagerActivityNotification(ReminderManagerActivity.LoadingRemindersEnded)
             callback?(result,error)
         }
     }
     
     
-    private func syncUser(callback:PFIdResultBlock?){
-        self.nc.postNotificationName(kUserSyncStarted, object: nil)
+    func syncUser(callback:PFIdResultBlock?){
+        self.postReminderManagerActivityNotification(ReminderManagerActivity.SyncStarted)
         var params = NSMutableDictionary()
         params.setObject(self.notesManager.getLastNoteCreatedAtForReminders(), forKey:"lastNoteCreatedAt" )
         params.setObject(self.lastUpdated, forKey: "lastReminderUpdatedAt")
@@ -292,7 +323,7 @@ class ReminderManager : EventStoreManagerDelegate{
                 for noteId in updatedNotesSet.allObjects as [String]{
                     change.updates.append(noteId)
                 }
-                self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+                self.postRemindersChangedNotification(change)
                 
                 // remove all remote notifications it might been deleted from server
                 self.notifyLoadForRemoteNotifications()
@@ -301,7 +332,7 @@ class ReminderManager : EventStoreManagerDelegate{
                 }
             }
             self.isSyncing = false
-            self.nc.postNotificationName(kUserSyncEnded, object: nil)
+            self.postReminderManagerActivityNotification(ReminderManagerActivity.SyncEnded)
             callback?(result,error)
         }
         
@@ -348,14 +379,15 @@ class ReminderManager : EventStoreManagerDelegate{
             reminder.objectId = pushInfo.reminderId
             reminder.collaborators = []
             self.reminderMap.setObject(reminder, forKey: pushInfo.reminderId)
-            var change = RemindersChanged(updates: nil, inserts: [pushInfo.reminderId], deletes: nil)
-            self.nc.postNotificationName(kRemindersChangedNotification, object: change)
+            var change = RemindersChangedNotification()
+            change.inserts.append(pushInfo.reminderId)
+            self.postRemindersChangedNotification(change)
         }
         reminder.title = pushInfo.reminderTitle
         reminder.dueDate = pushInfo.reminderDueDate
         reminder.dueDateInterval = pushInfo.reminderDueDateInterval
         self.setLocalNotification(pushInfo.reminderId, title: reminder.title, fireDate: reminder.dueDate,repeatInterval: reminder.dueDateInterval)
-        nc.postNotificationName(kReminderLoadingNotification, object: pushInfo.reminderId)
+        self.postReminderActivityNotification(ReminderActivity.Loading, forReminderId: pushInfo.reminderId)
     }
     
     func showAlertForPushNotification(pushInfo:PushNotificationUserInfo){
@@ -447,7 +479,9 @@ class ReminderManager : EventStoreManagerDelegate{
             reminder.saveEventually()
         }
         var key = reminder.key()
-        nc.postNotificationName(kRemindersChangedNotification, object: RemindersChanged(updates: nil, inserts: nil, deletes: [key]))
+        var change = RemindersChangedNotification()
+        change.deletes.append(key)
+        self.postRemindersChangedNotification(change)
         self.deleteReminderSeen(key)
         self.cancelNotification(key)
         self.reminderMap.removeObjectForKey(key)
@@ -512,7 +546,7 @@ class ReminderManager : EventStoreManagerDelegate{
         var key = reminder.key()
         assert(!self.loadSet.containsObject(key))
         self.loadSet.addObject(key)
-        var change = RemindersChanged()
+        var change = RemindersChangedNotification()
         change.isLocalChange = true
         if self.reminderMap[key] == nil{
             //new reminder
@@ -522,8 +556,8 @@ class ReminderManager : EventStoreManagerDelegate{
             change.updates = [key]
         }
         reminder.failedToSave = false
-        self.nc.postNotificationName(kRemindersChangedNotification, object: change)
-        self.nc.postNotificationName(kReminderLoadingNotification, object: key)
+        self.postRemindersChangedNotification(change)
+        self.postReminderActivityNotification(ReminderActivity.Saving, forReminderId: key)
         reminder.saveInBackgroundWithBlock { (success:Bool, error:NSError!) -> Void in
             if success {
                 JSQSystemSoundPlayer.jsq_playMessageSentSound()
@@ -535,8 +569,7 @@ class ReminderManager : EventStoreManagerDelegate{
                     // remove old key
                     self.reminderMap.removeObjectForKey(key)
                     // notify listeners
-                    self.nc.postNotificationName(kReminderCreatedNotification, object: NSDictionary(objects: [key,reminder.key()], forKeys: ["oldKey","newKey"]))
-                    
+                    self.postReminderCreatedNotificationForKey(key, idAfterCreate: reminder.key())
                 }else{
                     self.setReminderAsSeen(key)
                 }
@@ -546,7 +579,7 @@ class ReminderManager : EventStoreManagerDelegate{
                 TSMessage.showNotificationWithTitle("Error while saving reminder", subtitle: error.localizedDescription, type: TSMessageNotificationType.Error)
             }
             self.loadSet.removeObject(key)
-            self.nc.postNotificationName(kReminderLoadingFinishedNotification, object: reminder.key())
+            self.postReminderActivityNotification(ReminderActivity.Saved, forReminderId: reminder.key())
             resultBlock?(success,error)
         }
     }

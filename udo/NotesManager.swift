@@ -8,13 +8,25 @@
 
 import Foundation
 
-var kNoteLoadingEarlierNotification = "kNoteLoadingEarlierNotification"
-var kNoteLoadingEarlierFinishedNotification = "kNoteLoadingEarlierFinishedNotification"
+let kNoteActivityNotification = "kNoteActivityNotification"
 
-var kReminderNoteLoadingNotification = "kReminderNoteLoadingNotification"
-var kReminderNoteLoadingFinishedNotification = "kReminderNoteLoadingFinishedNotification"
-var kReminderNoteSaveFinishedNotification = "kReminderSaveFinishedNotification"
-var kReminderNoteSavingNotification = "kReminderNoteSavingNotification"
+enum NoteActivity {
+    case LoadingEarlierStarted
+    case LoadingEarlierEnded
+    case LoadingStarted
+    case LoadingEnded
+    case Saving
+    case Saved
+}
+
+class NoteActivityNotification {
+    let reminderId:String
+    let activity:NoteActivity
+    init(reminderId:String, activity:NoteActivity){
+        self.reminderId = reminderId
+        self.activity = activity
+    }
+}
 
 var kNotesLastRead = "NotesLastRead"
 
@@ -242,17 +254,22 @@ class NotesManager {
         return reminderNotes
     }
     
+    private func postNoteActivityNotification(activity:NoteActivity, reminderId:String) {
+        let activity = NoteActivityNotification(reminderId: reminderId, activity: activity)
+        nc.postNotificationName(kNoteActivityNotification, object: activity)
+    }
+    
     private func notifyLoadingForReminderId(reminderId:String){
-        nc.postNotificationName(kReminderNoteLoadingNotification, object: reminderId)
+        self.postNoteActivityNotification(NoteActivity.LoadingStarted, reminderId: reminderId)
     }
     private func notifyLoadingFinishedForReminderId(reminderId:String){
-        nc.postNotificationName(kReminderNoteLoadingFinishedNotification, object: reminderId)
+        self.postNoteActivityNotification(NoteActivity.LoadingEnded, reminderId: reminderId)
     }
     private func notifyLoadingEarliarForReminderId(reminderId:String){
-        nc.postNotificationName(kNoteLoadingEarlierNotification, object: reminderId)
+        self.postNoteActivityNotification(NoteActivity.LoadingEarlierStarted, reminderId: reminderId)
     }
     private func notifyLoadingEarliarFinishedForReminderId(reminderId:String){
-        nc.postNotificationName(kNoteLoadingEarlierFinishedNotification, object: reminderId)
+        self.postNoteActivityNotification(NoteActivity.LoadingEarlierEnded, reminderId: reminderId)
     }
     
     func remoteReminderNoteNotificationReceived(pushInfo:PushNotificationUserInfo) {
@@ -343,14 +360,14 @@ class NotesManager {
     
     func trySendingAgain(note:Note){
         note.deliveryStatus = DeliveryStatus.Sending
-        nc.postNotificationName(kReminderNoteSavingNotification, object: note.reminderId)
+        self.postNoteActivityNotification(NoteActivity.Saving, reminderId: note.reminderId)
         note.saveInBackgroundWithBlock { (success:Bool, error:NSError!) -> Void in
             if success {
                 note.deliveryStatus = DeliveryStatus.Sent
             }else {
                 note.deliveryStatus = DeliveryStatus.Error
             }
-            self.nc.postNotificationName(kReminderNoteSaveFinishedNotification, object: note.reminderId)
+            self.postNoteActivityNotification(NoteActivity.Saved, reminderId: note.reminderId)
         }
     }
     
@@ -363,14 +380,14 @@ class NotesManager {
         reminderNote.sentAt = NSDate()
         var noteSetting = self.getReminderNotes(reminderId)
         noteSetting.appendMyNote(reminderNote)
-        self.nc.postNotificationName(kReminderNoteSavingNotification, object: reminderId)
+        self.postNoteActivityNotification(NoteActivity.Saving, reminderId: reminderId)
         reminderNote.saveInBackgroundWithBlock { (success:Bool, error:NSError!) -> Void in
             if success {
                 reminderNote.deliveryStatus = DeliveryStatus.Sent
             }else {
                 reminderNote.deliveryStatus = DeliveryStatus.Error
             }
-            self.nc.postNotificationName(kReminderNoteSaveFinishedNotification, object: reminderId)
+            self.postNoteActivityNotification(NoteActivity.Saved, reminderId: reminderId)
         }
     }
     

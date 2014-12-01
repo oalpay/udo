@@ -79,8 +79,8 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         
         self.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 50, right: 0)
         
-        self.addToMyRemindersSwitch.onTintColor = AppTheme.doneColor
-        self.remindMeOnADaySwitch.onTintColor = AppTheme.doneColor
+        //self.addToMyRemindersSwitch.onTintColor = AppTheme.doneColor
+        //self.remindMeOnADaySwitch.onTintColor = AppTheme.doneColor
         
         //empty means not set yet
         self.remindMeAlarmDateLabel.text = ""
@@ -121,19 +121,11 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     
     func addListeners(){
         self.nc.addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
-        self.nc.addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
-        self.nc.addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
-        self.nc.addObserver(self, selector: "reminderCreatedNotification:", name: kReminderCreatedNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderActivityNotification:", name: kReminderActivityNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderManagerActivityNotification:", name: kReminderManagerActivityNotification, object: nil)
+        
         self.nc.addObserver(self, selector: "contactsChanged:", name: kContactsChangedNotification, object: nil)
-        
-        self.nc.addObserver(self, selector: "noteLoading:", name: kReminderNoteLoadingNotification, object: nil)
-        self.nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
-        self.nc.addObserver(self, selector: "noteSaveFinished:", name: kReminderNoteSaveFinishedNotification, object: nil)
-        
-        self.nc.addObserver(self, selector: "userSyncStarted:", name: kUserSyncStarted, object: nil)
-        self.nc.addObserver(self, selector: "userSyncEnded:", name: kUserSyncEnded, object: nil)
-
-        
+        self.nc.addObserver(self, selector: "noteActivityNotification:", name: kNoteActivityNotification, object: nil)
     }
     
     func removeListeners(){
@@ -162,66 +154,65 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         self.collaboratorsView.refresh()
     }
     
-    func reminderCreatedNotification(notification:NSNotification){
-        let keyInfo = notification.object as NSDictionary
-        let oldKey = keyInfo["oldKey"] as String
-        if self.reminderKey == oldKey {
-            self.reminderKey = keyInfo["newKey"] as String
-        }
-    }
-    
-    func reminderChangedNotificationReceived(notification: NSNotification){
-        if self.reminder.objectId == nil {
-            return
-        }
-        let newReminders = notification.object as [Reminder]
-        for newReminder in newReminders {
-            if (newReminder.objectId == self.reminder.objectId && newReminder.updatedAt.compare(self.reminder.updatedAt) == NSComparisonResult.OrderedDescending ){
-                self.reminder = newReminder
-                self.updateAllFields()
-            }
-        }
-    }
-    
-    func userSyncStarted(notification:NSNotification){
-        self.updateActivity()
-    }
-    
-    func userSyncEnded(notification:NSNotification){
-        self.updateActivity()
-        self.updateNotes()
-    }
-    
-    func reminderLoadingNotification(notification:NSNotification){
-        var key = notification.object as String
-        if self.reminder.key() == key {
-            self.updateActivity()
-        }
-    }
-    
-    func reminderLoadingFinishedNotification(notification:NSNotification){
-        var key = notification.object as String
-        if self.reminder.key() == key {
-            self.prepareReminder()
-            self.updateAllFields()
-        }
-    }
-    
     func remindersChangedNotification(notification:NSNotification){
-        var change = notification.object as RemindersChanged!
-        if change.hasKeyInUpdateSet(self.reminderKey) {
-            self.prepareReminder()
-            if change.isLocalChange {
-                self.updateRemindMeFields()
-            }else {
-                self.updateDueDateFields()
-                self.updateCollaborators()
-                self.updateTitle()
+        if let change = notification.object as? RemindersChangedNotification {
+            if change.hasKeyInUpdateSet(self.reminderKey) {
+                self.prepareReminder()
+                if change.isLocalChange {
+                    self.updateRemindMeFields()
+                }else {
+                    self.updateDueDateFields()
+                    self.updateCollaborators()
+                    self.updateTitle()
+                }
+                self.reloadDataAnimated(true)
             }
-            self.reloadDataAnimated(true)
         }
     }
-
+    func reminderActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? ReminderActivityNotification {
+            if activity.reminderId == self.reminder.key(){
+                switch activity.activity {
+                case .Loading,.Saving:
+                    self.updateActivity()
+                case .Loaded,.Saved:
+                    self.prepareReminder()
+                    self.updateAllFields()
+                case .Created:
+                    self.reminderKey = activity.idAfterCreate
+                default:
+                    break
+                }
+            }
+        }
+    }
+    
+    func reminderManagerActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? ReminderManagerActivityNotification {
+            switch activity.activity {
+            case .SyncEnded,.LoadingRemindersEnded:
+                self.updateNotes()
+            default:
+                self.updateActivity()
+            }
+        }
+    }
+    
+    func noteActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? NoteActivityNotification {
+            if activity.reminderId == self.reminderKey {
+                switch activity.activity {
+                case .LoadingEnded,.Saved:
+                    self.notesLoadingIndicator.stopAnimating()
+                    self.updateLastNote()
+                default:
+                    break
+                }
+            }
+        }
+    }
+    
+    // not used !!
     func showNoteLoading(){
         self.notesLoadingIndicator.startAnimating()
         self.addNewNoteLabel.hidden = true
@@ -229,12 +220,6 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         self.notesLabel.hidden = true
         self.badgeLabel.hidden = true
         self.notesDateLabel.hidden = true
-    }
-    
-    func noteLoading(notification:NSNotification){
-        if self.reminderKey == notification.object as String {
-           // self.showNoteLoading()
-        }
     }
     
     func updateLastNote(){
@@ -260,18 +245,6 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         }
     }
     
-    func noteLoadingFinished(notification:NSNotification){
-        if self.reminderKey == notification.object as String {
-            self.notesLoadingIndicator.stopAnimating()
-            self.updateLastNote()
-        }
-    }
-    func noteSaveFinished(notification:NSNotification){
-        if self.reminderKey == notification.object as String {
-            self.notesLoadingIndicator.stopAnimating()
-            self.updateLastNote()
-        }
-    }
     
     func isCollaboratorsDirty() -> Bool {
         var newCollaborators = NSSet(array: self.collaborators)

@@ -30,7 +30,6 @@
 		AC201B401A1A7D8F00735141 /* TSMessage_UDO.m in Sources */ = {isa = PBXBuildFile; fileRef = AC201B3F1A1A7D8F00735141 /* TSMessage_UDO.m */; };
 		AC201B441A1A802200735141 /* APAddressBook_UDO.m in Sources */ = {isa = PBXBuildFile; fileRef = AC201B431A1A802200735141 /* APAddressBook_UDO.m */; };
 		AC23E2DA1A098EF700643E25 /* LocalNotificationsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC23E2D91A098EF700643E25 /* LocalNotificationsManager.swift */; };
-		AC2703AE1A1F7C7200DBE4FF /* ios_bg@2x.jpg in Resources */ = {isa = PBXBuildFile; fileRef = AC2703AD1A1F7C7200DBE4FF /* ios_bg@2x.jpg */; };
 		AC316A921A08D87300D48915 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC316A901A08D87300D48915 /* Bolts.framework */; };
 		AC316A931A08D87300D48915 /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC316A911A08D87300D48915 /* Parse.framework */; };
 		AC34440E1A113A83001CF4A3 /* UDBadgeLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC34440D1A113A83001CF4A3 /* UDBadgeLabel.swift */; };
@@ -46,6 +45,11 @@
 		ACA0DEBA19DC21D00003B893 /* StaticDataTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = ACA0DEB819DC21D00003B893 /* StaticDataTableViewController.m */; };
 		ACAA0F951A17B78700AACCCB /* UDPopTipView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAA0F941A17B78700AACCCB /* UDPopTipView.swift */; };
 		ACAE74D219A7C69600072BF5 /* UIImage+ImageEffects.m in Sources */ = {isa = PBXBuildFile; fileRef = ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */; };
+		ACB410C21A2A054300F0EAE9 /* RegionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACB410C11A2A054300F0EAE9 /* RegionViewController.swift */; };
+		ACB410C91A2B59D000F0EAE9 /* WildcardGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = ACB410C81A2B59D000F0EAE9 /* WildcardGestureRecognizer.m */; };
+		ACB410CC1A2B5A0B00F0EAE9 /* CustomMapOverlay.m in Sources */ = {isa = PBXBuildFile; fileRef = ACB410CB1A2B5A0B00F0EAE9 /* CustomMapOverlay.m */; };
+		ACB410D41A2CFF6600F0EAE9 /* iosbg@2x.jpg in Resources */ = {isa = PBXBuildFile; fileRef = ACB410D31A2CFF6600F0EAE9 /* iosbg@2x.jpg */; };
+		ACB410D61A2D051F00F0EAE9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = ACB410D51A2D051F00F0EAE9 /* LaunchScreen.storyboard */; };
 		ACBB74FD19EC700A00D44510 /* UIImage+Tint.m in Sources */ = {isa = PBXBuildFile; fileRef = ACBB74FC19EC700A00D44510 /* UIImage+Tint.m */; };
 		ACBEF0D11A05075100549A5C /* UIImage+Resize.m in Sources */ = {isa = PBXBuildFile; fileRef = ACBEF0D01A05075100549A5C /* UIImage+Resize.m */; };
 		ACD60AFE19C78886002F550A /* EventStoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD60AF119C78886002F550A /* EventStoreManager.swift */; };
@@ -105,7 +109,6 @@
 		AC201B421A1A7FB300735141 /* APAddressBook_UDO.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APAddressBook_UDO.h; sourceTree = "<group>"; };
 		AC201B431A1A802200735141 /* APAddressBook_UDO.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = APAddressBook_UDO.m; sourceTree = "<group>"; };
 		AC23E2D91A098EF700643E25 /* LocalNotificationsManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocalNotificationsManager.swift; sourceTree = "<group>"; };
-		AC2703AD1A1F7C7200DBE4FF /* ios_bg@2x.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "ios_bg@2x.jpg"; sourceTree = "<group>"; };
 		AC316A901A08D87300D48915 /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bolts.framework; sourceTree = "<group>"; };
 		AC316A911A08D87300D48915 /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Parse.framework; sourceTree = "<group>"; };
 		AC34440D1A113A83001CF4A3 /* UDBadgeLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDBadgeLabel.swift; sourceTree = "<group>"; };
@@ -126,6 +129,15 @@
 		ACAA0F941A17B78700AACCCB /* UDPopTipView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UDPopTipView.swift; sourceTree = "<group>"; };
 		ACAE74D019A7C69600072BF5 /* UIImage+ImageEffects.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+ImageEffects.h"; sourceTree = "<group>"; };
 		ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+ImageEffects.m"; sourceTree = "<group>"; };
+		ACB410BF1A2A042300F0EAE9 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		ACB410C11A2A054300F0EAE9 /* RegionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RegionViewController.swift; sourceTree = "<group>"; };
+		ACB410C71A2B59D000F0EAE9 /* WildcardGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WildcardGestureRecognizer.h; sourceTree = "<group>"; };
+		ACB410C81A2B59D000F0EAE9 /* WildcardGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WildcardGestureRecognizer.m; sourceTree = "<group>"; };
+		ACB410CA1A2B5A0B00F0EAE9 /* CustomMapOverlay.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CustomMapOverlay.h; sourceTree = "<group>"; };
+		ACB410CB1A2B5A0B00F0EAE9 /* CustomMapOverlay.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CustomMapOverlay.m; sourceTree = "<group>"; };
+		ACB410CD1A2BB07200F0EAE9 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
+		ACB410D31A2CFF6600F0EAE9 /* iosbg@2x.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "iosbg@2x.jpg"; sourceTree = "<group>"; };
+		ACB410D51A2D051F00F0EAE9 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ACBB74FB19EC700A00D44510 /* UIImage+Tint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Tint.h"; sourceTree = "<group>"; };
 		ACBB74FC19EC700A00D44510 /* UIImage+Tint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Tint.m"; sourceTree = "<group>"; };
 		ACBEF0CF1A05075100549A5C /* UIImage+Resize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Resize.h"; sourceTree = "<group>"; };
@@ -200,6 +212,8 @@
 		5B42EC24A88DB5FA7D82FC5C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				ACB410CD1A2BB07200F0EAE9 /* CoreText.framework */,
+				ACB410BF1A2A042300F0EAE9 /* MapKit.framework */,
 				AC857DB91A14BC84009D2DE5 /* Crashlytics.framework */,
 				AC857DBA1A14BC84009D2DE5 /* Fabric.framework */,
 				AC1545471A128D60003F8443 /* CoreMotion.framework */,
@@ -256,7 +270,7 @@
 		AC2703AC1A1F7C6300DBE4FF /* Images */ = {
 			isa = PBXGroup;
 			children = (
-				AC2703AD1A1F7C7200DBE4FF /* ios_bg@2x.jpg */,
+				ACB410D31A2CFF6600F0EAE9 /* iosbg@2x.jpg */,
 			);
 			name = Images;
 			sourceTree = "<group>";
@@ -297,6 +311,17 @@
 				ACAE74D119A7C69600072BF5 /* UIImage+ImageEffects.m */,
 			);
 			name = "UIImage+ImageEffects";
+			sourceTree = "<group>";
+		};
+		ACB410C61A2B465800F0EAE9 /* CustomMapOverlay */ = {
+			isa = PBXGroup;
+			children = (
+				ACB410CA1A2B5A0B00F0EAE9 /* CustomMapOverlay.h */,
+				ACB410CB1A2B5A0B00F0EAE9 /* CustomMapOverlay.m */,
+				ACB410C71A2B59D000F0EAE9 /* WildcardGestureRecognizer.h */,
+				ACB410C81A2B59D000F0EAE9 /* WildcardGestureRecognizer.m */,
+			);
+			name = CustomMapOverlay;
 			sourceTree = "<group>";
 		};
 		ACBB74FE19EC701100D44510 /* UIImage+ */ = {
@@ -344,8 +369,8 @@
 				ACD60AF319C78886002F550A /* AccountViewController.swift */,
 				ACDB1CBD19E88AE1007D731D /* SettingsTableViewController.swift */,
 				ACFB6C2A198AB7BB0091E4AB /* AppDelegate.swift */,
-				ACFB6C49198ACE2E0091E4AB /* ContactsViewController.swift */,
 				AC1B4B9319FEA91A00A8C721 /* NotesViewController.swift */,
+				ACFB6C49198ACE2E0091E4AB /* ContactsViewController.swift */,
 				ACE869211992CB5C00F26D67 /* ReminderViewController.swift */,
 				ACD60AF219C78886002F550A /* RemindersMainViewController.swift */,
 				AC0C72AD198E63E100B803B5 /* RegisterViewController.swift */,
@@ -356,6 +381,9 @@
 				AC743D1819EEFD98004E730F /* Theme.swift */,
 				AC857DB51A140B2F009D2DE5 /* UDContactImageView.swift */,
 				ACAA0F941A17B78700AACCCB /* UDPopTipView.swift */,
+				ACB410C11A2A054300F0EAE9 /* RegionViewController.swift */,
+				ACB410D51A2D051F00F0EAE9 /* LaunchScreen.storyboard */,
+				ACB410C61A2B465800F0EAE9 /* CustomMapOverlay */,
 				AC201B411A1A7E5300735141 /* APAddressBook+UDO */,
 				AC201B3C1A1A7AC600735141 /* TSMessage+UDO */,
 				AC96C4061A019FB700231065 /* ISO8601DateFormatter */,
@@ -489,10 +517,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ACB410D41A2CFF6600F0EAE9 /* iosbg@2x.jpg in Resources */,
 				ACFB6C32198AB7BB0091E4AB /* Main.storyboard in Resources */,
 				AC00831919DDD70A002EC27C /* MHPrettyDate.strings in Resources */,
+				ACB410D61A2D051F00F0EAE9 /* LaunchScreen.storyboard in Resources */,
 				AC004E7F19AD1BED00970D00 /* ReminderItemCell.xib in Resources */,
-				AC2703AE1A1F7C7200DBE4FF /* ios_bg@2x.jpg in Resources */,
 				ACFB6C34198AB7BB0091E4AB /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -565,6 +594,7 @@
 				AC201B441A1A802200735141 /* APAddressBook_UDO.m in Sources */,
 				ACD60B0019C78886002F550A /* AccountViewController.swift in Sources */,
 				ACBB74FD19EC700A00D44510 /* UIImage+Tint.m in Sources */,
+				ACB410CC1A2B5A0B00F0EAE9 /* CustomMapOverlay.m in Sources */,
 				ACD60B0A19C78886002F550A /* ContactsManager.swift in Sources */,
 				AC1B4B9619FEB54700A8C721 /* NotesManager.swift in Sources */,
 				ACE869221992CB5C00F26D67 /* ReminderViewController.swift in Sources */,
@@ -577,7 +607,9 @@
 				AC0C72AE198E63E100B803B5 /* RegisterViewController.swift in Sources */,
 				ACFB6C4A198ACE2E0091E4AB /* ContactsViewController.swift in Sources */,
 				ACD60AFE19C78886002F550A /* EventStoreManager.swift in Sources */,
+				ACB410C21A2A054300F0EAE9 /* RegionViewController.swift in Sources */,
 				AC96C40C1A01A0E300231065 /* NSDate+ISO8601.m in Sources */,
+				ACB410C91A2B59D000F0EAE9 /* WildcardGestureRecognizer.m in Sources */,
 				AC96C4051A019FB100231065 /* ISO8601DateFormatter.m in Sources */,
 				ACBEF0D11A05075100549A5C /* UIImage+Resize.m in Sources */,
 				ACD60AFF19C78886002F550A /* RemindersMainViewController.swift in Sources */,

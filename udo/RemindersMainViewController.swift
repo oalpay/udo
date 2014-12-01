@@ -70,18 +70,14 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     func registerNotifications(){
         self.nc.addObserver(self, selector: "reminderShowNotification:", name: kReminderShowNotification, object: nil)
         self.nc.addObserver(self, selector: "remindersChangedNotification:", name: kRemindersChangedNotification, object: nil)
-        self.nc.addObserver(self, selector: "reminderCreatedNotification:", name: kReminderCreatedNotification, object: nil)
-        self.nc.addObserver(self, selector: "reminderLoadingNotification:", name: kReminderLoadingNotification, object: nil)
-        self.nc.addObserver(self, selector: "reminderLoadingFinishedNotification:", name: kReminderLoadingFinishedNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderActivityNotification:", name: kReminderActivityNotification, object: nil)
+        self.nc.addObserver(self, selector: "reminderManagerActivityNotification:", name: kReminderManagerActivityNotification, object: nil)
+        
         self.nc.addObserver(self, selector: "applicationWillEnterForegroundNotification:", name: UIApplicationWillEnterForegroundNotification, object: nil)
         self.nc.addObserver(self, selector: "userLoggedOut:", name: kUserLoggedOutNotification, object: nil)
         self.nc.addObserver(self, selector: "contactsChanged:", name: kContactsChangedNotification, object: nil)
         
-        self.nc.addObserver(self, selector: "userSyncStarted:", name: kUserSyncStarted, object: nil)
-        self.nc.addObserver(self, selector: "userSyncEnded:", name: kUserSyncEnded, object: nil)
-        
-        self.nc.addObserver(self, selector: "noteLoadingFinished:", name: kReminderNoteLoadingFinishedNotification, object: nil)
-        
+        self.nc.addObserver(self, selector: "noteActivityNotification:", name: kNoteActivityNotification, object: nil)    
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -196,53 +192,67 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
     }
     
     // notifications
-    
-    func noteLoadingFinished(notification:NSNotification){
-        self.updateVisibleCellsForLocalChanges()
-    }
-    
-    func reminderCreatedNotification(notification:NSNotification){
-        let keyInfo = notification.object as NSDictionary
-        let oldKey = keyInfo["oldKey"] as String
-        let index = self.nsReminderKeys().indexOfObject(oldKey)
+    func reminderCreatedForId(oldId:String, idAfterCreate:String){
+        let index = self.nsReminderKeys().indexOfObject(oldId)
         if index != NSNotFound {
-            let newKey = keyInfo["newKey"] as String
             var keys = self.reminderKeys.mutableCopy() as NSMutableArray
-            keys.replaceObjectAtIndex(index, withObject: newKey)
+            keys.replaceObjectAtIndex(index, withObject: idAfterCreate)
             self.reminderKeys = keys.copy() as NSArray
             if let cell = self.tableView.cellForRowAtIndexPath(NSIndexPath(forRow: index, inSection: 0)) as? ReminderItemTableViewCell{
-                cell.reminderKey = newKey
+                cell.reminderKey = idAfterCreate
             }
         }
     }
     
-    func reminderLoadingNotification(notification:NSNotification){
-        var key = notification.object as String
-        self.updateReminderCellActivity(key)
-    }
-    
-    func reminderLoadingFinishedNotification(notification:NSNotification){
-        var key = notification.object as String
-        self.updateReminderCellActivity(key)
-    }
-    
     func remindersChangedNotification(notification:NSNotification){
-        var change = notification.object as RemindersChanged!
-        self.mergeReminders(change)
+        if let change = notification.object as? RemindersChangedNotification {
+            self.mergeReminders(change)
+        }
     }
+    func reminderActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? ReminderActivityNotification {
+            switch activity.activity {
+            case .Loading,.Saving,.Loaded,.Saved:
+                self.updateReminderCellActivity(activity.reminderId)
+            case .Created:
+                self.reminderCreatedForId(activity.reminderId, idAfterCreate: activity.idAfterCreate!)
+            default:
+                break
+            }
+        }
+    }
+    func reminderManagerActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? ReminderManagerActivityNotification {
+            switch activity.activity {
+            case .SyncStarted,.LoadingReminders:
+                self.refreshControl?.beginRefreshing()
+            case .SyncEnded,.LoadingRemindersEnded:
+                self.refreshControl?.endRefreshing()
+                self.updateVisibleCellsForLocalChanges()
+            default:
+                break
+            }
+        }
+    }
+    
+    func noteActivityNotification(notification:NSNotification){
+        if let activity = notification.object as? NoteActivityNotification {
+            switch activity.activity {
+            case .LoadingEnded:
+                self.updateVisibleCellsForLocalChanges()
+            default:
+                break
+            }
+        }
+    }
+    
+
+    // notifications end
+    
     
     func refreshActivated(sender:UIRefreshControl){
-        self.reminderManager.loadReminders(nil)
+        self.reminderManager.syncUser(nil)
     }
-    
-    func userSyncStarted(notification:NSNotification) {
-        self.refreshControl?.beginRefreshing()
-    }
-    func userSyncEnded(notification:NSNotification) {
-        self.refreshControl?.endRefreshing()
-        self.updateVisibleCellsForLocalChanges()
-    }
-    // notifications end
     
     func updateReminderCellActivity(key:String){
         var index = self.nsReminderKeys().indexOfObject(key)
@@ -270,7 +280,7 @@ class RemindersMainViewController:UITableViewController,UISearchDisplayDelegate,
         self.tableView.endUpdates()
     }
     
-    func mergeReminders(change:RemindersChanged){
+    func mergeReminders(change:RemindersChangedNotification){
         
         if let selectedRow = self.tableView.indexPathForSelectedRow() { // disappearing seperator fix
             self.tableView.deselectRowAtIndexPath(selectedRow, animated: false)

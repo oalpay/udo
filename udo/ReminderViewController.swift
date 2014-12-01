@@ -171,7 +171,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
     }
     func reminderActivityNotification(notification:NSNotification){
         if let activity = notification.object as? ReminderActivityNotification {
-            if activity.reminderId == self.reminder.key(){
+            if activity.reminderId == self.reminderKey {
                 switch activity.activity {
                 case .Loading,.Saving:
                     self.updateActivity()

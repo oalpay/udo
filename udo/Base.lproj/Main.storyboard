@@ -204,7 +204,7 @@
                                     </mask>
                                 </variation>
                             </imageView>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" text="Please enable access to your contacts in iPhone Settings &gt; Privacy &gt; Contacts &gt; U.do" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="3fQ-Xd-kWh">
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" text="Please enable access to your contacts in iPhone Settings &gt; Privacy &gt; Contacts &gt; U.do" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="3fQ-Xd-kWh">
                                 <rect key="frame" x="15" y="80" width="384" height="200"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <constraints>
@@ -1381,7 +1381,7 @@
                             <imageView userInteractionEnabled="NO" contentMode="top" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="iosbg.jpg" translatesAutoresizingMaskIntoConstraints="NO" id="TKV-YW-u4a">
                                 <rect key="frame" x="0.0" y="0.0" width="414" height="562"/>
                             </imageView>
-                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="obF-EX-82h">
+                            <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" editable="NO" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="obF-EX-82h">
                                 <rect key="frame" x="15" y="80" width="384" height="200"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                 <constraints>

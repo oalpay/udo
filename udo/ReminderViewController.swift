@@ -488,7 +488,7 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
                         self.makeCellVisibleAfterDelay(self.remindMeOnADayCell)
                     }
                 }else {
-                    sender.setOn(!sender.on, animated: true)
+                    sender.setOn(false, animated: true)
                     TSMessage.showNotificationWithTitle("Error", subtitle: "Please give Reminders access to u.do from privacy settings", type: TSMessageNotificationType.Error)
                 }
                 

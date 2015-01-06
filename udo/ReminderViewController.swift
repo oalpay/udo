@@ -789,7 +789,6 @@ class ReminderViewController: StaticDataTableViewController,UITextViewDelegate,C
         }else if result.value == MessageComposeResultSent.value {
             self.contactsManager.invitationSent(controller.recipients)
             controller.dismissViewControllerAnimated(true, completion: nil)
-            self.performSegueWithIdentifier("ContactSelected", sender: nil)
         }else if result.value == MessageComposeResultCancelled.value {
             controller.dismissViewControllerAnimated(true, completion: nil)
         }

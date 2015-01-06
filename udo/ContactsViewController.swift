@@ -197,9 +197,9 @@ class ContactsViewController:UITableViewController,UISearchDisplayDelegate{
             if let section = self.searchSections[self.searchHeaders[indexPath.section]] {
                 let contact = section.objectAtIndex(indexPath.row) as APContact
                 if let name = contact.compositeName {
-                    contactCell.textLabel.text = name
+                    contactCell.textLabel?.text = name
                 }else{
-                    contactCell.textLabel.text = ""
+                    contactCell.textLabel?.text = ""
                 }
                 contactCell.accessoryType = UITableViewCellAccessoryType.DisclosureIndicator
             }

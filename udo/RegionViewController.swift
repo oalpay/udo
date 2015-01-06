@@ -133,7 +133,7 @@ class RegionViewController:UIViewController,UISearchDisplayDelegate,UITableViewD
             cell = UITableViewCell(style: UITableViewCellStyle.Default, reuseIdentifier: "defaultCellIdentifier")
         }
         let mapItem = self.searchResults[indexPath.row]
-        cell!.textLabel.text = mapItem.name
+        cell!.textLabel?.text = mapItem.name
         return cell!
     }
     
